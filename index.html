@@ -278,15 +278,26 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
   <!-- NOVA PESAGEM -->
   <div class="pg" id="pg-nova">
 
-    <!-- Contrato / Ordem -->
+    <!-- Contrato -->
     <div class="card">
-      <div class="ct">📄 Contrato / Ordem</div>
+      <div class="ct">📋 Contrato</div>
       <div class="f">
-        <label>Nº do Contrato / Ordem *</label>
-        <input type="text" id="f-oc" placeholder="OC-2024-001" list="dl-oc" oninput="infoOC(this.value)" autocomplete="off">
+        <label>Nº do Contrato *</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="f-oc" placeholder="Selecione ou digite..." list="dl-oc" oninput="infoOC(this.value)" autocomplete="off" style="flex:1">
+          <button type="button" onclick="abrirSelContrato()" title="Ver contratos" style="padding:0 14px;border:1.5px solid var(--g1);border-radius:var(--r2px);background:var(--g3);color:var(--g1);font-size:16px;cursor:pointer;flex-shrink:0">☰</button>
+        </div>
         <datalist id="dl-oc"></datalist>
       </div>
-      <div id="oc-info" style="display:none;margin-top:5px;padding:6px 9px;background:var(--g3);border-radius:7px;font-size:11px;color:var(--g1)"></div>
+      <!-- Lista de seleção -->
+      <div id="sel-contrato" style="display:none;border:1.5px solid var(--brd);border-radius:var(--r2px);background:#fff;max-height:220px;overflow-y:auto;margin-top:4px">
+        <div style="padding:7px 12px;font-size:11px;color:var(--ink3);border-bottom:.5px solid var(--brd);display:flex;justify-content:space-between;align-items:center">
+          <b style="color:var(--ink2)">Contratos cadastrados</b>
+          <button onclick="document.getElementById('sel-contrato').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:16px;padding:0">✕</button>
+        </div>
+        <div id="sel-contrato-lista"><div style="padding:12px;text-align:center;font-size:12px;color:var(--ink3)">Carregando...</div></div>
+      </div>
+      <div id="oc-info" style="display:none;margin-top:6px;padding:8px 11px;background:var(--g3);border-radius:8px;font-size:12px;color:var(--g1)"></div>
 
       <!-- Foto da ordem -->
       <div class="f" style="margin-top:9px">
@@ -298,7 +309,6 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
           <img id="prev-oc" style="display:none;width:52px;height:52px;object-fit:cover;border-radius:6px;margin-left:auto;flex-shrink:0">
         </label>
       </div>
-
       <div class="f"><label>Funcionário Responsável *</label><input type="text" id="f-fn" placeholder="Nome de quem registra"></div>
     </div>
 
@@ -307,18 +317,12 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
       <div class="ct">🚛 Veículo e Eixos</div>
       <div class="f"><label>Placa *</label><input type="text" id="f-pl" class="placa" placeholder="ABC1D23" maxlength="8" oninput="this.value=this.value.toUpperCase()"></div>
 
+      <!-- Dianteiro fixo em 1 — oculto -->
+      <span id="nd" style="display:none">1</span>
+
       <div class="f">
         <label>Configuração de Eixos (CONTRAN) *</label>
-        <div class="egrid">
-          <div class="ec">
-            <div class="et">🔵 DIANTEIRO</div>
-            <div class="ev">6 t / eixo</div>
-            <div class="ctrl">
-              <button type="button" class="eb" onclick="adj('nd',-1)">−</button>
-              <span class="en" id="nd">1</span>
-              <button type="button" class="eb p" onclick="adj('nd',1)">+</button>
-            </div>
-          </div>
+        <div class="egrid" style="grid-template-columns:1fr 1fr 1fr">
           <div class="ec">
             <div class="et">🟢 SIMPLES</div>
             <div class="ev">10 t / eixo</div>
@@ -871,7 +875,44 @@ function foto(inp,btnId,prevId,tipo,fiId,flId,lbl){
 }
 
 /* ══ ORDEM INFO ═══════════════════════════════════════════════ */
-/* ══ DROPDOWN PRODUTO ══════════════════════════════════════════ */
+/* ══ SELEÇÃO DE CONTRATO ═══════════════════════════════════════ */
+function abrirSelContrato(){
+  const box=document.getElementById('sel-contrato');
+  const lista=document.getElementById('sel-contrato-lista');
+  if(box.style.display==='block'){box.style.display='none';return;}
+  box.style.display='block';
+  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  if(!ocs.length){
+    lista.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:var(--ink3)">Carregando da planilha...</div>';
+    loadContratosDaPlanilha().then(()=>{
+      const ocs2=JSON.parse(localStorage.getItem('poc')||'[]');
+      if(ocs2.length) renderSelContrato(ocs2,lista);
+      else lista.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:var(--ink3)">Nenhum contrato. Cadastre em Ordens.</div>';
+    });
+    return;
+  }
+  renderSelContrato(ocs,lista);
+}
+function renderSelContrato(ocs,lista){
+  lista.innerHTML=ocs.map(o=>{
+    const vol=parseFloat(o.vol)||0;
+    const entregues=cloud.filter(x=>x.numOrdem===o.n&&(x.status||'').includes('Finalizado'))
+      .reduce((sum,x)=>sum+parseFloat(x.cargaLiquida||0)*1000,0);
+    const saldo=vol>0?vol-entregues:null;
+    return `<div onclick="selecionarContrato('${o.n}')" style="padding:10px 13px;cursor:pointer;border-bottom:.5px solid var(--brd)" onmouseover="this.style.background='var(--g3)'" onmouseout="this.style.background=''">
+      <div style="font-weight:700;font-size:13px">${o.n}</div>
+      <div style="font-size:11px;color:var(--ink3)">${o.p||'—'}${o.d?' · '+o.d:''}</div>
+      ${vol>0?`<div style="font-size:11px;color:${saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)'};font-weight:600">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')}kg / ${vol.toLocaleString('pt-BR')}kg</div>`:''}
+    </div>`;
+  }).join('');
+}
+function selecionarContrato(n){
+  document.getElementById('f-oc').value=n;
+  document.getElementById('sel-contrato').style.display='none';
+  infoOC(n);
+}
+
+/* ══ INFO CONTRATO — mostra saldo ══════════════════════════════ */
 function showProdutos(){
   const d=document.getElementById('prod-drop');
   d.style.display=d.style.display==='none'?'block':'none';
