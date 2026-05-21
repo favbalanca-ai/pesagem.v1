@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pesagem">
+<meta name="theme-color" content="#1a5c45">
+<link rel="manifest" href="manifest.json">
+<title>Pesagem de Caminhões</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══ RESET & VARS ══════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --v1:#1a5c45;--v2:#2d7a5f;--v3:#e8f5e9;--v4:#0a2318;
+  --r1:#c0392b;--r2:#fce8e8;
+  --a1:#856404;--a2:#fff3cd;
+  --txt:#0f1f18;--txt2:#4a6358;--txt3:#8aada0;
+  --bg:#f2f7f5;--card:#fff;--brd:#d4e6de;
+  --rad:14px;--rad2:10px;
+  --sh:0 2px 12px rgba(26,92,69,.08);
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column}
+
+/* ═══ TOPBAR ════════════════════════════════════════════════ */
+.topbar{background:var(--v1);color:#fff;padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0;z-index:50;position:relative}
+.topbar-inner{padding:14px 16px 12px;display:flex;align-items:center;gap:10px}
+.topbar h1{font-size:16px;font-weight:600;flex:1}
+.btn-back{background:rgba(255,255,255,.15);border:none;color:#fff;width:34px;height:34px;border-radius:8px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-bar{display:flex;gap:3px;padding:0 16px 10px}
+.step-dot{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.25);transition:background .3s}
+.step-dot.done{background:rgba(255,255,255,.8)}
+.step-dot.active{background:#fff}
+
+/* ═══ PAGES ═════════════════════════════════════════════════ */
+.page{flex:1;overflow-y:auto;padding:14px 14px 100px;display:none}
+.page.active{display:block}
+
+/* ═══ CARDS ═════════════════════════════════════════════════ */
+.card{background:var(--card);border-radius:var(--rad);padding:14px 16px;margin-bottom:12px;box-shadow:var(--sh);border:.5px solid var(--brd)}
+.card-title{font-size:11px;font-weight:700;color:var(--v1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+
+/* ═══ FIELDS ════════════════════════════════════════════════ */
+.field{margin-bottom:10px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:5px}
+.field input,.field select,.field textarea{
+  width:100%;padding:11px 14px;border:1.5px solid var(--brd);border-radius:var(--rad2);
+  font-size:15px;font-family:'DM Sans',sans-serif;background:#fff;color:var(--txt);
+  transition:border .15s;-webkit-appearance:none}
+.field input:focus,.field select:focus{outline:none;border-color:var(--v1);box-shadow:0 0 0 3px rgba(26,92,69,.1)}
+.field input.placa{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;text-align:center;letter-spacing:3px;text-transform:uppercase}
+.field input[type=number]{font-size:22px;font-weight:700;text-align:center;color:var(--v1);padding:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ═══ LEGISLAÇÃO DENATRAN ═══════════════════════════════════ */
+.leg-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.leg-table th{background:var(--v1);color:#fff;padding:6px 8px;text-align:left;font-weight:600}
+.leg-table td{padding:6px 8px;border-bottom:.5px solid var(--brd)}
+.leg-table tr:nth-child(even) td{background:#f5faf7}
+.leg-table td.destaque{font-weight:700;color:var(--v1)}
+
+/* ═══ FOTOS ═════════════════════════════════════════════════ */
+.foto-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.foto-btn{position:relative;border:2px dashed var(--brd);border-radius:var(--rad2);background:#fafcfb;padding:12px 4px;text-align:center;cursor:pointer;transition:all .15s;overflow:hidden}
+.foto-btn.ok{border-color:var(--v1);background:var(--v3);border-style:solid}
+.foto-btn input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.foto-btn .icon{font-size:24px;display:block;margin-bottom:3px}
+.foto-btn .lbl{font-size:9px;font-weight:600;color:var(--txt3)}
+.foto-btn.ok .lbl{color:var(--v1)}
+.foto-preview{width:100%;height:60px;object-fit:cover;border-radius:6px;display:none;margin-top:4px}
+
+/* ═══ PESO ══════════════════════════════════════════════════ */
+.pbt-box{background:var(--v4);border-radius:var(--rad);padding:16px;text-align:center;margin:10px 0}
+.pbt-label{color:#6dbf9e;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.pbt-val{color:#a8e6cc;font-size:40px;font-weight:700;font-family:'Space Mono',monospace;line-height:1}
+.pbt-sub{color:#6dbf9e;font-size:11px;margin-top:6px}
+.pbt-detail{display:flex;justify-content:space-around;margin-top:10px;gap:6px}
+.pbt-item{flex:1;background:rgba(255,255,255,.08);border-radius:8px;padding:8px;text-align:center}
+.pbt-item .pi-label{font-size:9px;color:#6dbf9e;text-transform:uppercase;letter-spacing:.05em}
+.pbt-item .pi-val{font-size:16px;font-weight:700;color:#a8e6cc;margin-top:2px}
+
+/* ═══ STATUS ════════════════════════════════════════════════ */
+.status-badge{border-radius:var(--rad2);padding:12px 16px;text-align:center;font-size:15px;font-weight:700;margin:8px 0}
+.st-ok{background:#e8f5e9;color:#1a5c45}
+.st-warn{background:#fff3cd;color:#856404}
+.st-err{background:#fce8e8;color:#c0392b}
+.st-info{background:#e3f0ff;color:#1a4a8a}
+
+/* ═══ BOTÕES ════════════════════════════════════════════════ */
+.btn{width:100%;padding:15px;border-radius:var(--rad2);border:none;font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;margin-top:6px}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--v1);color:#fff}
+.btn-secondary{background:#eef2ef;color:var(--v1);border:1px solid var(--brd)}
+.btn-danger{background:var(--r1);color:#fff}
+.btn-wa{background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-sm{padding:10px;font-size:13px;width:auto;flex:1}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ═══ ORDEM CARDS ═══════════════════════════════════════════ */
+.ordem-card{background:var(--card);border-radius:var(--rad);padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v1);box-shadow:var(--sh);cursor:pointer;transition:all .15s}
+.ordem-card:active{transform:scale(.99)}
+.ordem-card.excedido{border-left-color:var(--r1)}
+.ordem-card.atencao{border-left-color:#e6a817}
+.placa-tag{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;letter-spacing:2px}
+.ordem-info{font-size:13px;color:var(--txt2);margin-top:3px}
+.ordem-badge{font-size:11px;padding:3px 10px;border-radius:20px;display:inline-block;margin-top:6px;font-weight:600}
+.badge-ag{background:#e3f0ff;color:#1a4a8a}
+.badge-ok{background:var(--v3);color:var(--v1)}
+.badge-err{background:var(--r2);color:var(--r1)}
+.badge-warn{background:var(--a2);color:var(--a1)}
+
+/* ═══ ASSINATURA ════════════════════════════════════════════ */
+#canvas-sig{width:100%;height:200px;border:2px dashed var(--brd);border-radius:var(--rad2);background:#fff;cursor:crosshair;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;display:block}
+#canvas-sig.signed{border-color:var(--v1);border-style:solid}
+#sig-wrapper{position:relative;width:100%;touch-action:none;user-select:none;-webkit-user-select:none}
+
+/* ═══ TICKET ════════════════════════════════════════════════ */
+.tk-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--brd);font-size:14px}
+.tk-row:last-child{border:none}
+.tk-label{color:var(--txt2)}
+.tk-val{font-weight:600;text-align:right}
+.tk-val.verde{color:var(--v1);font-size:17px}
+.ticket-header{text-align:center;padding-bottom:14px;margin-bottom:14px;border-bottom:2px solid var(--brd)}
+
+/* ═══ HOME ══════════════════════════════════════════════════ */
+.home-hero{background:linear-gradient(135deg,var(--v4) 0%,var(--v1) 100%);border-radius:var(--rad);padding:24px 20px;text-align:center;margin-bottom:14px;color:#fff}
+.home-hero h2{font-size:22px;font-weight:700;margin-bottom:4px}
+.home-hero p{font-size:13px;opacity:.75}
+.metrics{display:flex;gap:8px;margin-top:12px}
+.metric{flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:10px 6px;text-align:center}
+.metric .mv{font-size:22px;font-weight:700;font-family:'Space Mono',monospace}
+.metric .ml{font-size:10px;opacity:.75;margin-top:2px}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.home-btn{background:var(--card);border-radius:var(--rad);padding:18px 14px;text-align:center;cursor:pointer;box-shadow:var(--sh);border:.5px solid var(--brd);transition:all .15s}
+.home-btn:active{transform:scale(.97)}
+.home-btn .hb-icon{font-size:32px;margin-bottom:6px}
+.home-btn .hb-title{font-size:13px;font-weight:700}
+.home-btn .hb-sub{font-size:11px;color:var(--txt3);margin-top:2px}
+.badge-count{background:var(--r1);color:#fff;border-radius:20px;font-size:10px;font-weight:700;padding:2px 7px;display:inline-block;margin-top:4px}
+.sync-bar{background:var(--card);border-radius:var(--rad);padding:12px 16px;margin-bottom:10px;box-shadow:var(--sh);border:.5px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sync-status{font-size:13px;color:var(--txt2);flex:1}
+.btn-sync{padding:8px 16px;border-radius:8px;border:1.5px solid var(--v1);background:transparent;color:var(--v1);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn-sync:disabled{opacity:.5;cursor:default}
+
+/* ═══ FILTROS ═══════════════════════════════════════════════ */
+.filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.filtro{padding:6px 12px;border-radius:20px;border:1.5px solid var(--brd);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--txt2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.filtro.active{background:var(--v1);color:#fff;border-color:var(--v1)}
+
+/* ═══ LOGIN ═════════════════════════════════════════════════ */
+#tela-login{position:fixed;inset:0;background:linear-gradient(160deg,var(--v4),#0f3d28 50%,var(--v1));display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;padding:30px 24px}
+#tela-login.hide{display:none}
+.login-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-label{font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.login-input{width:100%;padding:13px 16px;border:1.5px solid var(--brd);border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;margin-bottom:14px;color:var(--txt)}
+.login-input:focus{outline:none;border-color:var(--v1)}
+.btn-login{width:100%;padding:15px;border-radius:12px;border:none;background:var(--v1);color:#fff;font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer}
+.login-erro{background:var(--r2);color:var(--r1);border-radius:8px;padding:8px 12px;font-size:13px;margin-top:10px;display:none;text-align:center}
+
+/* ═══ BOTTOMBAR ═════════════════════════════════════════════ */
+.bottombar{background:#fff;border-top:1px solid var(--brd);padding:8px 0 env(safe-area-inset-bottom,8px);display:flex;justify-content:space-around;flex-shrink:0;z-index:50}
+.bb-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--txt3);cursor:pointer;padding:0 12px;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.bb-item.active{color:var(--v1)}
+.bb-icon{font-size:22px}
+
+/* ═══ MISC ══════════════════════════════════════════════════ */
+body[data-signing]{overflow:hidden;position:fixed;width:100%}
+#offline-badge{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;background:#e6a817;color:#fff;text-align:center;font-size:12px;font-weight:600;padding:5px;z-index:1000;display:none}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#0a2318;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:40px 20px;color:var(--txt3)}
+.empty .ei{font-size:48px;margin-bottom:10px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media print{.bottombar,.topbar,.btn-back,#btn-wa-ticket,.btn-sync,.btn-secondary{display:none!important} body{padding:5mm}}
+</style>
+</head>
+<body>
+
+<div id="offline-badge">📵 Sem internet — dados salvos localmente</div>
+<div id="toast"></div>
+
+<!-- ═══ LOGIN ═════════════════════════════════════════════ -->
+<div id="tela-login">
+  <div style="font-size:56px;margin-bottom:12px">⚖️</div>
+  <div style="font-size:24px;font-weight:700;color:#fff;margin-bottom:4px;text-align:center">Pesagem de Caminhões</div>
+  <div style="font-size:13px;color:rgba(255,255,255,.65);margin-bottom:32px;text-align:center">Sistema de controle de carregamento</div>
+  <div class="login-card">
+    <div class="login-label">E-mail</div>
+    <input class="login-input" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+    <div class="login-label">Senha</div>
+    <input class="login-input" type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()">
+    <button class="btn-login" onclick="fazerLogin()">Entrar →</button>
+    <div class="login-erro" id="login-erro">E-mail ou senha incorretos</div>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:20px">v5.0 · Pesagem Única</div>
+</div>
+
+<div id="app" style="display:none">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">‹</button>
+      <h1 id="page-title">🚛 Pesagem</h1>
+      <button onclick="fazerLogout()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 10px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif" id="btn-logout">Sair</button>
+    </div>
+    <div class="step-bar" id="step-bar" style="display:none">
+      <div class="step-dot" id="s1"></div><div class="step-dot" id="s2"></div>
+      <div class="step-dot" id="s3"></div><div class="step-dot" id="s4"></div>
+      <div class="step-dot" id="s5"></div>
+    </div>
+  </div>
+
+  <!-- ═══ HOME ═══════════════════════════════════════════════ -->
+  <div class="page active" id="pg-home">
+    <div class="home-hero">
+      <div style="font-size:40px;margin-bottom:6px">⚖️</div>
+      <h2>Pesagem Única</h2>
+      <p>Controle completo de carregamento</p>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="hm-hoje">0</div><div class="ml">Hoje</div></div>
+        <div class="metric"><div class="mv" id="hm-aguard">0</div><div class="ml">Aguardando</div></div>
+        <div class="metric"><div class="mv" id="hm-fin">0</div><div class="ml">Finalizadas</div></div>
+      </div>
+    </div>
+    <div class="sync-bar">
+      <div class="sync-status" id="sync-status">☁️ Sincronizado</div>
+      <button class="btn-sync" id="btn-sync-home" onclick="syncManual()">Sincronizar</button>
+    </div>
+    <div class="home-grid">
+      <div class="home-btn" onclick="irNovaPesagem()">
+        <div class="hb-icon">📋</div>
+        <div class="hb-title">Nova Pesagem</div>
+        <div class="hb-sub">Registrar entrada</div>
+      </div>
+      <div class="home-btn" onclick="irAguardando()">
+        <div class="hb-icon">⏳</div>
+        <div class="hb-title">Aguardando</div>
+        <div class="hb-sub" id="aguard-sub">Nenhum</div>
+        <div id="aguard-count" style="display:none" class="badge-count">0</div>
+      </div>
+      <div class="home-btn" onclick="irHistorico()">
+        <div class="hb-icon">📊</div>
+        <div class="hb-title">Histórico</div>
+        <div class="hb-sub">Todos os registros</div>
+      </div>
+      <div class="home-btn" onclick="showPage('pg-legislacao','📋 Legislação CONTRAN')" id="btn-legislacao">
+        <div class="hb-icon">📖</div>
+        <div class="hb-title">Legislação</div>
+        <div class="hb-sub">Limites de peso</div>
+      </div>
+    </div>
+    <div class="home-grid" id="admin-grid" style="display:none">
+      <div class="home-btn" onclick="irOrdensCadastro()">
+        <div class="hb-icon">📝</div>
+        <div class="hb-title">Cadastro de Ordens</div>
+        <div class="hb-sub">Criar ordens de carregamento</div>
+      </div>
+      <div class="home-btn" onclick="showPage('pg-config','⚙️ Configurações')">
+        <div class="hb-icon">⚙️</div>
+        <div class="hb-title">Configurações</div>
+        <div class="hb-sub">Empresa e sistema</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ NOVA PESAGEM ════════════════════════════════════════ -->
+  <div class="page" id="pg-nova">
+    <div class="card">
+      <div class="card-title">📄 Ordem de Carregamento</div>
+      <div class="field">
+        <label>Nº Ordem *</label>
+        <input type="text" id="f-numOrdem" placeholder="Digite ou selecione" list="lista-ordens-dl" oninput="preencherDadosOrdem(this.value)" autocomplete="off">
+        <datalist id="lista-ordens-dl"></datalist>
+        <div id="f-ordem-info" style="display:none;margin-top:6px;padding:6px 10px;background:var(--v3);border-radius:6px;font-size:12px;color:var(--v1)"></div>
+      </div>
+      <div class="field"><label>Funcionário Responsável *</label><input type="text" id="f-funcionario" placeholder="Nome de quem registra"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🚛 Veículo</div>
+      <div class="field"><label>Placa *</label><input type="text" id="f-placa" class="placa" placeholder="ABC1D23" maxlength="8" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="field">
+        <label>Configuração de Eixos (CONTRAN) *</label>
+        <select id="f-config" onchange="aplicarConfigEixos()" style="font-size:13px">
+          <option value="">— Selecione a configuração —</option>
+          <optgroup label="2 Eixos">
+            <option value="6+10">2 eixos (6+10) — Caminhão simples — PBT máx 16 t</option>
+          </optgroup>
+          <optgroup label="3 Eixos">
+            <option value="6+17">3 eixos (6+17) — Caminhão toco — PBT máx 23 t</option>
+          </optgroup>
+          <optgroup label="4 Eixos">
+            <option value="6+10+17">4 eixos (6+10+17) — Truck — PBT máx 33 t</option>
+            <option value="6+17+20">4 eixos (6+17+20) — Combinado — PBT máx 43 t</option>
+            <option value="6+10+25.5">4 eixos (6+10+25,5) — Carreta — PBT máx 41,5 t</option>
+          </optgroup>
+          <optgroup label="5 Eixos">
+            <option value="6+10+30">5 eixos (6+10+30) — Carreta — PBT máx 46 t</option>
+            <option value="6+17+25.5">5 eixos (6+17+25,5) — Carreta alongada — PBT máx 48,5 t</option>
+          </optgroup>
+          <optgroup label="6 Eixos">
+            <option value="6+17+10+17">6 eixos (6+17+10+17) — Bitrem — PBT máx 50 t</option>
+            <option value="6+17+30">6 eixos (6+17+30) — Bitrem pesado — PBT máx 53 t</option>
+          </optgroup>
+          <optgroup label="7 Eixos">
+            <option value="6+10+10+10">7 eixos (6+10+10+10) — Treminhão leve — PBT máx 36 t</option>
+            <option value="6+10+10+17">7 eixos (6+10+10+17) — Treminhão — PBT máx 43 t</option>
+            <option value="6+10+17+10">7 eixos (6+10+17+10) — Treminhão var. — PBT máx 43 t</option>
+            <option value="6+17+10+17b">7 eixos (6+17+10+17) — Treminhão pesado — PBT máx 50 t</option>
+          </optgroup>
+          <optgroup label="9 Eixos">
+            <option value="6+17+17+17">9 eixos (6+17+17+17) — Rodotrem — PBT máx 57 t</option>
+            <option value="6+17+10+10+10+10">9 eixos (6+17+10+10+10+10) — Rodotrem — PBT máx 63 t</option>
+            <option value="6+17+25.5+25.5">9 eixos (6+17+25,5+25,5) — PBT máx 65,5 t</option>
+          </optgroup>
+          <optgroup label="11 Eixos">
+            <option value="6+17+17+17+17">11 eixos (6+17+17+17+17) — Rodotrem duplo — PBT máx 74 t</option>
+            <option value="6+17+25.5+25.5b">11 eixos (6+17+25,5+25,5) especial — PBT máx 74 t</option>
+          </optgroup>
+        </select>
+        <div id="config-info" style="display:none;margin-top:8px;padding:10px 12px;background:var(--v3);border-radius:8px;font-size:12px;color:var(--v1)"></div>
+      </div>
+      <input type="hidden" id="f-totalEixos" value="0">
+      <input type="hidden" id="f-limPeso" value="0">
+      <input type="hidden" id="f-taraRef" value="0">
+    </div>
+    <div class="card">
+      <div class="card-title">👤 Motorista</div>
+      <div class="field"><label>Nome Completo *</label><input type="text" id="f-motorista" placeholder="Nome do motorista"></div>
+      <div class="field"><label>CPF</label><input type="text" id="f-cpf" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📷 Fotos</div>
+      <div class="foto-grid">
+        <label class="foto-btn" id="fb-cnh">
+          <span class="icon">📸</span><span class="lbl">CNH</span>
+          <input type="file" accept="image/*" capture="environment" onchange="fotoCapturada(this,'fb-cnh','cnh')">
+          <img id="prev-cnh" class="foto-preview">
+        </label>
+        <label class="foto-btn" id="fb-placa">
+          <span class="icon">📸</span><span class="lbl">Placa</span>
+          <input type="file" accept="image/*" capture="environment" onchange="fotoCapturada(this,'fb-placa','placa')">
+          <img id="prev-placa" class="foto-preview">
+        </label>
+        <label class="foto-btn" id="fb-caminhao">
+          <span class="icon">📸</span><span class="lbl">Caminhão</span>
+          <input type="file" accept="image/*" capture="environment" onchange="fotoCapturada(this,'fb-caminhao','caminhao')">
+          <img id="prev-caminhao" class="foto-preview">
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚖️ Pesagem da Tara</div>
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Peso do veículo <b>vazio</b> na balança</div>
+      <div class="field"><label>Tara em toneladas *</label><input type="number" id="f-tara" placeholder="0.000" step="0.001" min="0" max="50" oninput="validarTara()"></div>
+      <div id="tara-aviso" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;margin-top:4px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Observações</div>
+      <textarea id="f-obs" rows="2" placeholder="Tipo de carga, lacre, ocorrências..." style="width:100%;padding:11px 14px;border:1.5px solid var(--brd);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;resize:none"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="salvarEntrada()">⚖️ Registrar Tara → Aguardando Carregamento</button>
+    <button class="btn btn-secondary" onclick="goHome()">Cancelar</button>
+  </div>
+
+  <!-- ═══ AGUARDANDO ══════════════════════════════════════════ -->
+  <div class="page" id="pg-aguardando">
+    <div id="lista-aguardando"></div>
+  </div>
+
+  <!-- ═══ PESO BRUTO ══════════════════════════════════════════ -->
+  <div class="page" id="pg-bruto">
+    <div class="card" id="bruto-info"></div>
+    <div class="card">
+      <div class="card-title">⚖️ Peso Bruto Total (veículo carregado)</div>
+      <div class="field"><label>Peso bruto em toneladas *</label>
+        <input type="number" id="f-bruto" placeholder="0.000" step="0.001" min="0" max="200" oninput="calcBruto()">
+      </div>
+    </div>
+    <div id="resultado-bruto" style="display:none">
+      <div class="pbt-box">
+        <div class="pbt-label">Resultado da Pesagem</div>
+        <div class="pbt-val" id="r-carga">—</div>
+        <div class="pbt-sub">Carga Líquida (Bruto − Tara)</div>
+        <div class="pbt-detail">
+          <div class="pbt-item"><div class="pi-label">Tara</div><div class="pi-val" id="r-tara">—</div></div>
+          <div class="pbt-item"><div class="pi-label">Bruto</div><div class="pi-val" id="r-bruto">—</div></div>
+          <div class="pbt-item"><div class="pi-label">Limite</div><div class="pi-val" id="r-limite">—</div></div>
+        </div>
+      </div>
+      <div class="status-badge" id="r-status-badge"></div>
+      <div id="r-excesso" style="display:none;padding:8px 12px;background:var(--r2);border-radius:8px;font-size:13px;color:var(--r1);margin-bottom:8px"></div>
+    </div>
+    <button class="btn btn-primary" id="btn-confirmar-bruto" onclick="confirmarBruto()" style="display:none">✅ Confirmar → Assinatura do Motorista</button>
+  </div>
+
+  <!-- ═══ ASSINATURA ══════════════════════════════════════════ -->
+  <div class="page" id="pg-assinatura">
+    <div class="card" id="assin-info"></div>
+    <div class="card">
+      <div class="card-title">✍️ Assinatura Digital do Motorista</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:10px;text-align:center">Peça ao motorista que assine abaixo para confirmar o carregamento</div>
+      <div id="sig-wrapper">
+        <canvas id="canvas-sig"></canvas>
+        <div id="sig-hint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.35;font-size:13px;color:var(--txt3)">✍️ Assine aqui</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <button class="btn btn-secondary btn-sm" onclick="limparSig()">🗑️ Limpar</button>
+        <div id="sig-status" style="flex:1;font-size:12px;color:var(--txt3);text-align:center">Aguardando assinatura...</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="finalizar()">🏁 Finalizar e Emitir Ticket</button>
+  </div>
+
+  <!-- ═══ TICKET ══════════════════════════════════════════════ -->
+  <div class="page" id="pg-ticket">
+    <div class="card">
+      <div class="ticket-header">
+        <div style="font-size:32px;margin-bottom:6px">🎫</div>
+        <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;letter-spacing:3px" id="tk-placa">—</div>
+        <div style="font-size:12px;color:var(--txt3);margin-top:4px" id="tk-info">—</div>
+      </div>
+      <div class="tk-row"><span class="tk-label">Nº Ordem</span><span class="tk-val" id="tk-ordem">—</span></div>
+      <div class="tk-row"><span class="tk-label">Motorista</span><span class="tk-val" id="tk-motorista">—</span></div>
+      <div class="tk-row"><span class="tk-label">CPF</span><span class="tk-val" id="tk-cpf">—</span></div>
+      <div class="tk-row"><span class="tk-label">Configuração</span><span class="tk-val" id="tk-config">—</span></div>
+      <div class="tk-row"><span class="tk-label">Eixos</span><span class="tk-val" id="tk-eixos">—</span></div>
+      <div class="tk-row"><span class="tk-label">Tara</span><span class="tk-val" id="tk-tara">—</span></div>
+      <div class="tk-row"><span class="tk-label">Peso Bruto</span><span class="tk-val" id="tk-bruto">—</span></div>
+      <div class="tk-row"><span class="tk-label">Carga Líquida</span><span class="tk-val verde" id="tk-carga">—</span></div>
+      <div class="tk-row"><span class="tk-label">Limite Legal</span><span class="tk-val" id="tk-limite">—</span></div>
+      <div class="tk-row"><span class="tk-label">Tolerância (7%)</span><span class="tk-val" id="tk-tolerancia">—</span></div>
+      <div class="tk-row"><span class="tk-label">Funcionário</span><span class="tk-val" id="tk-func">—</span></div>
+      <div class="tk-row" id="tk-obs-row" style="display:none"><span class="tk-label">Observações</span><span class="tk-val" id="tk-obs">—</span></div>
+    </div>
+    <div class="status-badge" id="tk-status-badge"></div>
+    <div class="card" id="tk-sig-card" style="display:none">
+      <div class="card-title">✍️ Assinatura</div>
+      <img id="tk-sig-img" style="width:100%;border-radius:8px">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn btn-wa btn-sm" id="btn-wa-ticket" onclick="enviarWA()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.117 1.532 5.849L.057 23.571a.75.75 0 0 0 .921.921l5.722-1.475A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 0 1-4.962-1.358l-.355-.211-3.697.952.977-3.579-.232-.369A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+        WhatsApp
+      </button>
+    </div>
+    <button class="btn btn-primary" onclick="goHome();atualizarHome()" style="margin-top:6px">🏠 Nova Pesagem</button>
+  </div>
+
+  <!-- ═══ HISTÓRICO ═══════════════════════════════════════════ -->
+  <div class="page" id="pg-historico">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="text" id="hist-busca" placeholder="🔍 Placa ou motorista..." oninput="renderHistorico()"
+        style="flex:1;padding:10px 14px;border:1.5px solid var(--brd);border-radius:10px;font-size:14px;background:#fff">
+      <button onclick="carregarDaPlanilha()" style="padding:10px 12px;border-radius:10px;border:1.5px solid var(--brd);background:#fff;font-size:18px;cursor:pointer">☁️</button>
+    </div>
+    <div class="filtros">
+      <button class="filtro active" onclick="setFiltro(this,'todos')">Todos</button>
+      <button class="filtro" onclick="setFiltro(this,'hoje')">Hoje</button>
+      <button class="filtro" onclick="setFiltro(this,'Aguardando')">Aguardando</button>
+      <button class="filtro" onclick="setFiltro(this,'CONFORME')">Conformes</button>
+      <button class="filtro" onclick="setFiltro(this,'EXCEDIDO')">Excedidos</button>
+    </div>
+    <div id="lista-historico"></div>
+  </div>
+
+  <!-- ═══ CADASTRO DE ORDENS (admin) ════════════════════════ -->
+  <div class="page" id="pg-ordens">
+    <div class="card">
+      <div class="card-title">➕ Nova Ordem de Carregamento</div>
+      <div class="field"><label>Nº da Ordem *</label><input type="text" id="oc-num" placeholder="OC-2024-001"></div>
+      <div class="row2">
+        <div class="field"><label>Data Prevista</label><input type="date" id="oc-data"></div>
+        <div class="field"><label>Produto / Carga</label><input type="text" id="oc-produto" placeholder="Ex: Soja, Milho..."></div>
+      </div>
+      <div class="field"><label>Observações</label><input type="text" id="oc-obs" placeholder="Informações adicionais"></div>
+      <button class="btn btn-primary" onclick="salvarOrdemCadastro()" style="margin-top:4px">➕ Adicionar Ordem</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Ordens Cadastradas</div>
+      <div id="lista-ordens-cadastro"></div>
+    </div>
+  </div>
+
+  <!-- ═══ LEGISLAÇÃO DENATRAN ════════════════════════════════ -->
+  <div class="page" id="pg-legislacao">
+    <div class="card">
+      <div class="card-title">📖 Resolução CONTRAN nº 210/2006</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:12px">Limites máximos de peso bruto total (PBT) por configuração de eixos</div>
+      <table class="leg-table">
+        <tr><th>Configuração</th><th>Eixos</th><th>PBT Máx.</th><th>Tolerância 7%</th></tr>
+        <tr><td>Caminhão simples</td><td>2</td><td class="destaque">16,0 t</td><td>17,1 t</td></tr>
+        <tr><td>Caminhão toco</td><td>3</td><td class="destaque">23,0 t</td><td>24,6 t</td></tr>
+        <tr><td>Caminhão truck</td><td>4</td><td class="destaque">29,0 t</td><td>31,0 t</td></tr>
+        <tr><td>Carreta simples</td><td>5</td><td class="destaque">41,5 t</td><td>44,4 t</td></tr>
+        <tr><td>Bitrem / Carreta dupla</td><td>6</td><td class="destaque">45,0 t</td><td>48,2 t</td></tr>
+        <tr><td>Treminhão</td><td>7</td><td class="destaque">48,5 t</td><td>51,9 t</td></tr>
+        <tr><td>Rodotrem</td><td>9</td><td class="destaque">57,0 t</td><td>61,0 t</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">⚖️ Limites por Eixo</div>
+      <table class="leg-table">
+        <tr><th>Tipo de Eixo</th><th>Limite</th></tr>
+        <tr><td>Eixo simples de rodas simples</td><td class="destaque">6,0 t</td></tr>
+        <tr><td>Eixo simples de rodas duplas</td><td class="destaque">10,0 t</td></tr>
+        <tr><td>Eixo tandem duplo</td><td class="destaque">17,0 t</td></tr>
+        <tr><td>Eixo tandem triplo</td><td class="destaque">25,5 t</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">📌 Tolerância Legal</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.7">
+        A tolerância de <b>7%</b> sobre o PBT máximo é prevista no art. 99 do CTB para erros de pesagem.<br><br>
+        Veículos que ultrapassam o limite + tolerância estão sujeitos a <b>multa e retenção</b> até regularização da carga.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🚨 Penalidades (CTB art. 99)</div>
+      <table class="leg-table">
+        <tr><th>Excesso</th><th>Infração</th></tr>
+        <tr><td>Até 5%</td><td>Leve — R$ 130,16</td></tr>
+        <tr><td>5% a 10%</td><td>Média — R$ 195,23</td></tr>
+        <tr><td>10% a 15%</td><td>Grave — R$ 195,23</td></tr>
+        <tr><td>Acima de 15%</td><td>Gravíssima — R$ 2.934,70 + retenção</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ CONFIGURAÇÕES ════════════════════════════════════════ -->
+  <div class="page" id="pg-config">
+    <div class="card">
+      <div class="card-title">🏢 Empresa</div>
+      <div class="field"><label>Nome da Empresa</label><input type="text" id="cfg-empresa" placeholder="Minha Transportadora"></div>
+      <div class="field"><label>WhatsApp do Escritório (DDI+DDD+número)</label><input type="text" id="cfg-whatsapp" placeholder="5561999999999"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙️ Sistema</div>
+      <div class="field"><label>Tolerância de Pesagem (%)</label><input type="number" id="cfg-tol" value="7" step="1" min="0" max="15"></div>
+    </div>
+    <button class="btn btn-primary" onclick="salvarConfig()">💾 Salvar Configurações</button>
+    <button class="btn btn-danger" onclick="if(confirm('Sair do app?'))fazerLogout()" style="margin-top:8px">🚪 Sair</button>
+  </div>
+
+  <!-- BOTTOMBAR -->
+  <div class="bottombar">
+    <button class="bb-item active" id="bb-home" onclick="goHome()"><span class="bb-icon">🏠</span>Home</button>
+    <button class="bb-item" id="bb-nova" onclick="irNovaPesagem()"><span class="bb-icon">➕</span>Nova</button>
+    <button class="bb-item" id="bb-aguard" onclick="irAguardando()"><span class="bb-icon">⏳</span>Aguardando</button>
+    <button class="bb-item" id="bb-hist" onclick="irHistorico()"><span class="bb-icon">📊</span>Histórico</button>
+    <button class="bb-item" id="bb-cfg" onclick="showPage('pg-config','⚙️ Configurações')"><span class="bb-icon">⚙️</span>Config</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURAÇÃO
+// ═══════════════════════════════════════════════════════════════
+const URL_SHEETS = "https://script.google.com/macros/s/AKfycbxFlt5mnjwGn1tn1RcL6qKsyLtjjcvhJTcNScL_E3LsFjK2o3kuY2_JRvgQPrXXGH8-Zg/exec";
+const TOKEN      = "pesagem@fav2024";
+
+const USUARIOS = [
+  { email:"fav.balanca@gmail.com",     senha:"fazenda2024", nome:"Administrador",  nivel:"admin" },
+  { email:"balanca@fazendaaguaviva.com",senha:"balanca123",  nome:"Balanceiro",     nivel:"operador" },
+  { email:"escritorio@fazendaaguaviva.com",senha:"escrit456",nome:"Escritório",    nivel:"visualizador" },
+];
+
+// CONTRAN — tabela completa por combinação de eixos (Res. 12/98, 68/98, 184, 189)
+// Formato: "desc por eixo" → { eixos, lim (PBT máx), tara ref, desc }
+const CONFIGS_DENATRAN = {
+  // 2 eixos
+  "6+10":      { eixos:2, lim:16,    tara:6,  desc:"2 eixos (6+10) — Caminhão simples" },
+  // 3 eixos
+  "6+17":      { eixos:3, lim:23,    tara:9,  desc:"3 eixos (6+17) — Caminhão toco" },
+  // 4 eixos
+  "6+10+17":   { eixos:4, lim:33,    tara:11, desc:"4 eixos (6+10+17) — Truck/Bi-truck" },
+  "6+17+20":   { eixos:4, lim:43,    tara:12, desc:"4 eixos (6+17+20) — Combinado" },
+  "6+10+25.5": { eixos:4, lim:41.5,  tara:12, desc:"4 eixos (6+10+25.5) — Carreta simples" },
+  // 5 eixos
+  "6+10+30":   { eixos:5, lim:46,    tara:13, desc:"5 eixos (6+10+30) — Carreta" },
+  "6+17+25.5": { eixos:5, lim:48.5,  tara:14, desc:"5 eixos (6+17+25.5) — Carreta alongada" },
+  // 6 eixos
+  "6+17+10+17":{ eixos:6, lim:50,    tara:16, desc:"6 eixos (6+17+10+17) — Bitrem" },
+  "6+17+30":   { eixos:6, lim:53,    tara:16, desc:"6 eixos (6+17+30) — Bitrem pesado" },
+  // 7 eixos
+  "6+10+10+10":{ eixos:7, lim:36,    tara:18, desc:"7 eixos (6+10+10+10) — Treminhão leve" },
+  "6+10+10+17":{ eixos:7, lim:43,    tara:18, desc:"7 eixos (6+10+10+17) — Treminhão" },
+  "6+10+17+10":{ eixos:7, lim:43,    tara:18, desc:"7 eixos (6+10+17+10) — Treminhão var." },
+  "6+17+10+17b":{ eixos:7, lim:50,   tara:18, desc:"7 eixos (6+17+10+17) — Treminhão pesado" },
+  // 9 eixos
+  "6+17+10+10+10+10":{ eixos:9, lim:63, tara:22, desc:"9 eixos (6+17+...) — Rodotrem" },
+  "6+17+17+17":{ eixos:9, lim:57,    tara:22, desc:"9 eixos (6+17+17+17) — Rodotrem simples" },
+  // 11 eixos
+  "6+17+17+17+17":{ eixos:11, lim:74, tara:26, desc:"11 eixos — Rodotrem duplo" },
+  // Especiais
+  "6+17+25.5+25.5":{ eixos:9, lim:65.5, tara:22, desc:"9 eixos (6+17+25.5+25.5)" },
+  "6+17+25.5+25.5b":{ eixos:9, lim:74,  tara:24, desc:"9 eixos (6+17+25.5+25.5) especial" },
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════════════════════════
+let DB = { ordens: [], config: {} };
+let syncPendente = [];
+let ordemAtual   = null;
+let usuarioLogado= null;
+let fotos        = {};
+let sigCanvas, sigCtx, sigDesenhando=false, sigTem=false;
+let filtroAtivo  = 'todos';
+let ordensNuvem  = [];
+let paginaAtual  = 'pg-home';
+let paginaAnterior = null;
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  window.addEventListener('online',  () => { document.getElementById('offline-badge').style.display='none'; sincronizarPendentes(); });
+  window.addEventListener('offline', () => document.getElementById('offline-badge').style.display='block');
+  if (!navigator.onLine) document.getElementById('offline-badge').style.display='block';
+  document.addEventListener('touchmove', e => { if(document.body.getAttribute('data-signing')==='1') e.preventDefault(); }, {passive:false});
+  checarSessao();
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════════════════════
+function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const senha  = document.getElementById('login-senha').value;
+  const erro   = document.getElementById('login-erro');
+  erro.style.display = 'none';
+  if (!email||!senha) { erro.textContent='Preencha e-mail e senha.'; erro.style.display='block'; return; }
+  const user = USUARIOS.find(u => u.email.toLowerCase()===email && u.senha===senha);
+  if (!user) { erro.textContent='❌ E-mail ou senha incorretos.'; erro.style.display='block'; return; }
+  usuarioLogado = user;
+  localStorage.setItem('pesagem_user', JSON.stringify(user));
+  abrirApp(user);
+}
+
+function checarSessao() {
+  const raw = localStorage.getItem('pesagem_user');
+  if (raw) {
+    const user = JSON.parse(raw);
+    const valid = USUARIOS.find(u => u.email===user.email && u.senha===user.senha);
+    if (valid) { usuarioLogado=valid; abrirApp(valid); return; }
+  }
+  document.getElementById('tela-login').classList.remove('hide');
+  document.getElementById('app').style.display='none';
+}
+
+function abrirApp(user) {
+  document.getElementById('tela-login').classList.add('hide');
+  document.getElementById('app').style.display='flex';
+  if (user.nivel==='visualizador') document.getElementById('bb-nova').style.display='none';
+  if (user.nivel==='admin') document.getElementById('admin-grid').style.display='grid';
+  carregarDados(); carregarConfig(); atualizarHome();
+  initCanvas();
+  setTimeout(sincronizarPendentes, 2000);
+}
+
+function fazerLogout() {
+  localStorage.removeItem('pesagem_user');
+  usuarioLogado=null;
+  document.getElementById('tela-login').classList.remove('hide');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-senha').value='';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PERSISTÊNCIA
+// ═══════════════════════════════════════════════════════════════
+function salvarDados() {
+  localStorage.setItem('pesagem_db', JSON.stringify(DB.ordens));
+  localStorage.setItem('pesagem_sync', JSON.stringify(syncPendente));
+}
+function carregarDados() {
+  const r = localStorage.getItem('pesagem_db');
+  DB.ordens = r ? JSON.parse(r) : [];
+  const s = localStorage.getItem('pesagem_sync');
+  syncPendente = s ? JSON.parse(s) : [];
+}
+function carregarConfig() {
+  const r = localStorage.getItem('pesagem_cfg');
+  DB.config = r ? JSON.parse(r) : { empresa:'Fazenda Água Viva', whatsapp:'5561999999999', tol:7 };
+  document.getElementById('cfg-empresa').value  = DB.config.empresa  || '';
+  document.getElementById('cfg-whatsapp').value = DB.config.whatsapp || '';
+  document.getElementById('cfg-tol').value      = DB.config.tol      || 7;
+}
+function salvarConfig() {
+  DB.config = {
+    empresa:  document.getElementById('cfg-empresa').value,
+    whatsapp: document.getElementById('cfg-whatsapp').value,
+    tol:      parseFloat(document.getElementById('cfg-tol').value)||7,
+  };
+  localStorage.setItem('pesagem_cfg', JSON.stringify(DB.config));
+  toast('✅ Configurações salvas!');
+  goHome();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SYNC COM PLANILHA
+// ═══════════════════════════════════════════════════════════════
+async function enviarSheets(ordem, acao='salvar') {
+  if (!URL_SHEETS) return;
+  if (!navigator.onLine) { adicionarPendente(ordem,acao); atualizarSyncStatus(); return; }
+  try {
+    const resp = await fetch(URL_SHEETS, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({acao, ordem, token:TOKEN})
+    });
+    const txt = await resp.text();
+    const r   = JSON.parse(txt);
+    if (!r.ok) adicionarPendente(ordem,acao);
+  } catch(e) {
+    adicionarPendente(ordem,acao);
+  }
+  atualizarSyncStatus();
+}
+
+function adicionarPendente(ordem, acao) {
+  if (!syncPendente.find(o => o.ordem && o.ordem.id===ordem.id)) {
+    syncPendente.push({ordem,acao});
+    salvarDados();
+  }
+}
+
+async function sincronizarPendentes() {
+  if (!URL_SHEETS||!navigator.onLine||!syncPendente.length) { atualizarSyncStatus(); return; }
+  const pendentes = [...syncPendente];
+  syncPendente = []; salvarDados();
+  let ok=0;
+  for (const item of pendentes) {
+    try {
+      const resp = await fetch(URL_SHEETS, {
+        method:'POST', headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({acao:item.acao, ordem:item.ordem, token:TOKEN})
+      });
+      const txt  = await resp.text();
+      const r    = JSON.parse(txt);
+      if (r.ok) ok++; else syncPendente.push(item);
+    } catch(e) { syncPendente.push(item); }
+  }
+  salvarDados(); atualizarSyncStatus();
+  if (ok>0) toast(`☁️ ${ok} pesagem(s) sincronizada(s)!`);
+}
+
+async function syncManual() {
+  const btn = document.getElementById('btn-sync-home');
+  if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Sincronizando...'; }
+
+  // Buscar da planilha e mesclar
+  if (URL_SHEETS && navigator.onLine) {
+    try {
+      const resp = await fetch(URL_SHEETS, {
+        method:'POST', headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({acao:'listar', token:TOKEN})
+      });
+      const txt = await resp.text();
+      const r   = JSON.parse(txt);
+      if (r.ok && r.ordens) {
+        ordensNuvem = r.ordens;
+        // Mesclar — adicionar localmente ordens que vieram da planilha
+        const idsLocais = DB.ordens.map(o=>o.id);
+        r.ordens.forEach(on => {
+          if (!idsLocais.includes(on.id)) {
+            DB.ordens.push(on);
+          }
+        });
+        salvarDados();
+        atualizarHome();
+      }
+    } catch(e) {}
+  }
+
+  await sincronizarPendentes();
+  if (btn) { btn.disabled=false; btn.textContent='Sincronizar'; }
+  if (!navigator.onLine) toast('📵 Sem internet — dados salvos localmente');
+}
+
+async function carregarDaPlanilha() {
+  if (!URL_SHEETS) { toast('⚠️ URL não configurada'); return; }
+  if (!navigator.onLine) { toast('📵 Sem internet'); return; }
+  toast('⏳ Buscando da planilha...');
+  try {
+    const resp = await fetch(URL_SHEETS, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({acao:'listar', token:TOKEN})
+    });
+    const txt = await resp.text();
+    const r   = JSON.parse(txt);
+    if (!r.ok) { toast('❌ '+(r.erro||'Erro')); return; }
+    ordensNuvem = r.ordens||[];
+    const idsLocais = DB.ordens.map(o=>o.id);
+    ordensNuvem.forEach(on => { if(!idsLocais.includes(on.id)) DB.ordens.push(on); });
+    salvarDados(); renderHistorico();
+    toast(`✅ ${ordensNuvem.length} registros carregados`);
+  } catch(e) { toast('❌ Erro: '+e.message); }
+}
+
+function atualizarSyncStatus() {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  if (syncPendente.length>0) el.innerHTML=`⚠️ ${syncPendente.length} pendente(s)`;
+  else if (!navigator.onLine) el.textContent='📵 Offline';
+  else el.textContent='☁️ Sincronizado';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════════════
+function showPage(id, titulo, steps, stepAtivo) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  paginaAnterior = paginaAtual; paginaAtual = id;
+  document.getElementById('page-title').textContent = titulo||'🚛 Pesagem';
+  document.getElementById('btn-back').style.display = id!=='pg-home'?'flex':'none';
+  document.getElementById('btn-logout').style.display = id!=='pg-home'?'none':'block';
+  const sb = document.getElementById('step-bar');
+  if (steps) {
+    sb.style.display='flex';
+    for(let i=1;i<=5;i++){const d=document.getElementById('s'+i);d.className='step-dot'+(i<stepAtivo?' done':i===stepAtivo?' active':'');}
+  } else sb.style.display='none';
+  document.querySelectorAll('.bb-item').forEach(b=>b.classList.remove('active'));
+  const map={'pg-home':'bb-home','pg-nova':'bb-nova','pg-aguardando':'bb-aguard','pg-historico':'bb-hist','pg-config':'bb-cfg'};
+  if(map[id]) document.getElementById(map[id]).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goBack() { if(paginaAnterior&&paginaAnterior!==paginaAtual) showPage(paginaAnterior); else goHome(); }
+function goHome() { atualizarHome(); showPage('pg-home','🚛 Pesagem'); }
+function irNovaPesagem() {
+  fotos={}; ordemAtual=null;
+  document.querySelectorAll('#pg-nova input:not([type=file]),#pg-nova select,#pg-nova textarea').forEach(el=>{
+    if(el.type==='number'&&el.id.startsWith('f-e')) el.value='0';
+    else if(el.type!=='hidden') el.value='';
+  });
+  document.getElementById('f-totalEixos').value='0';
+  document.getElementById('f-limPeso').value='0';
+  document.getElementById('f-taraRef').value='0';
+  document.getElementById('config-info').style.display='none';
+  document.getElementById('tara-aviso').style.display='none';
+  const info=document.getElementById('f-ordem-info'); if(info) info.style.display='none';
+  document.querySelectorAll('.foto-btn').forEach(b=>{b.classList.remove('ok');b.querySelector('.icon').textContent='📸';});
+  document.querySelectorAll('.foto-preview').forEach(i=>{i.style.display='none';i.src='';});
+  // Preencher datalist com ordens cadastradas
+  const dl=document.getElementById('lista-ordens-dl');
+  if(dl){ const ordens=getOrdensCadastradas(); dl.innerHTML=ordens.map(o=>`<option value="${o.num}">${o.num}${o.produto?' — '+o.produto:''}</option>`).join(''); }
+  showPage('pg-nova','📋 Nova Pesagem',true,1);
+}
+
+function preencherDadosOrdem(num) {
+  const ordens=getOrdensCadastradas(), ordem=ordens.find(o=>o.num===num);
+  const info=document.getElementById('f-ordem-info');
+  if(info){ if(ordem){info.style.display='block';info.innerHTML=`📋 <b>${ordem.num}</b>${ordem.produto?' · '+ordem.produto:''}${ordem.data?' · '+ordem.data:''}${ordem.obs?' · '+ordem.obs:''}`;}else info.style.display='none'; }
+}
+function irAguardando() { renderAguardando(); showPage('pg-aguardando','⏳ Aguardando Carregamento'); }
+function irHistorico()  { renderHistorico(); showPage('pg-historico','📊 Histórico'); if(navigator.onLine) carregarDaPlanilha(); }
+
+// ═══════════════════════════════════════════════════════════════
+//  CADASTRO DE ORDENS (admin)
+// ═══════════════════════════════════════════════════════════════
+function irOrdensCadastro() {
+  renderOrdensCadastro();
+  showPage('pg-ordens','📝 Cadastro de Ordens');
+}
+
+function salvarOrdemCadastro() {
+  const num     = document.getElementById('oc-num').value.trim();
+  const data    = document.getElementById('oc-data').value;
+  const produto = document.getElementById('oc-produto').value.trim();
+  const obs     = document.getElementById('oc-obs').value.trim();
+  if (!num) { toast('⚠️ Informe o número da ordem!'); return; }
+
+  const ordens = JSON.parse(localStorage.getItem('pesagem_ordens_cadastro')||'[]');
+  if (ordens.find(o=>o.num===num)) { toast('⚠️ Ordem já cadastrada!'); return; }
+  ordens.push({ num, data, produto, obs, criado: new Date().toLocaleString('pt-BR') });
+  localStorage.setItem('pesagem_ordens_cadastro', JSON.stringify(ordens));
+
+  document.getElementById('oc-num').value='';
+  document.getElementById('oc-data').value='';
+  document.getElementById('oc-produto').value='';
+  document.getElementById('oc-obs').value='';
+  renderOrdensCadastro();
+  toast('✅ Ordem cadastrada!');
+}
+
+function renderOrdensCadastro() {
+  const ordens = JSON.parse(localStorage.getItem('pesagem_ordens_cadastro')||'[]');
+  const el = document.getElementById('lista-ordens-cadastro');
+  if (!ordens.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--txt3)">Nenhuma ordem cadastrada ainda</div>'; return; }
+  el.innerHTML = ordens.reverse().map((o,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:.5px solid var(--brd)">
+      <div>
+        <div style="font-weight:600;font-size:14px">${o.num}</div>
+        <div style="font-size:12px;color:var(--txt2)">${o.produto||'—'} · ${o.data||'—'}</div>
+        ${o.obs?`<div style="font-size:11px;color:var(--txt3)">${o.obs}</div>`:''}
+      </div>
+      <button onclick="excluirOrdemCadastro('${o.num}')" style="background:var(--r2);color:var(--r1);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">Excluir</button>
+    </div>`).join('');
+}
+
+function excluirOrdemCadastro(num) {
+  if (!confirm(`Excluir ordem ${num}?`)) return;
+  let ordens = JSON.parse(localStorage.getItem('pesagem_ordens_cadastro')||'[]');
+  ordens = ordens.filter(o=>o.num!==num);
+  localStorage.setItem('pesagem_ordens_cadastro', JSON.stringify(ordens));
+  renderOrdensCadastro();
+  toast('🗑️ Ordem excluída');
+}
+
+function getOrdensCadastradas() {
+  return JSON.parse(localStorage.getItem('pesagem_ordens_cadastro')||'[]');
+}
+function maskCPF(el) {
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>3) v=v.slice(0,3)+'.'+v.slice(3);
+  if(v.length>7) v=v.slice(0,7)+'.'+v.slice(7);
+  if(v.length>11) v=v.slice(0,11)+'-'+v.slice(11,13);
+  el.value=v.slice(0,14);
+}
+
+function aplicarConfigEixos() {
+  const sel  = document.getElementById('f-config').value;
+  const info = document.getElementById('config-info');
+  if (!sel) { info.style.display='none'; document.getElementById('f-totalEixos').value='0'; document.getElementById('f-limPeso').value='0'; return; }
+  const cfg = CONFIGS_DENATRAN[sel];
+  if (!cfg) return;
+  document.getElementById('f-totalEixos').value = cfg.eixos;
+  document.getElementById('f-limPeso').value    = cfg.lim;
+  document.getElementById('f-taraRef').value    = cfg.tara;
+  // Decomposição dos eixos a partir da chave (ex: "6+10+17")
+  const partes = sel.replace('b','').split('+').map(Number).filter(n=>!isNaN(n));
+  let s=0,d=0,t=0;
+  partes.forEach(p=>{ if(p===6||p===10)s++; else if(p===17||p===20)d++; else if(p===25.5||p===30)t++; });
+  document.getElementById('f-es').value=s;
+  document.getElementById('f-ed').value=d;
+  document.getElementById('f-et').value=t;
+  const tol=(DB.config.tol||7)/100;
+  info.style.display='block';
+  info.innerHTML=`<b>${cfg.desc}</b><br>PBT Máx: <b>${cfg.lim} t</b> · Tolerância ${DB.config.tol||7}%: <b>${(cfg.lim*(1+tol)).toFixed(1)} t</b> · Peso por eixo: <b>${sel.replace('b','')}</b> · Tara ref.: <b>~${cfg.tara} t</b>`;
+}
+
+function calcEixos() {
+  const es=parseInt(document.getElementById('f-es').value)||0;
+  const ed=parseInt(document.getElementById('f-ed').value)||0;
+  const et=parseInt(document.getElementById('f-et').value)||0;
+  const total=es+ed+et;
+  document.getElementById('f-totalEixos').value=total;
+  // Estimar limite pelo total de eixos
+  const limMap={2:16,3:23,4:29,5:41.5,6:45,7:48.5,8:53,9:57};
+  const lim=limMap[total]||0;
+  document.getElementById('f-limPeso').value=lim;
+}
+
+function validarTara() {
+  const tara = parseFloat(document.getElementById('f-tara').value)||0;
+  const taraRef = parseFloat(document.getElementById('f-taraRef').value)||0;
+  const aviso = document.getElementById('tara-aviso');
+  if (!tara||!taraRef) { aviso.style.display='none'; return; }
+  const diff = Math.abs(tara-taraRef)/taraRef*100;
+  if (diff>30) {
+    aviso.style.display='block';
+    aviso.style.cssText='display:block;background:#fff3cd;color:#856404;border-radius:6px;padding:6px 10px;font-size:12px;margin-top:4px';
+    aviso.textContent=`⚠️ Tara ${tara} t está ${diff.toFixed(0)}% diferente da referência (${taraRef} t). Verifique.`;
+  } else { aviso.style.display='none'; }
+}
+
+function fotoCapturada(input, btnId, tipo) {
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    fotos[tipo]=e.target.result;
+    const btn=document.getElementById(btnId);
+    btn.classList.add('ok');
+    btn.querySelector('.icon').textContent='✅';
+    btn.querySelector('.lbl').textContent=tipo==='cnh'?'CNH ✓':tipo==='placa'?'Placa ✓':'Cam ✓';
+    const prev=document.getElementById('prev-'+tipo);
+    if(prev){prev.src=e.target.result;prev.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+
+function gerarID() {
+  const n=new Date();
+  return 'OS'+n.getFullYear()+String(n.getMonth()+1).padStart(2,'0')+String(n.getDate()).padStart(2,'0')+String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+String(n.getSeconds()).padStart(2,'0');
+}
+
+function salvarEntrada() {
+  const numOrdem    = document.getElementById('f-numOrdem').value.trim();
+  const funcionario = document.getElementById('f-funcionario').value.trim();
+  const placa       = document.getElementById('f-placa').value.trim().toUpperCase();
+  const motorista   = document.getElementById('f-motorista').value.trim();
+  const tara        = parseFloat(document.getElementById('f-tara').value)||0;
+  const totalEixos  = parseInt(document.getElementById('f-totalEixos').value)||0;
+  const limPeso     = parseFloat(document.getElementById('f-limPeso').value)||0;
+  const configSel   = document.getElementById('f-config').value;
+
+  if (!numOrdem)    { toast('⚠️ Informe o nº da ordem!'); return; }
+  if (!funcionario) { toast('⚠️ Informe o funcionário!'); return; }
+  if (!placa)       { toast('⚠️ Informe a placa!'); return; }
+  if (!motorista)   { toast('⚠️ Informe o motorista!'); return; }
+  if (!configSel)   { toast('⚠️ Selecione a configuração do veículo!'); return; }
+  if (totalEixos===0){ toast('⚠️ Configure os eixos!'); return; }
+  if (tara<=0)      { toast('⚠️ Informe o peso da tara!'); return; }
+
+  const cfgInfo = CONFIGS_DENATRAN[configSel] || { desc: configSel, eixos: totalEixos, lim: limPeso };
+  const now = new Date();
+
+  const ordem = {
+    id: gerarID(),
+    dataEntrada: now.toLocaleDateString('pt-BR'),
+    horaEntrada: now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    numOrdem, funcionario, placa, motorista,
+    cpf: document.getElementById('f-cpf').value,
+    configVeiculo: cfgInfo.desc || configSel,
+    eixosSimples: parseInt(document.getElementById('f-es').value)||0,
+    eixosDuplos:  parseInt(document.getElementById('f-ed').value)||0,
+    eixosTriplos: parseInt(document.getElementById('f-et').value)||0,
+    totalEixos, tara, limPeso,
+    obs: document.getElementById('f-obs').value,
+    fotos: {...fotos},
+    status: 'Aguardando',
+    pesoBruto:null, cargaLiquida:null, statusPeso:null, dataHoraFim:null, assinatura:null
+  };
+
+  DB.ordens.push(ordem);
+  salvarDados();
+  enviarSheets(ordem,'salvar');
+  ordemAtual = ordem;
+  toast('✅ Tara registrada! Caminhão aguardando carregamento.');
+  atualizarHome();
+  irAguardando();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AGUARDANDO
+// ═══════════════════════════════════════════════════════════════
+function renderAguardando() {
+  const lista = DB.ordens.filter(o=>o.status==='Aguardando');
+  const el = document.getElementById('lista-aguardando');
+  if (!lista.length) {
+    el.innerHTML='<div class="empty"><div class="ei">⏳</div><p>Nenhum caminhão aguardando</p></div>';
+    return;
+  }
+  el.innerHTML = lista.map(o=>`
+    <div class="ordem-card" onclick="irRegistrarBruto('${o.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="placa-tag">${o.placa}</div>
+        <span style="font-size:11px;color:var(--txt3)">${o.horaEntrada}</span>
+      </div>
+      <div class="ordem-info">👤 ${o.motorista}</div>
+      <div class="ordem-info">⚖️ Tara: <b>${o.tara.toFixed(3)} t</b> · Limite: <b>${o.limPeso} t</b></div>
+      <div class="ordem-info">📋 ${o.numOrdem} · ${o.configVeiculo||''}</div>
+      <div class="ordem-badge badge-ag">Toque para registrar peso bruto →</div>
+    </div>`).join('');
+}
+
+function irRegistrarBruto(id) {
+  ordemAtual = DB.ordens.find(o=>o.id===id); if(!ordemAtual) return;
+  document.getElementById('f-bruto').value='';
+  document.getElementById('resultado-bruto').style.display='none';
+  document.getElementById('btn-confirmar-bruto').style.display='none';
+  const tol = (DB.config.tol||7)/100;
+  document.getElementById('bruto-info').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="placa-tag">${ordemAtual.placa}</div>
+      <span class="ordem-badge badge-ag">${ordemAtual.numOrdem}</span>
+    </div>
+    <div style="font-size:13px;color:var(--txt2)">👤 ${ordemAtual.motorista}</div>
+    <div style="font-size:13px;color:var(--txt2);margin-top:4px">🚛 ${ordemAtual.configVeiculo||''}</div>
+    <div style="font-size:13px;color:var(--txt2);margin-top:2px">⚖️ Tara: <b style="color:var(--v1)">${ordemAtual.tara.toFixed(3)} t</b> · Limite DENATRAN: <b>${ordemAtual.limPeso} t</b> · Tolerância: <b>${(ordemAtual.limPeso*(1+tol)).toFixed(1)} t</b></div>`;
+  showPage('pg-bruto','⚖️ Peso Bruto',true,3);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PESO BRUTO — CÁLCULO DENATRAN
+// ═══════════════════════════════════════════════════════════════
+function calcBruto() {
+  const b = parseFloat(document.getElementById('f-bruto').value)||0;
+  if (!b||!ordemAtual) { document.getElementById('resultado-bruto').style.display='none'; document.getElementById('btn-confirmar-bruto').style.display='none'; return; }
+
+  const tara  = ordemAtual.tara;
+  const carga = Math.max(0, b - tara);
+  const lim   = ordemAtual.limPeso;
+  const tol   = (DB.config.tol||7)/100;
+  const limTol= lim*(1+tol);
+  const excPct= ((b-lim)/lim*100);
+
+  let status, classe, msg;
+  if (b <= lim) {
+    status='CONFORME'; classe='st-ok'; msg=`✅ CONFORME — ${b.toFixed(3)} t / Limite ${lim} t`;
+  } else if (b <= limTol) {
+    status='ATENÇÃO'; classe='st-warn'; msg=`⚠️ ATENÇÃO — Dentro da tolerância de ${DB.config.tol||7}%`;
+  } else {
+    status='EXCEDIDO'; classe='st-err'; msg=`🚨 EXCEDIDO — ${b.toFixed(3)} t / Limite ${lim} t`;
+  }
+
+  document.getElementById('r-carga').textContent = carga.toFixed(3)+' t';
+  document.getElementById('r-tara').textContent  = tara.toFixed(3)+' t';
+  document.getElementById('r-bruto').textContent = b.toFixed(3)+' t';
+  document.getElementById('r-limite').textContent= lim+' t';
+
+  const sb = document.getElementById('r-status-badge');
+  sb.className='status-badge '+classe; sb.textContent=msg;
+
+  const exc = document.getElementById('r-excesso');
+  if (status==='EXCEDIDO') {
+    const excPeso = b-lim;
+    let penalidade='';
+    if(excPct<=5) penalidade='Infração leve — R$ 130,16';
+    else if(excPct<=10) penalidade='Infração média — R$ 195,23';
+    else if(excPct<=15) penalidade='Infração grave — R$ 195,23';
+    else penalidade='Infração gravíssima — R$ 2.934,70 + retenção do veículo';
+    exc.style.display='block';
+    exc.innerHTML=`<b>Excesso:</b> ${excPeso.toFixed(3)} t (${excPct.toFixed(1)}%)<br><b>Penalidade CTB:</b> ${penalidade}`;
+  } else exc.style.display='none';
+
+  document.getElementById('resultado-bruto').style.display='block';
+  document.getElementById('btn-confirmar-bruto').style.display='block';
+}
+
+function confirmarBruto() {
+  const b=parseFloat(document.getElementById('f-bruto').value)||0;
+  if(b<=0){toast('⚠️ Informe o peso bruto!');return;}
+  if(!confirm(`Confirmar peso bruto de ${b.toFixed(3)} t?`)) return;
+
+  const tara=ordemAtual.tara, carga=Math.max(0,b-tara), lim=ordemAtual.limPeso;
+  const tol=(DB.config.tol||7)/100, limTol=lim*(1+tol);
+  ordemAtual.pesoBruto   = b;
+  ordemAtual.cargaLiquida= parseFloat(carga.toFixed(3));
+  ordemAtual.statusPeso  = b>limTol?'EXCEDIDO':b>lim?'ATENÇÃO':'CONFORME';
+
+  document.getElementById('assin-info').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="placa-tag">${ordemAtual.placa}</div>
+      <span class="ordem-badge ${ordemAtual.statusPeso==='CONFORME'?'badge-ok':ordemAtual.statusPeso==='ATENÇÃO'?'badge-warn':'badge-err'}">${ordemAtual.statusPeso}</span>
+    </div>
+    <div style="font-size:13px;color:var(--txt2)">👤 ${ordemAtual.motorista}</div>
+    <div style="font-size:13px;color:var(--txt2);margin-top:2px">⚖️ Bruto: <b>${b.toFixed(3)} t</b> · Carga: <b style="color:var(--v1)">${carga.toFixed(3)} t</b></div>`;
+
+  limparSig();
+  showPage('pg-assinatura','✍️ Assinatura',true,4);
+  document.body.setAttribute('data-signing','1');
+  document.getElementById('app').style.overflow='hidden';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ASSINATURA
+// ═══════════════════════════════════════════════════════════════
+function initCanvas() {
+  sigCanvas = document.getElementById('canvas-sig');
+  if(!sigCanvas) return;
+  sigCtx = sigCanvas.getContext('2d');
+
+  function resize() {
+    const w = sigCanvas.parentElement ? sigCanvas.parentElement.offsetWidth : window.innerWidth-60;
+    const dpr = window.devicePixelRatio||1;
+    sigCanvas.width  = Math.floor(w*dpr);
+    sigCanvas.height = Math.floor(200*dpr);
+    sigCanvas.style.width  = w+'px';
+    sigCanvas.style.height = '200px';
+    sigCtx.setTransform(1,0,0,1,0,0);
+    sigCtx.scale(dpr,dpr);
+    sigCtx.strokeStyle='#1a5c45'; sigCtx.lineWidth=3; sigCtx.lineCap='round'; sigCtx.lineJoin='round';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const getPos = (e) => { const r=sigCanvas.getBoundingClientRect(), src=e.touches?e.touches[0]:e; return{x:src.clientX-r.left,y:src.clientY-r.top}; };
+  const start  = (x,y) => { sigDesenhando=true; sigTem=true; sigCtx.beginPath(); sigCtx.moveTo(x,y); sigCanvas.classList.add('signed'); document.getElementById('sig-hint').style.display='none'; document.getElementById('sig-status').textContent='✅ Assinatura registrada'; document.getElementById('sig-status').style.color='var(--v1)'; };
+  const draw   = (x,y) => { if(!sigDesenhando) return; sigCtx.lineTo(x,y); sigCtx.stroke(); sigCtx.beginPath(); sigCtx.moveTo(x,y); };
+  const stop   = () => { sigDesenhando=false; sigCtx.beginPath(); };
+
+  sigCanvas.addEventListener('mousedown', e=>{e.preventDefault();const p=getPos(e);start(p.x,p.y);});
+  sigCanvas.addEventListener('mousemove', e=>{e.preventDefault();draw(getPos(e).x,getPos(e).y);});
+  sigCanvas.addEventListener('mouseup',   e=>{e.preventDefault();stop();});
+  sigCanvas.addEventListener('mouseleave',()=>stop());
+
+  const opts={passive:false,capture:true};
+  sigCanvas.addEventListener('touchstart', e=>{e.preventDefault();e.stopPropagation();const p=getPos(e);start(p.x,p.y);},opts);
+  sigCanvas.addEventListener('touchmove',  e=>{e.preventDefault();e.stopPropagation();draw(getPos(e).x,getPos(e).y);},opts);
+  sigCanvas.addEventListener('touchend',   e=>{e.preventDefault();e.stopPropagation();stop();},opts);
+  sigCanvas.addEventListener('touchcancel',e=>{e.preventDefault();stop();},opts);
+}
+
+function limparSig() {
+  if(!sigCtx||!sigCanvas) return;
+  sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
+  sigTem=false; sigCanvas.classList.remove('signed');
+  const h=document.getElementById('sig-hint'); if(h) h.style.display='flex';
+  const s=document.getElementById('sig-status'); if(s){s.textContent='Aguardando assinatura...';s.style.color='var(--txt3)';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FINALIZAR
+// ═══════════════════════════════════════════════════════════════
+function finalizar() {
+  if(!sigTem){toast('⚠️ O motorista precisa assinar!');return;}
+  document.body.removeAttribute('data-signing');
+  document.getElementById('app').style.overflow='';
+
+  const now=new Date();
+  ordemAtual.assinatura  = sigCanvas.toDataURL('image/png');
+  ordemAtual.status      = 'Finalizado';
+  ordemAtual.dataHoraFim = now.toLocaleString('pt-BR');
+
+  const idx=DB.ordens.findIndex(o=>o.id===ordemAtual.id);
+  if(idx>=0) DB.ordens[idx]={...ordemAtual};
+  salvarDados();
+  enviarSheets(ordemAtual,'atualizar');
+
+  renderTicket(ordemAtual);
+  showPage('pg-ticket','🎫 Ticket',true,5);
+  toast('🎉 Pesagem finalizada!');
+  atualizarHome();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TICKET
+// ═══════════════════════════════════════════════════════════════
+function renderTicket(o) {
+  document.getElementById('tk-placa').textContent     = o.placa;
+  document.getElementById('tk-info').textContent      = `${o.numOrdem} · ${o.dataHoraFim||o.dataEntrada}`;
+  document.getElementById('tk-ordem').textContent     = o.numOrdem;
+  document.getElementById('tk-motorista').textContent = o.motorista;
+  document.getElementById('tk-cpf').textContent       = o.cpf||'—';
+  document.getElementById('tk-config').textContent    = o.configVeiculo||'—';
+  document.getElementById('tk-eixos').textContent     = o.totalEixos+' eixos';
+  document.getElementById('tk-tara').textContent      = o.tara.toFixed(3)+' t';
+  document.getElementById('tk-bruto').textContent     = (o.pesoBruto||0).toFixed(3)+' t';
+  document.getElementById('tk-carga').textContent     = (o.cargaLiquida||0).toFixed(3)+' t';
+  document.getElementById('tk-limite').textContent    = o.limPeso+' t';
+  const tol=(DB.config.tol||7)/100;
+  document.getElementById('tk-tolerancia').textContent= (o.limPeso*(1+tol)).toFixed(1)+' t ('+((DB.config.tol||7))+'%)';
+  document.getElementById('tk-func').textContent      = o.funcionario||'—';
+  if(o.obs){document.getElementById('tk-obs-row').style.display='flex';document.getElementById('tk-obs').textContent=o.obs;}
+  else document.getElementById('tk-obs-row').style.display='none';
+
+  const st=o.statusPeso||'CONFORME';
+  const sb=document.getElementById('tk-status-badge');
+  sb.className='status-badge '+(st==='EXCEDIDO'?'st-err':st==='ATENÇÃO'?'st-warn':'st-ok');
+  sb.textContent=st==='EXCEDIDO'?'🚨 EXCEDIDO':st==='ATENÇÃO'?'⚠️ ATENÇÃO':'✅ CONFORME';
+
+  if(o.assinatura){document.getElementById('tk-sig-card').style.display='block';document.getElementById('tk-sig-img').src=o.assinatura;}
+  else document.getElementById('tk-sig-card').style.display='none';
+}
+
+function verTicket(id) {
+  const o=DB.ordens.find(x=>x.id===id)||ordensNuvem.find(x=>x.id===id);
+  if(!o) return;
+  ordemAtual=o; renderTicket(o); showPage('pg-ticket','🎫 Ticket');
+}
+
+function enviarWA() {
+  const o=ordemAtual; if(!o) return;
+  const num=DB.config.whatsapp||'5561999999999';
+  const tol=(DB.config.tol||7);
+  const msg=encodeURIComponent(
+    `🚛 *PESAGEM FINALIZADA*\n\n`+
+    `*${DB.config.empresa||'Pesagem'}*\n`+
+    `*OS:* ${o.id}\n*Ordem:* ${o.numOrdem}\n*Placa:* ${o.placa}\n`+
+    `*Motorista:* ${o.motorista}\n*CPF:* ${o.cpf||'—'}\n`+
+    `*Veículo:* ${o.configVeiculo||''}\n\n`+
+    `⚖️ *Tara:* ${o.tara.toFixed(3)} t\n`+
+    `⚖️ *Bruto:* ${(o.pesoBruto||0).toFixed(3)} t\n`+
+    `📦 *Carga Líquida:* ${(o.cargaLiquida||0).toFixed(3)} t\n`+
+    `📏 *Limite DENATRAN:* ${o.limPeso} t\n`+
+    `📏 *Tolerância ${tol}%:* ${(o.limPeso*(1+tol/100)).toFixed(1)} t\n\n`+
+    `*Status:* ${o.statusPeso==='EXCEDIDO'?'🚨 EXCEDIDO':o.statusPeso==='ATENÇÃO'?'⚠️ ATENÇÃO':'✅ CONFORME'}\n`+
+    `*Data/Hora:* ${o.dataHoraFim||''}`
+  );
+  window.open(`https://wa.me/${num}?text=${msg}`,'_blank');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HISTÓRICO
+// ═══════════════════════════════════════════════════════════════
+function setFiltro(btn, filtro) {
+  filtroAtivo=filtro;
+  document.querySelectorAll('.filtro').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistorico();
+}
+
+function renderHistorico() {
+  const busca=(document.getElementById('hist-busca')?.value||'').toLowerCase();
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const idsLocais=DB.ordens.map(o=>o.id);
+  let lista=[...DB.ordens,...ordensNuvem.filter(o=>!idsLocais.includes(o.id))].reverse();
+
+  if(filtroAtivo==='hoje') lista=lista.filter(o=>o.dataEntrada===hoje);
+  else if(filtroAtivo==='Aguardando') lista=lista.filter(o=>o.status==='Aguardando');
+  else if(filtroAtivo==='CONFORME') lista=lista.filter(o=>(o.statusPeso||'').includes('CONFORME'));
+  else if(filtroAtivo==='EXCEDIDO') lista=lista.filter(o=>(o.statusPeso||'').includes('EXCEDIDO'));
+
+  if(busca) lista=lista.filter(o=>(o.placa||'').toLowerCase().includes(busca)||(o.motorista||'').toLowerCase().includes(busca)||(o.numOrdem||'').toLowerCase().includes(busca));
+
+  const el=document.getElementById('lista-historico');
+  if(!lista.length){el.innerHTML='<div class="empty"><div class="ei">📊</div><p>Nenhuma pesagem encontrada</p><p style="font-size:12px;margin-top:6px">Toque em ☁️ para buscar da planilha</p></div>';return;}
+
+  el.innerHTML=lista.map(o=>{
+    const st=o.statusPeso||(o.status==='Aguardando'?'Aguardando':'CONFORME');
+    const cls=st==='EXCEDIDO'?'excedido':st==='ATENÇÃO'?'atencao':'';
+    const badge=st==='EXCEDIDO'?'badge-err':st==='ATENÇÃO'?'badge-warn':st==='Aguardando'?'badge-ag':'badge-ok';
+    const nuvem=!idsLocais.includes(o.id);
+    return `<div class="ordem-card ${cls}" onclick="verTicket('${o.id}')">
+      <div style="display:flex;justify-content:space-between">
+        <div class="placa-tag">${o.placa}</div>
+        <span style="font-size:10px;color:var(--txt3)">${o.dataEntrada||''} ${o.horaEntrada||''}</span>
+      </div>
+      <div class="ordem-info">👤 ${o.motorista} · ${o.numOrdem||'—'}</div>
+      ${o.pesoBruto?`<div class="ordem-info">⚖️ Bruto: ${parseFloat(o.pesoBruto).toFixed(3)} t · Carga: ${parseFloat(o.cargaLiquida||0).toFixed(3)} t</div>`:''}
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+        <span class="ordem-badge ${badge}">${st}</span>
+        ${nuvem?'<span style="font-size:10px;color:var(--txt3)">☁️ planilha</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HOME METRICS
+// ═══════════════════════════════════════════════════════════════
+function atualizarHome() {
+  carregarDados();
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const deHoje=DB.ordens.filter(o=>o.dataEntrada===hoje);
+  const aguardando=DB.ordens.filter(o=>o.status==='Aguardando');
+  const finalizados=DB.ordens.filter(o=>o.status==='Finalizado'&&o.dataEntrada===hoje);
+
+  document.getElementById('hm-hoje').textContent  = deHoje.length;
+  document.getElementById('hm-aguard').textContent= aguardando.length;
+  document.getElementById('hm-fin').textContent   = finalizados.length;
+
+  const sub=document.getElementById('aguard-sub'), cnt=document.getElementById('aguard-count');
+  if(aguardando.length>0){sub.textContent=aguardando.length===1?'1 caminhão':`${aguardando.length} caminhões`;cnt.textContent=aguardando.length;cnt.style.display='inline-block';}
+  else{sub.textContent='Nenhum';cnt.style.display='none';}
+  atualizarSyncStatus();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+</script>
+</body>
+</html>

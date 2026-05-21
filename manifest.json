@@ -1,0 +1,13 @@
+{
+  "name": "Pesagem de Caminhões",
+  "short_name": "Pesagem",
+  "description": "Sistema de pesagem única — controle de tara e peso bruto",
+  "start_url": "/pesagem/",
+  "scope": "/pesagem/",
+  "display": "standalone",
+  "background_color": "#0a2318",
+  "theme_color": "#1a5c45",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": []
+}
