@@ -554,17 +554,23 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
   <!-- ORDENS ADMIN -->
   <div class="pg" id="pg-oc">
     <div class="card">
-      <div class="ct">➕ Cadastrar Ordem</div>
-      <div class="f"><label>Nº do Contrato / Ordem *</label><input type="text" id="oc-n" placeholder="OC-2024-001"></div>
+      <div class="ct">➕ Cadastrar Contrato</div>
       <div class="r2">
+        <div class="f"><label>Nº do Contrato *</label><input type="text" id="oc-n" placeholder="CS-2026" autocomplete="off"></div>
         <div class="f"><label>Data</label><input type="date" id="oc-d"></div>
-        <div class="f"><label>Produto</label><input type="text" id="oc-p" placeholder="Soja, Milho..."></div>
       </div>
-      <div class="f"><label>Obs</label><input type="text" id="oc-o" placeholder="Informações adicionais"></div>
-      <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar</button>
+      <div class="r2">
+        <div class="f"><label>Produto</label><input type="text" id="oc-p" placeholder="Soja, Milho..."></div>
+        <div class="f"><label>Volume Total (kg) *</label><input type="number" id="oc-vol" placeholder="0" min="0" step="1"></div>
+      </div>
+      <div class="f"><label>Obs</label><input type="text" id="oc-o" placeholder="Comprador, observações..."></div>
+      <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar Contrato</button>
     </div>
     <div class="card">
-      <div class="ct">📋 Ordens Cadastradas</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="ct" style="margin:0">📋 Contratos Cadastrados</div>
+        <button onclick="loadContratosDaPlanilha().then(()=>rOC())" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--brd);background:#fff;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">☁️ Atualizar</button>
+      </div>
       <div id="lst-oc"></div>
     </div>
   </div>
@@ -845,46 +851,106 @@ function foto(inp,btnId,prevId,tipo,fiId,flId,lbl){
 }
 
 /* ══ ORDEM INFO ═══════════════════════════════════════════════ */
+/* ══ INFO CONTRATO — mostra saldo ══════════════════════════════ */
 function infoOC(v){
   const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
   const o=ocs.find(x=>x.n===v);
   const el=document.getElementById('oc-info');
-  if(o){el.style.display='block';el.innerHTML=`📋 <b>${o.n}</b>${o.p?' · '+o.p:''}${o.d?' · '+o.d:''}${o.o?' · '+o.o:''}`;}
-  else el.style.display='none';
+  if(!o){el.style.display='none';return;}
+  // calcular kg já entregues neste contrato
+  const entregues=cloud.filter(x=>x.numOrdem===v&&(x.status||'').includes('Finalizado'))
+    .reduce((sum,x)=>sum+parseFloat(x.cargaLiquida||0)*1000,0);
+  const vol=parseFloat(o.vol)||0;
+  const saldo=vol>0?vol-entregues:null;
+  let html=`📋 <b>${o.n}</b>`;
+  if(o.p) html+=` · ${o.p}`;
+  if(o.d) html+=` · ${o.d}`;
+  if(vol>0){
+    const cor=saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)';
+    html+=`<br>📦 Volume contrato: <b>${vol.toLocaleString('pt-BR')} kg</b>`;
+    html+=` · Entregue: <b>${Math.round(entregues).toLocaleString('pt-BR')} kg</b>`;
+    html+=` · <span style="color:${cor};font-weight:800">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')} kg</span>`;
+  }
+  if(o.o) html+=`<br>${o.o}`;
+  el.style.display='block'; el.innerHTML=html;
 }
 
-/* ══ CADASTRO OC ══════════════════════════════════════════════ */
+/* ══ CADASTRO CONTRATOS ════════════════════════════════════════ */
 function addOC(){
   const n=document.getElementById('oc-n').value.trim();
-  if(!n){toast('⚠️ Informe o número!');return;}
+  if(!n){toast('⚠️ Informe o nº do contrato!');return;}
   const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
-  if(ocs.find(o=>o.n===n)){toast('⚠️ Já existe!');return;}
-  const contrato={n,d:document.getElementById('oc-d').value,p:document.getElementById('oc-p').value.trim(),o:document.getElementById('oc-o').value.trim()};
+  if(ocs.find(o=>o.n===n)){toast('⚠️ Contrato já existe!');return;}
+  const vol=document.getElementById('oc-vol').value.trim();
+  const contrato={
+    n,
+    d:document.getElementById('oc-d').value,
+    p:document.getElementById('oc-p').value.trim(),
+    vol:parseFloat(vol)||0,
+    o:document.getElementById('oc-o').value.trim()
+  };
   ocs.push(contrato);
   localStorage.setItem('poc',JSON.stringify(ocs));
-  ['oc-n','oc-d','oc-p','oc-o'].forEach(id=>document.getElementById(id).value='');
+  ['oc-n','oc-d','oc-p','oc-vol','oc-o'].forEach(id=>document.getElementById(id).value='');
+  // Sincronizar com planilha
   if(SHEETS_URL&&navigator.onLine){
     fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao:'salvarContrato',contrato,token:TOKEN})}).catch(()=>{});
+      body:JSON.stringify({acao:'salvarContrato',contrato,token:TOKEN})})
+      .then(r=>r.text()).then(t=>{
+        const j=JSON.parse(t);
+        if(j.ok) toast('✅ Contrato cadastrado e enviado à planilha!');
+        else toast('✅ Cadastrado localmente (erro na planilha)');
+      }).catch(()=>toast('✅ Cadastrado (sem internet)'));
+  } else {
+    toast('✅ Cadastrado — enviará à planilha quando conectar');
   }
-  rOC(); toast('✅ Contrato cadastrado!');
+  rOC();
 }
+
 function rOC(){
   const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
   const el=document.getElementById('lst-oc');
-  if(!ocs.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:12px">Nenhuma ordem cadastrada</div>';return;}
-  el.innerHTML=[...ocs].reverse().map(o=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:.5px solid var(--brd)">
-      <div><div style="font-weight:700;font-size:13px">${o.n}</div>
-      <div style="font-size:10px;color:var(--ink3)">${o.p||'—'} · ${o.d||'—'}</div></div>
-      <button onclick="delOC('${o.n}')" style="background:var(--r2);color:var(--r1);border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:700">×</button>
-    </div>`).join('');
+  if(!ocs.length){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:12px">Nenhum contrato cadastrado<br>Toque em ☁️ Atualizar para carregar da planilha</div>';
+    return;
+  }
+  el.innerHTML=[...ocs].reverse().map(o=>{
+    const vol=parseFloat(o.vol)||0;
+    const entregues=cloud.filter(x=>x.numOrdem===o.n&&(x.status||'').includes('Finalizado'))
+      .reduce((sum,x)=>sum+parseFloat(x.cargaLiquida||0)*1000,0);
+    const saldo=vol>0?vol-entregues:null;
+    const pct=vol>0?Math.min(100,Math.round(entregues/vol*100)):null;
+    return `<div style="padding:10px 0;border-bottom:.5px solid var(--brd)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:14px">${o.n}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:1px">${o.p||'—'} · ${o.d||'—'}</div>
+          ${vol>0?`<div style="font-size:11px;color:var(--ink2);margin-top:3px">
+            📦 Total: <b>${vol.toLocaleString('pt-BR')}kg</b> · 
+            Entregue: <b>${Math.round(entregues).toLocaleString('pt-BR')}kg</b> · 
+            <b style="color:${saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)'}">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')}kg</b>
+          </div>
+          <div style="background:#e0e0e0;border-radius:4px;height:4px;margin-top:5px">
+            <div style="background:${pct>=100?'var(--r1)':pct>=90?'var(--a1)':'var(--g1)'};width:${pct}%;height:4px;border-radius:4px;transition:width .3s"></div>
+          </div>`:''}
+          ${o.o?`<div style="font-size:10px;color:var(--ink3);margin-top:3px">${o.o}</div>`:''}
+        </div>
+        <button onclick="delOC('${o.n}')" style="background:var(--r2);color:var(--r1);border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:700;margin-left:8px;flex-shrink:0">×</button>
+      </div>
+    </div>`;
+  }).join('');
 }
+
 function delOC(n){
-  if(!confirm(`Excluir ${n}?`))return;
+  if(!confirm(`Excluir contrato ${n}?`))return;
   let ocs=JSON.parse(localStorage.getItem('poc')||'[]');
   localStorage.setItem('poc',JSON.stringify(ocs.filter(o=>o.n!==n)));
-  rOC(); toast('🗑️ Excluída');
+  // marcar como inativo na planilha
+  if(SHEETS_URL&&navigator.onLine){
+    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao:'delContrato',num:n,token:TOKEN})}).catch(()=>{});
+  }
+  rOC(); toast('🗑️ Contrato excluído');
 }
 
 /* ══ SALVAR TARA ══════════════════════════════════════════════ */
