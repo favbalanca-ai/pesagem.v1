@@ -554,8 +554,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
   <!-- ORDENS ADMIN -->
   <div class="pg" id="pg-oc">
     <div class="card">
-      <div class="ct">➕ Cadastrar Contrato</div>
-      <div class="f"><label>Nº do Contrato*</label><input type="text" id="oc-n" placeholder="2026.CS-01"></div>
+      <div class="ct">➕ Cadastrar Ordem</div>
+      <div class="f"><label>Nº do Contrato / Ordem *</label><input type="text" id="oc-n" placeholder="OC-2024-001"></div>
       <div class="r2">
         <div class="f"><label>Data</label><input type="date" id="oc-d"></div>
         <div class="f"><label>Produto</label><input type="text" id="oc-p" placeholder="Soja, Milho..."></div>
@@ -564,7 +564,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
       <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar</button>
     </div>
     <div class="card">
-      <div class="ct">📋 Contrato Cadastradas</div>
+      <div class="ct">📋 Ordens Cadastradas</div>
       <div id="lst-oc"></div>
     </div>
   </div>
@@ -645,9 +645,9 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxFlt5mnjwGn1tn1RcL6
 const TOKEN      = "pesagem@fav2024";
 
 const USERS = [
-  {email:"fav.balanca@gmail.com",     pw:"123", nome:"Admin",     nivel:"admin"},
-  {email:"balanca@fazendaaguaviva.com",pw:"123",  nome:"Balanceiro",nivel:"op"},
-  {email:"escritorio@fazendaaguaviva.com",pw:"123",nome:"Escritório",nivel:"view"},
+  {email:"fav.balanca@gmail.com",     pw:"fazenda2024", nome:"Admin",     nivel:"admin"},
+  {email:"balanca@fazendaaguaviva.com",pw:"balanca123",  nome:"Balanceiro",nivel:"op"},
+  {email:"escritorio@fazendaaguaviva.com",pw:"escrit456",nome:"Escritório",nivel:"view"},
 ];
 
 /* ══ ESTADO ═══════════════════════════════════════════════════ */
@@ -688,9 +688,15 @@ function openApp(u){
   document.getElementById('app').style.display='flex';
   if(u.nivel==='admin') document.getElementById('btn-admin').style.display='block';
   if(u.nivel==='view')  document.getElementById('bi-nova').style.display='none';
-  loadDB(); loadCfg(); updHome(); initSig();
-  setTimeout(syncP,2000);
-  setTimeout(loadContratosDaPlanilha,4000);
+  loadDB(); loadCfg(); initSig();
+  // Carregar planilha assim que abrir
+  setTimeout(async()=>{
+    await syncP(); // enviar pendentes primeiro
+    await carregarDaPlanilha(); // depois carregar planilha
+    updHome();
+    loadContratosDaPlanilha();
+  }, 1000);
+  updHome();
 }
 function logout(){
   localStorage.removeItem('pu'); usr=null;
@@ -701,8 +707,16 @@ function logout(){
 }
 
 /* ══ DADOS ════════════════════════════════════════════════════ */
-function saveDB(){localStorage.setItem('pdb',JSON.stringify(DB.ordens));localStorage.setItem('ppd',JSON.stringify(pend));}
-function loadDB(){DB.ordens=JSON.parse(localStorage.getItem('pdb')||'[]');pend=JSON.parse(localStorage.getItem('ppd')||'[]');}
+// ══ DADOS: planilha é a fonte de verdade ══════════════════════
+// Localmente só guardamos pendentes (offline) e cache temporário
+function saveDB(){
+  // Não salvar mais ordens no localStorage — planilha é a fonte
+  localStorage.setItem('ppd',JSON.stringify(pend));
+}
+function loadDB(){
+  DB.ordens=[]; // sempre começa vazio — carrega da planilha
+  pend=JSON.parse(localStorage.getItem('ppd')||'[]');
+}
 function loadCfg(){
   DB.cfg=JSON.parse(localStorage.getItem('pcfg')||'{"empresa":"Fazenda Água Viva","wa":"5561999995351","tol":7}');
   document.getElementById('cfg-em').value=DB.cfg.empresa||'Fazenda Água Viva';
@@ -1079,12 +1093,12 @@ function rTicket(o){
   if(btnEdit) btnEdit.style.display=(usr&&usr.nivel==='admin')?'block':'none';
 }
 function vTicket(id){
-  const o=DB.ordens.find(x=>x.id===id)||cloud.find(x=>x.id===id);
+  const o=cloud.find(x=>x.id===id)||DB.ordens.find(x=>x.id===id);
   if(!o)return; atual=o; rTicket(o); showPg('pg-tk','🎫 Ticket');
 }
 function sendWA(){
   if(!atual)return;
-  const n=DB.cfg.wa||'5561999995351',tol=DB.cfg.tol||7;
+  const n=DB.cfg.wa||'5561999999999',tol=DB.cfg.tol||7;
   const msg=encodeURIComponent(
     `🚛 *PESAGEM FINALIZADA*\n*${DB.cfg.empresa||'Pesagem'}*\n\n`+
     `📋 Contrato: ${atual.numOrdem}\n🚛 Placa: ${atual.placa}\n👤 Motorista: ${atual.motorista}\n\n`+
@@ -1103,21 +1117,22 @@ function setF(btn,f){filAtivo=f;document.querySelectorAll('.fil').forEach(b=>b.c
 function rHist(){
   const bsc=(document.getElementById('h-bsc')?.value||'').toLowerCase();
   const hj=new Date().toLocaleDateString('pt-BR');
-  const ids=DB.ordens.map(o=>o.id);
-  let ls=[...DB.ordens,...cloud.filter(o=>!ids.includes(o.id))].reverse();
+  // SEMPRE usa cloud — fiel à planilha
+  let ls=[...cloud].reverse();
   if(filAtivo==='hj') ls=ls.filter(o=>o.dataEntrada===hj);
-  else if(filAtivo==='ag') ls=ls.filter(o=>o.status==='Aguardando');
+  else if(filAtivo==='ag') ls=ls.filter(o=>(o.status||'').toLowerCase().includes('aguardando'));
   else if(filAtivo==='ok') ls=ls.filter(o=>(o.statusPeso||'').includes('CONFORME'));
   else if(filAtivo==='er') ls=ls.filter(o=>(o.statusPeso||'').includes('EXCEDIDO'));
   if(bsc) ls=ls.filter(o=>(o.placa||'').toLowerCase().includes(bsc)||(o.motorista||'').toLowerCase().includes(bsc)||(o.numOrdem||'').toLowerCase().includes(bsc));
   const el=document.getElementById('lst-hist');
-  if(!ls.length){el.innerHTML='<div class="emp"><div class="ei">📊</div><p>Nenhuma pesagem</p></div>';return;}
-  const idsL=DB.ordens.map(o=>o.id);
+  if(!ls.length){
+    el.innerHTML='<div class="emp"><div class="ei">📊</div><p>Nenhuma pesagem</p>'+(navigator.onLine?'':'<p style="font-size:11px;margin-top:6px">Sem internet — conecte para ver o histórico</p>')+'</div>';
+    return;
+  }
   el.innerHTML=ls.map(o=>{
     const st=o.statusPeso||(o.status==='Aguardando'?'Aguardando':'CONFORME');
     const bc=st==='EXCEDIDO'?'exc':st==='ATENÇÃO'?'atc':'';
-    const bg=st==='EXCEDIDO'?'ber':st==='ATENÇÃO'?'bwn':st==='Aguardando'?'bag':'bok';
-    const nc=!idsL.includes(o.id);
+    const bg=st==='EXCEDIDO'?'ber':st==='ATENÇÃO'?'bwn':st==='Aguardando'||st.toLowerCase().includes('aguardando')?'bag':'bok';
     return `<div class="oc ${bc}" onclick="vTicket('${o.id}')">
       <div style="display:flex;justify-content:space-between">
         <div class="plc">${o.placa}</div>
@@ -1125,136 +1140,100 @@ function rHist(){
       </div>
       <div class="oi">👤 ${o.motorista} · ${o.numOrdem||'—'}</div>
       ${o.formulaEixos?`<div class="oi" style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.formulaEixos}</div>`:''}
-      ${o.pesoBruto?`<div class="oi">⚖️ ${o.pesoBruto.toFixed(3)}t → Carga: ${(o.cargaLiquida||0).toFixed(3)}t (${Math.round((o.cargaLiquida||0)*1000)}kg)</div>`:''}
-      <div style="display:flex;align-items:center;gap:5px;margin-top:4px">
-        <span class="obg ${bg}">${st}</span>
-        ${nc?'<span style="font-size:10px;color:var(--ink3)">☁️</span>':''}
-      </div>
+      ${o.pesoBruto?`<div class="oi">⚖️ ${parseFloat(o.pesoBruto).toFixed(3)}t → Carga: ${parseFloat(o.cargaLiquida||0).toFixed(3)}t (${Math.round(parseFloat(o.cargaLiquida||0)*1000)}kg)</div>`:''}
+      <span class="obg ${bg}">${st}</span>
     </div>`;
   }).join('');
 }
 
-/* ══ SYNC ══════════════════════════════════════════════════════ */
+/* ══ SYNC — PLANILHA É A FONTE DE VERDADE ═══════════════════════
+   App envia dados → planilha
+   App lê dados → sempre da planilha
+   Se excluir na planilha → some do app
+═══════════════════════════════════════════════════════════════ */
 function updS(){
   const el=document.getElementById('stxt');if(!el)return;
-  const pendN=pend.length;
-  // calcular quantos locais não estão na planilha
-  const idsCloud=cloud.map(o=>o.id);
-  const naoSinc=DB.ordens.filter(o=>!idsCloud.includes(o.id)).length;
-  if(pendN>0){
-    el.textContent=`⚠️ ${pendN} pendente(s)`;
-  } else if(!navigator.onLine){
-    el.textContent='📵 Offline';
-  } else {
-    el.textContent='☁️ Sincronizado';
-  }
-  // mostrar barra amarela se há dados locais não enviados
-  const sbar2=document.getElementById('sbar2');
-  const ptxt=document.getElementById('pend-txt');
-  if(sbar2&&ptxt){
-    if(naoSinc>0&&navigator.onLine){
-      sbar2.style.display='flex';
-      ptxt.textContent=`${naoSinc} pesagem(s) salva(s) localmente, não enviada(s) à planilha`;
-    } else {
-      sbar2.style.display='none';
-    }
-  }
+  if(pend.length>0) el.textContent=`⚠️ ${pend.length} pendente(s) offline`;
+  else if(!navigator.onLine) el.textContent='📵 Offline — dados salvos localmente';
+  else el.textContent=`☁️ Planilha: ${cloud.length} registro(s)`;
+  const sb=document.getElementById('sbar2'),pt=document.getElementById('pend-txt');
+  if(sb&&pt){ if(pend.length>0){sb.style.display='flex';pt.textContent=`${pend.length} pesagem(s) aguardando envio (offline)`;}else sb.style.display='none'; }
 }
 
-async function enviarTodosLocais(){
-  if(!SHEETS_URL||!navigator.onLine){toast('📵 Sem internet');return;}
-  const idsCloud=cloud.map(o=>o.id);
-  const naoEnviados=DB.ordens.filter(o=>!idsCloud.includes(o.id));
-  if(!naoEnviados.length){toast('✅ Tudo já está na planilha!');return;}
-  toast(`⏳ Enviando ${naoEnviados.length} registro(s)...`);
-  let ok=0;
-  for(const o of naoEnviados){
-    const acao=o.status==='Finalizado'?'atualizar':'salvar';
-    try{
-      const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao,ordem:o,token:TOKEN})});
-      const j=JSON.parse(await r.text());
-      if(j.ok) ok++;
-    }catch(e){}
-  }
-  toast(`✅ ${ok}/${naoEnviados.length} enviado(s)!`);
-  // Recarregar da planilha
-  await loadCl();
-  updS();
-}
+// Enviar para planilha (offline → fila)
 async function enviar(ordem,acao){
-  if(!SHEETS_URL)return;
+  if(!SHEETS_URL){return;}
   if(!navigator.onLine){addP(ordem,acao);updS();return;}
   try{
     const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao,ordem,token:TOKEN})});
     const j=JSON.parse(await r.text());
-    if(!j.ok)addP(ordem,acao);
+    if(!j.ok) addP(ordem,acao);
   }catch(e){addP(ordem,acao);}
   updS();
 }
 function addP(o,a){if(!pend.find(p=>p.ordem&&p.ordem.id===o.id)){pend.push({ordem:o,acao:a});saveDB();}}
+
+// Enviar pendentes offline quando voltar internet
 async function syncP(){
   if(!SHEETS_URL||!navigator.onLine||!pend.length){updS();return;}
   const ps=[...pend]; pend=[];saveDB();
   let ok=0;
   for(const p of ps){
-    try{const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})});const j=JSON.parse(await r.text());if(j.ok)ok++;else pend.push(p);}
-    catch(e){pend.push(p);}
-  }
-  saveDB();updS();if(ok>0)toast(`☁️ ${ok} sincronizada(s)!`);
-}
-async function syncM(){
-  const btn=document.getElementById('btn-sy');if(btn){btn.disabled=true;btn.textContent='⏳...';}
-  if(SHEETS_URL&&navigator.onLine){
     try{
-      const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listar',token:TOKEN})});
+      const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})});
       const j=JSON.parse(await r.text());
-      if(j.ok&&j.ordens){
-        cloud=j.ordens.map(normOrdem);
-        const ids=DB.ordens.map(o=>o.id);
-        cloud.forEach(o=>{
-          if(!ids.includes(o.id)){DB.ordens.push(o);}
-          else {
-            // atualizar dados que vieram da planilha
-            const idx=DB.ordens.findIndex(x=>x.id===o.id);
-            if(idx>=0) DB.ordens[idx]={...DB.ordens[idx],...o};
-          }
-        });
-        saveDB();updHome();
-        toast(`☁️ ${cloud.length} registro(s) carregado(s)!`);
-      }
-    }catch(e){toast('❌ Erro ao carregar: '+e.message);}
+      if(j.ok) ok++; else pend.push(p);
+    }catch(e){pend.push(p);}
   }
-  await syncP();
-  if(btn){btn.disabled=false;btn.textContent='Sincronizar';}
-  if(!navigator.onLine)toast('📵 Sem internet');
+  saveDB();
+  if(ok>0){ toast(`☁️ ${ok} pesagem(s) enviada(s)!`); await carregarDaPlanilha(); }
+  updS();
 }
-async function loadCl(){
-  if(!SHEETS_URL||!navigator.onLine)return;
+
+// Carregar TUDO da planilha — substitui cache local
+async function carregarDaPlanilha(){
+  if(!SHEETS_URL||!navigator.onLine)return false;
   try{
     const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listar',token:TOKEN})});
     const j=JSON.parse(await r.text());
     if(j.ok&&j.ordens){
+      // planilha é a fonte de verdade — substitui tudo
       cloud=j.ordens.map(normOrdem);
-      const ids=DB.ordens.map(o=>o.id);
-      cloud.forEach(o=>{
-        if(!ids.includes(o.id)){DB.ordens.push(o);}
-        else {
-          const idx=DB.ordens.findIndex(x=>x.id===o.id);
-          if(idx>=0) DB.ordens[idx]={...DB.ordens[idx],...o};
-        }
-      });
-      saveDB();rHist();
+      DB.ordens=[...cloud]; // app mostra exatamente o que está na planilha
+      return true;
     }
   }catch(e){}
+  return false;
+}
+
+// Botão Sincronizar na home
+async function syncM(){
+  const btn=document.getElementById('btn-sy');
+  if(btn){btn.disabled=true;btn.textContent='⏳...';}
+  // 1. Enviar pendentes offline
+  await syncP();
+  // 2. Carregar planilha
+  const ok=await carregarDaPlanilha();
+  updHome();
+  if(btn){btn.disabled=false;btn.textContent='Sincronizar';}
+  if(ok) toast(`☁️ ${cloud.length} registro(s) na planilha`);
+  else if(!navigator.onLine) toast('📵 Sem internet');
+  else toast('❌ Erro ao carregar planilha');
+}
+
+// Carregar ao abrir histórico
+async function loadCl(){
+  const ok=await carregarDaPlanilha();
+  if(ok) rHist();
 }
 
 /* ══ HOME ══════════════════════════════════════════════════════ */
 function updHome(){
-  loadDB();
   const hj=new Date().toLocaleDateString('pt-BR');
-  const dh=DB.ordens.filter(o=>o.dataEntrada===hj);
-  const ag=DB.ordens.filter(o=>o.status==='Aguardando');
-  const fn=DB.ordens.filter(o=>o.status==='Finalizado'&&o.dataEntrada===hj);
+  const todos=cloud.length>0?cloud:DB.ordens; // prefere cloud
+  const dh=todos.filter(o=>o.dataEntrada===hj);
+  const ag=todos.filter(o=>(o.status||'').toLowerCase().includes('aguardando'));
+  const fn=todos.filter(o=>o.dataEntrada===hj&&(o.status||'').toLowerCase().includes('finalizado'));
   document.getElementById('mh').textContent=dh.length;
   document.getElementById('ma').textContent=ag.length;
   document.getElementById('mf').textContent=fn.length;
@@ -1266,58 +1245,37 @@ function updHome(){
 
 /* ══ TOAST ══════════════════════════════════════════════════════ */
 function toast(m){const e=document.getElementById('tst');e.textContent=m;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3500);}
-// ── Normalizar data vinda da planilha ─────────────────────────
-function normData(v) {
-  if (!v) return '';
-  const s = String(v);
-  // Se for ISO (2026-05-21T...) converter para BR
-  if (s.includes('T') || s.match(/^\d{4}-\d{2}-\d{2}/)) {
-    try {
-      const d = new Date(s);
-      if (!isNaN(d)) return d.toLocaleDateString('pt-BR');
-    } catch(e) {}
-  }
-  return s;
-}
-function normHora(v) {
-  if (!v) return '';
-  const s = String(v);
-  if (s.includes('T')) {
-    try {
-      const d = new Date(s);
-      if (!isNaN(d)) return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    } catch(e) {}
-  }
-  return s.substring(0,5); // pega só HH:mm
-}
-function normOrdem(o) {
-  // normaliza campos de data vindos da planilha
-  return {
+
+// ── Normalizar dados vindos da planilha ───────────────────────
+function normOrdem(o){
+  const normD=v=>{if(!v)return '';const s=String(v);if(s.includes('T')||s.match(/^\d{4}-\d{2}-\d{2}/)){try{const d=new Date(s);if(!isNaN(d))return d.toLocaleDateString('pt-BR');}catch(e){}}return s;};
+  const normH=v=>{if(!v)return '';const s=String(v);if(s.includes('T')){try{const d=new Date(s);if(!isNaN(d))return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}catch(e){}}return s.substring(0,5);};
+  const normDH=v=>{if(!v)return '';const s=String(v);if(s.includes('T')){try{const d=new Date(s);if(!isNaN(d))return d.toLocaleString('pt-BR');}catch(e){}}return s;};
+  return{
     ...o,
-    dataEntrada: normData(o.dataEntrada),
-    horaEntrada: normHora(o.horaEntrada),
-    dataHoraFim: o.dataHoraFim ? normData(o.dataHoraFim)+' '+normHora(o.dataHoraFim) : '',
+    dataEntrada:  normD(o.dataEntrada),
+    horaEntrada:  normH(o.horaEntrada),
+    dataHoraFim:  normDH(o.dataHoraFim),
     tara:         parseFloat(o.tara)||0,
     pesoBruto:    parseFloat(o.pesoBruto)||0,
     cargaLiquida: parseFloat(o.cargaLiquida)||0,
     pbtMax:       parseFloat(o.pbtMax||o.limPeso)||0,
     limPeso:      parseFloat(o.pbtMax||o.limPeso)||0,
-    statusPeso:   (o.status||'').replace('Finalizado — ','') || o.statusPeso || '',
+    statusPeso:   String(o.status||o.statusPeso||'').replace('Finalizado — ',''),
   };
 }
+
+// ── Contratos — da planilha (fonte de verdade) ────────────────
 async function loadContratosDaPlanilha(){
-  if(!SHEETS_URL||!navigator.onLine) return;
+  if(!SHEETS_URL||!navigator.onLine)return;
   try{
-    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao:'listarContratos',token:TOKEN})});
+    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listarContratos',token:TOKEN})});
     const j=JSON.parse(await r.text());
-    if(j.ok&&j.contratos&&j.contratos.length>0){
-      const local=JSON.parse(localStorage.getItem('poc')||'[]');
-      const localNums=local.map(x=>x.n);
-      j.contratos.forEach(c=>{if(!localNums.includes(c.n))local.push(c);});
-      localStorage.setItem('poc',JSON.stringify(local));
+    if(j.ok&&j.contratos){
+      // planilha é a fonte — substitui lista local
+      localStorage.setItem('poc',JSON.stringify(j.contratos));
       const dl=document.getElementById('dl-oc');
-      if(dl) dl.innerHTML=local.map(o=>`<option value="${o.n}">${o.n}${o.p?' — '+o.p:''}</option>`).join('');
+      if(dl) dl.innerHTML=j.contratos.map(c=>`<option value="${c.n}">${c.n}${c.p?' — '+c.p:''}</option>`).join('');
     }
   }catch(e){}
 }
