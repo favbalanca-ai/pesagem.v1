@@ -951,32 +951,42 @@ function infoOC(v){
 
 /* ══ CADASTRO CONTRATOS ════════════════════════════════════════ */
 function addOC(){
-  const n=document.getElementById('oc-n').value.trim();
-  if(!n){toast('⚠️ Informe o nº do contrato!');return;}
-  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
-  if(ocs.find(o=>o.n===n)){toast('⚠️ Contrato já existe!');return;}
-  const vol=document.getElementById('oc-vol').value.trim();
-  const contrato={
-    n,
-    d:document.getElementById('oc-d').value,
-    p:document.getElementById('oc-p').value.trim(),
-    vol:parseFloat(vol)||0,
-    o:document.getElementById('oc-o').value.trim()
+  var nm=document.getElementById('oc-n').value.trim();
+  if(!nm){toast('⚠️ Informe o nº do contrato!');return;}
+  var ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  if(ocs.find(function(o){return o.n===nm;})){toast('⚠️ Contrato já existe!');return;}
+  var contrato={
+    n: nm,
+    d: document.getElementById('oc-d').value,
+    p: document.getElementById('oc-p').value.trim(),
+    vol: parseFloat(document.getElementById('oc-vol').value)||0,
+    o: document.getElementById('oc-o').value.trim()
   };
   ocs.push(contrato);
   localStorage.setItem('poc',JSON.stringify(ocs));
-  ['oc-n','oc-d','oc-p','oc-vol','oc-o'].forEach(id=>document.getElementById(id).value='');
-  // Sincronizar com planilha
+  // limpar campos
+  document.getElementById('oc-n').value='';
+  document.getElementById('oc-d').value='';
+  document.getElementById('oc-p').value='';
+  document.getElementById('oc-vol').value='';
+  document.getElementById('oc-o').value='';
+  // Enviar para planilha
   if(SHEETS_URL&&navigator.onLine){
-    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao:'salvarContrato',contrato,token:TOKEN})})
-      .then(r=>r.text()).then(t=>{
-        const j=JSON.parse(t);
-        if(j.ok) toast('✅ Contrato cadastrado e enviado à planilha!');
-        else toast('✅ Cadastrado localmente (erro na planilha)');
-      }).catch(()=>toast('✅ Cadastrado (sem internet)'));
+    var payload=JSON.stringify({acao:'salvarContrato',contrato:contrato,token:TOKEN});
+    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload})
+      .then(function(r){return r.text();})
+      .then(function(t){
+        try{
+          var j=JSON.parse(t);
+          if(j.ok) toast('✅ Contrato gravado na planilha!');
+          else toast('❌ Erro planilha: '+(j.erro||'desconhecido'));
+        }catch(e){
+          toast('❌ Resposta inválida: '+t.substring(0,50));
+        }
+      })
+      .catch(function(e){toast('❌ Sem conexão: '+e.message);});
   } else {
-    toast('✅ Cadastrado — enviará à planilha quando conectar');
+    toast('✅ Salvo localmente — enviará quando conectar');
   }
   rOC();
 }
