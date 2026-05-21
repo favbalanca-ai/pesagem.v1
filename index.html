@@ -556,14 +556,34 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
     <div class="card">
       <div class="ct">➕ Cadastrar Contrato</div>
       <div class="r2">
-        <div class="f"><label>Nº do Contrato *</label><input type="text" id="oc-n" placeholder="CS-2026" autocomplete="off"></div>
+        <div class="f">
+          <label>Nº do Contrato *</label>
+          <input type="text" id="oc-n" placeholder="CS-2026" autocomplete="off" list="dl-oc-n">
+          <datalist id="dl-oc-n"></datalist>
+        </div>
         <div class="f"><label>Data</label><input type="date" id="oc-d"></div>
       </div>
       <div class="r2">
-        <div class="f"><label>Produto</label><input type="text" id="oc-p" placeholder="Soja, Milho..."></div>
-        <div class="f"><label>Volume Total (kg) *</label><input type="number" id="oc-vol" placeholder="0" min="0" step="1"></div>
+        <div class="f">
+          <label>Produto</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="oc-p" placeholder="Soja, Milho..." style="flex:1">
+            <button type="button" onclick="showProdutos()" style="padding:0 12px;border:1.5px solid var(--brd);border-radius:var(--r2px);background:#fff;font-size:14px;cursor:pointer;flex-shrink:0">▾</button>
+          </div>
+          <!-- dropdown produtos -->
+          <div id="prod-drop" style="display:none;background:#fff;border:1.5px solid var(--brd);border-radius:var(--r2px);margin-top:3px;box-shadow:var(--sh);z-index:100;position:relative">
+            <div onclick="selecionarProduto('Soja')"    style="padding:9px 13px;cursor:pointer;font-size:14px;border-bottom:.5px solid var(--brd)">🌾 Soja</div>
+            <div onclick="selecionarProduto('Milho')"   style="padding:9px 13px;cursor:pointer;font-size:14px;border-bottom:.5px solid var(--brd)">🌽 Milho</div>
+            <div onclick="selecionarProduto('Trigo')"   style="padding:9px 13px;cursor:pointer;font-size:14px;border-bottom:.5px solid var(--brd)">🌾 Trigo</div>
+            <div onclick="selecionarProduto('Sorgo')"   style="padding:9px 13px;cursor:pointer;font-size:14px;border-bottom:.5px solid var(--brd)">🌾 Sorgo</div>
+            <div onclick="selecionarProduto('Algodão')" style="padding:9px 13px;cursor:pointer;font-size:14px;border-bottom:.5px solid var(--brd)">🌿 Algodão</div>
+            <div onclick="selecionarProduto('Feijão')"  style="padding:9px 13px;cursor:pointer;font-size:14px;border-bottom:.5px solid var(--brd)">🫘 Feijão</div>
+            <div onclick="selecionarProduto('Girassol')" style="padding:9px 13px;cursor:pointer;font-size:14px">🌻 Girassol</div>
+          </div>
+        </div>
+        <div class="f"><label>Volume Total (kg) *</label><input type="number" id="oc-vol" placeholder="0" min="0" step="1000"></div>
       </div>
-      <div class="f"><label>Obs</label><input type="text" id="oc-o" placeholder="Comprador, observações..."></div>
+      <div class="f"><label>Obs / Comprador</label><input type="text" id="oc-o" placeholder="Ex: Bunge, Cargill..."></div>
       <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar Contrato</button>
     </div>
     <div class="card">
@@ -851,7 +871,20 @@ function foto(inp,btnId,prevId,tipo,fiId,flId,lbl){
 }
 
 /* ══ ORDEM INFO ═══════════════════════════════════════════════ */
-/* ══ INFO CONTRATO — mostra saldo ══════════════════════════════ */
+/* ══ DROPDOWN PRODUTO ══════════════════════════════════════════ */
+function showProdutos(){
+  const d=document.getElementById('prod-drop');
+  d.style.display=d.style.display==='none'?'block':'none';
+}
+function selecionarProduto(p){
+  document.getElementById('oc-p').value=p;
+  document.getElementById('prod-drop').style.display='none';
+}
+// Fechar dropdown ao clicar fora
+document.addEventListener('click',e=>{
+  const d=document.getElementById('prod-drop');
+  if(d&&!e.target.closest('#pg-oc')) d.style.display='none';
+});
 function infoOC(v){
   const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
   const o=ocs.find(x=>x.n===v);
@@ -910,6 +943,9 @@ function addOC(){
 function rOC(){
   const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
   const el=document.getElementById('lst-oc');
+  // popular datalist do campo nº contrato
+  const dl=document.getElementById('dl-oc-n');
+  if(dl) dl.innerHTML=ocs.map(o=>`<option value="${o.n}">${o.n}${o.p?' — '+o.p:''}</option>`).join('');
   if(!ocs.length){
     el.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:12px">Nenhum contrato cadastrado<br>Toque em ☁️ Atualizar para carregar da planilha</div>';
     return;
