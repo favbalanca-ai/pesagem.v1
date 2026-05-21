@@ -167,7 +167,35 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
 .fil.on{background:var(--g1);color:#fff;border-color:var(--g1)}
 
 /* MISC */
-body[data-sig]{overflow:hidden;position:fixed;width:100%}
+/* MODAL EDIÇÃO */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+.modal.hide{display:none}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
+.modal-tit{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:var(--bg);border:none;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* PDF PREVIEW */
+#pdf-frame{position:fixed;inset:0;background:#222;z-index:600;display:none;flex-direction:column}
+#pdf-frame.show{display:flex}
+#pdf-header{background:var(--g1);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#pdf-content{flex:1;overflow-y:auto;background:#f5f5f5;padding:16px}
+.pdf-page{background:#fff;max-width:600px;margin:0 auto;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.15);font-family:'Inter',sans-serif;font-size:13px;line-height:1.6}
+.pdf-logo{text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid #1a5c45}
+.pdf-logo h1{font-size:18px;font-weight:800;color:#1a5c45}
+.pdf-logo p{font-size:11px;color:#888}
+.pdf-section{margin-bottom:14px}
+.pdf-section h3{font-size:11px;font-weight:700;color:#1a5c45;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid #e0e8e4}
+.pdf-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:.5px solid #f0f0f0;font-size:12px}
+.pdf-row:last-child{border:none}
+.pdf-label{color:#666}
+.pdf-val{font-weight:600;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px}
+.pdf-status{text-align:center;padding:10px;border-radius:8px;font-size:14px;font-weight:800;margin:12px 0;font-family:'JetBrains Mono',monospace}
+.pdf-ok{background:#e8f5e9;color:#1a5c45}
+.pdf-wn{background:#fff3cd;color:#856404}
+.pdf-er{background:#fce8e8;color:#c0392b}
+.pdf-sig{margin-top:10px}
+.pdf-sig img{width:100%;max-height:100px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px}
+@media print{#pdf-header{display:none}#pdf-content{padding:0}}
 #offb{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;background:#e6a817;color:#fff;text-align:center;font-size:11px;font-weight:700;padding:5px;z-index:1000;display:none}
 #tst{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--g4);color:#fff;padding:9px 18px;border-radius:30px;font-size:12px;font-weight:600;opacity:0;transition:all .25s;z-index:999;pointer-events:none;max-width:90vw;text-align:center}
 #tst.on{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -376,6 +404,16 @@ body[data-sig]{overflow:hidden;position:fixed;width:100%}
         </div>
         <div class="pc" id="ct"></div>
       </div>
+      <!-- Foto da balança (tara) -->
+      <div class="f" style="margin-top:9px">
+        <label>📸 Foto da Balança (Tara)</label>
+        <label class="fb" id="fb-tara" style="width:100%;flex-direction:row;padding:10px 13px;gap:10px;justify-content:flex-start;min-height:52px">
+          <span class="fi" id="fi-tara">📊</span>
+          <span class="fl" id="fl-tara" style="font-size:11px">Fotografar display da balança</span>
+          <input type="file" accept="image/*" capture="environment" onchange="foto(this,'fb-tara','prev-tara','fotaTara','fi-tara','fl-tara','Balança ✓')">
+          <img id="prev-tara" style="display:none;width:52px;height:52px;object-fit:cover;border-radius:6px;margin-left:auto;flex-shrink:0">
+        </label>
+      </div>
     </div>
 
     <!-- Obs -->
@@ -410,6 +448,16 @@ body[data-sig]{overflow:hidden;position:fixed;width:100%}
           <span class="pu" id="ub">kg</span>
         </div>
         <div class="pc" id="cb"></div>
+      </div>
+      <!-- Foto da balança (bruto) -->
+      <div class="f" style="margin-top:9px">
+        <label>📸 Foto da Balança (Bruto)</label>
+        <label class="fb" id="fb-bruto" style="width:100%;flex-direction:row;padding:10px 13px;gap:10px;justify-content:flex-start;min-height:52px">
+          <span class="fi" id="fi-bruto">📊</span>
+          <span class="fl" id="fl-bruto" style="font-size:11px">Fotografar display da balança</span>
+          <input type="file" accept="image/*" capture="environment" onchange="foto(this,'fb-bruto','prev-bruto','fotaBruto','fi-bruto','fl-bruto','Balança ✓')">
+          <img id="prev-bruto" style="display:none;width:52px;height:52px;object-fit:cover;border-radius:6px;margin-left:auto;flex-shrink:0">
+        </label>
       </div>
     </div>
     <div id="res-br" style="display:none">
@@ -471,12 +519,15 @@ body[data-sig]{overflow:hidden;position:fixed;width:100%}
     </div>
     <div class="brow">
       <button class="btn btns bsm" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn btns bsm" onclick="gerarPDF()">📄 PDF</button>
       <button class="btn btnw bsm" id="btn-wa" onclick="sendWA()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.117 1.532 5.849L.057 23.571a.75.75 0 0 0 .921.921l5.722-1.475A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 0 1-4.962-1.358l-.355-.211-3.697.952.977-3.579-.232-.369A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
         WhatsApp
       </button>
     </div>
     <button class="btn btnp" onclick="home();updHome()" style="margin-top:4px">🏠 Nova Pesagem</button>
+    <!-- Botão editar (só admin) -->
+    <button class="btn btns" id="btn-edit-tk" onclick="abrirEditar()" style="margin-top:4px;display:none">✏️ Editar Ticket</button>
   </div>
 
   <!-- HISTÓRICO -->
@@ -543,6 +594,47 @@ body[data-sig]{overflow:hidden;position:fixed;width:100%}
   <button class="btn btnd" onclick="if(confirm('Sair?'))logout()" style="margin-top:7px">🚪 Sair</button>
 </div>
 
+<!-- MODAL EDIÇÃO TICKET -->
+<div class="modal hide" id="modal-edit">
+  <div class="modal-box">
+    <div class="modal-tit">
+      ✏️ Editar Ticket
+      <button class="modal-close" onclick="fecharEditar()">✕</button>
+    </div>
+    <div class="f"><label>Placa</label><input type="text" id="ed-placa" class="placa"></div>
+    <div class="f"><label>Motorista</label><input type="text" id="ed-mot"></div>
+    <div class="f"><label>CPF</label><input type="text" id="ed-cpf"></div>
+    <div class="f"><label>Nº Contrato/Ordem</label><input type="text" id="ed-oc"></div>
+    <div class="f"><label>Tara (toneladas)</label><input type="number" id="ed-tara" step="0.001"></div>
+    <div class="f"><label>Peso Bruto (toneladas)</label><input type="number" id="ed-bruto" step="0.001" oninput="calcEditBruto()"></div>
+    <div id="ed-resultado" style="padding:8px 10px;background:var(--g3);border-radius:8px;font-size:12px;color:var(--g1);margin-bottom:8px;display:none"></div>
+    <div class="f"><label>Observações</label><input type="text" id="ed-obs"></div>
+    <div class="f">
+      <label>Status</label>
+      <select id="ed-status" style="width:100%;padding:10px;border:1.5px solid var(--brd);border-radius:var(--r2px);font-family:'Inter',sans-serif;font-size:14px;-webkit-appearance:none">
+        <option value="Aguardando">Aguardando</option>
+        <option value="Finalizado — CONFORME">Finalizado — CONFORME</option>
+        <option value="Finalizado — ATENÇÃO">Finalizado — ATENÇÃO</option>
+        <option value="Finalizado — EXCEDIDO">Finalizado — EXCEDIDO</option>
+      </select>
+    </div>
+    <button class="btn btnp" onclick="salvarEdicao()">💾 Salvar Alterações</button>
+    <button class="btn btns" onclick="fecharEditar()" style="margin-top:6px">Cancelar</button>
+  </div>
+</div>
+
+<!-- PDF OVERLAY -->
+<div id="pdf-frame">
+  <div id="pdf-header">
+    <button onclick="fecharPDF()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:34px;height:34px;border-radius:8px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">‹</button>
+    <span style="font-size:15px;font-weight:700;flex:1">📄 Ticket PDF</span>
+    <button onclick="imprimirPDF()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">🖨️ Imprimir</button>
+  </div>
+  <div id="pdf-content">
+    <div class="pdf-page" id="pdf-page"></div>
+  </div>
+</div>
+
 <script>
 /* ══ CONFIG ═══════════════════════════════════════════════════ */
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxFlt5mnjwGn1tn1RcL6qKsyLtjjcvhJTcNScL_E3LsFjK2o3kuY2_JRvgQPrXXGH8-Zg/exec";
@@ -607,9 +699,9 @@ function logout(){
 function saveDB(){localStorage.setItem('pdb',JSON.stringify(DB.ordens));localStorage.setItem('ppd',JSON.stringify(pend));}
 function loadDB(){DB.ordens=JSON.parse(localStorage.getItem('pdb')||'[]');pend=JSON.parse(localStorage.getItem('ppd')||'[]');}
 function loadCfg(){
-  DB.cfg=JSON.parse(localStorage.getItem('pcfg')||'{"empresa":"Fazenda Água Viva","wa":"5561999999999","tol":7}');
-  document.getElementById('cfg-em').value=DB.cfg.empresa||'';
-  document.getElementById('cfg-wa').value=DB.cfg.wa||'';
+  DB.cfg=JSON.parse(localStorage.getItem('pcfg')||'{"empresa":"Fazenda Água Viva","wa":"5561999995351","tol":7}');
+  document.getElementById('cfg-em').value=DB.cfg.empresa||'Fazenda Água Viva';
+  document.getElementById('cfg-wa').value=DB.cfg.wa||'5561999995351';
   document.getElementById('cfg-tl').value=DB.cfg.tol||7;
 }
 function saveCfg(){
@@ -1095,6 +1187,234 @@ function updHome(){
 
 /* ══ TOAST ══════════════════════════════════════════════════════ */
 function toast(m){const e=document.getElementById('tst');e.textContent=m;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3500);}
+/* ══ RESET FOTO BRUTO ══════════════════════════════════════════ */
+const _irBrutoOrig = irBruto;
+function irBruto(id){
+  _irBrutoOrig(id);
+  // reset foto bruto
+  const fb=document.getElementById('fb-bruto');if(fb)fb.classList.remove('ok');
+  const fi=document.getElementById('fi-bruto');if(fi)fi.textContent='📊';
+  const fl=document.getElementById('fl-bruto');if(fl)fl.textContent='Fotografar display da balança';
+  const pv=document.getElementById('prev-bruto');if(pv){pv.style.display='none';pv.src='';}
+  if(fotos) delete fotos.fotaBruto;
+}
+
+/* ══ CONTRATOS SYNC ════════════════════════════════════════════ */
+async function syncContratos(){
+  // Salvar todos os contratos locais na planilha
+  if(!SHEETS_URL||!navigator.onLine)return;
+  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  for(const c of ocs){
+    try{
+      await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({acao:'salvarContrato',contrato:c,token:TOKEN})});
+    }catch(e){}
+  }
+}
+
+async function loadContratosDaPlanilha(){
+  if(!SHEETS_URL||!navigator.onLine)return;
+  try{
+    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao:'listarContratos',token:TOKEN})});
+    const j=JSON.parse(await r.text());
+    if(j.ok&&j.contratos&&j.contratos.length>0){
+      const local=JSON.parse(localStorage.getItem('poc')||'[]');
+      const localNums=local.map(x=>x.n);
+      j.contratos.forEach(c=>{if(!localNums.includes(c.n))local.push(c);});
+      localStorage.setItem('poc',JSON.stringify(local));
+      // Atualizar datalist se estiver aberto
+      const dl=document.getElementById('dl-oc');
+      if(dl) dl.innerHTML=local.map(o=>`<option value="${o.n}">${o.n}${o.p?' — '+o.p:''}</option>`).join('');
+    }
+  }catch(e){}
+}
+
+// Sobrescrever addOC para sincronizar
+const _addOCorig = addOC;
+function addOC(){
+  const n=document.getElementById('oc-n').value.trim();
+  if(!n){toast('⚠️ Informe o número!');return;}
+  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  if(ocs.find(o=>o.n===n)){toast('⚠️ Já existe!');return;}
+  const contrato={n,d:document.getElementById('oc-d').value,p:document.getElementById('oc-p').value.trim(),o:document.getElementById('oc-o').value.trim()};
+  ocs.push(contrato);
+  localStorage.setItem('poc',JSON.stringify(ocs));
+  ['oc-n','oc-d','oc-p','oc-o'].forEach(id=>document.getElementById(id).value='');
+  // Sincronizar com planilha
+  if(SHEETS_URL&&navigator.onLine){
+    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao:'salvarContrato',contrato,token:TOKEN})}).catch(()=>{});
+  }
+  rOC(); toast('✅ Ordem/Contrato cadastrado!');
+}
+
+// Carregar contratos da planilha ao abrir tela de ordens
+const _irOrdensOrig = irOrdens;
+function irOrdens(){
+  _irOrdensOrig();
+  loadContratosDaPlanilha().then(()=>rOC());
+}
+
+/* ══ EDITAR TICKET (admin) ═════════════════════════════════════ */
+function abrirEditar(){
+  if(!atual) return;
+  document.getElementById('ed-placa').value   = atual.placa||'';
+  document.getElementById('ed-mot').value     = atual.motorista||'';
+  document.getElementById('ed-cpf').value     = atual.cpf||'';
+  document.getElementById('ed-oc').value      = atual.numOrdem||'';
+  document.getElementById('ed-tara').value    = atual.tara||0;
+  document.getElementById('ed-bruto').value   = atual.pesoBruto||0;
+  document.getElementById('ed-obs').value     = atual.obs||'';
+  document.getElementById('ed-status').value  = atual.status||'Aguardando';
+  calcEditBruto();
+  document.getElementById('modal-edit').classList.remove('hide');
+}
+function fecharEditar(){
+  document.getElementById('modal-edit').classList.add('hide');
+}
+function calcEditBruto(){
+  const b=parseFloat(document.getElementById('ed-bruto').value)||0;
+  const t=parseFloat(document.getElementById('ed-tara').value)||0;
+  const res=document.getElementById('ed-resultado');
+  if(b>0&&t>0){
+    const carga=Math.max(0,b-t);
+    const lim=atual?atual.pbtMax||atual.limPeso||0:0;
+    const tol=(DB.cfg.tol||7)/100;
+    const st=b>lim*(1+tol)?'EXCEDIDO':b>lim?'ATENÇÃO':'CONFORME';
+    res.style.display='block';
+    res.innerHTML=`Carga Líquida: <b>${carga.toFixed(3)}t</b> · Status: <b>${st}</b>`;
+    res.style.background=st==='EXCEDIDO'?'var(--r2)':st==='ATENÇÃO'?'var(--a2)':'var(--g3)';
+    res.style.color=st==='EXCEDIDO'?'var(--r1)':st==='ATENÇÃO'?'var(--a1)':'var(--g1)';
+  } else res.style.display='none';
+}
+function salvarEdicao(){
+  if(!atual) return;
+  const b=parseFloat(document.getElementById('ed-bruto').value)||atual.pesoBruto||0;
+  const t=parseFloat(document.getElementById('ed-tara').value)||atual.tara||0;
+  const carga=Math.max(0,b-t);
+  const lim=atual.pbtMax||atual.limPeso||0;
+  const tol=(DB.cfg.tol||7)/100;
+  const st=b>0?(b>lim*(1+tol)?'EXCEDIDO':b>lim?'ATENÇÃO':'CONFORME'):atual.statusPeso||'';
+
+  atual.placa       = document.getElementById('ed-placa').value.trim().toUpperCase();
+  atual.motorista   = document.getElementById('ed-mot').value.trim();
+  atual.cpf         = document.getElementById('ed-cpf').value.trim();
+  atual.numOrdem    = document.getElementById('ed-oc').value.trim();
+  atual.tara        = t;
+  atual.pesoBruto   = b>0?b:atual.pesoBruto;
+  atual.cargaLiquida= b>0?parseFloat(carga.toFixed(3)):atual.cargaLiquida;
+  atual.statusPeso  = st;
+  atual.obs         = document.getElementById('ed-obs').value.trim();
+  atual.status      = document.getElementById('ed-status').value;
+
+  const idx=DB.ordens.findIndex(o=>o.id===atual.id);
+  if(idx>=0) DB.ordens[idx]={...atual};
+  saveDB(); enviar(atual,'atualizar');
+
+  fecharEditar(); rTicket(atual);
+  toast('✅ Ticket atualizado!');
+}
+
+/* ══ GERAR PDF DO TICKET ═══════════════════════════════════════ */
+function gerarPDF(){
+  if(!atual) return;
+  const o = atual;
+  const tol = DB.cfg.tol||7;
+  const st  = o.statusPeso||'CONFORME';
+  const stCls = st==='EXCEDIDO'?'pdf-er':st==='ATENÇÃO'?'pdf-wn':'pdf-ok';
+  const stTxt = st==='EXCEDIDO'?'🚨 EXCEDIDO':st==='ATENÇÃO'?'⚠️ ATENÇÃO':'✅ CONFORME';
+  const emp = DB.cfg.empresa||'Sistema de Pesagem';
+
+  document.getElementById('pdf-page').innerHTML = `
+    <div class="pdf-logo">
+      <h1>⚖️ ${emp}</h1>
+      <p>Ticket de Pesagem — ${o.dataHoraFim||o.dataEntrada+' '+o.horaEntrada}</p>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:4px">OS: ${o.id}</p>
+    </div>
+
+    <div class="pdf-status ${stCls}">${stTxt}</div>
+
+    <div class="pdf-section">
+      <h3>📋 Identificação</h3>
+      <div class="pdf-row"><span class="pdf-label">Contrato/Ordem</span><span class="pdf-val">${o.numOrdem||'—'}</span></div>
+      <div class="pdf-row"><span class="pdf-label">Placa</span><span class="pdf-val">${o.placa}</span></div>
+      <div class="pdf-row"><span class="pdf-label">Data Entrada</span><span class="pdf-val">${o.dataEntrada} ${o.horaEntrada}</span></div>
+      <div class="pdf-row"><span class="pdf-label">Finalização</span><span class="pdf-val">${o.dataHoraFim||'—'}</span></div>
+    </div>
+
+    <div class="pdf-section">
+      <h3>👤 Motorista</h3>
+      <div class="pdf-row"><span class="pdf-label">Nome</span><span class="pdf-val">${o.motorista}</span></div>
+      <div class="pdf-row"><span class="pdf-label">CPF</span><span class="pdf-val">${o.cpf||'—'}</span></div>
+    </div>
+
+    <div class="pdf-section">
+      <h3>🚛 Veículo e Eixos</h3>
+      <div class="pdf-row"><span class="pdf-label">Configuração</span><span class="pdf-val">${o.formulaEixos||o.totalEixos+' eixos'}</span></div>
+      <div class="pdf-row"><span class="pdf-label">PBT Máximo CONTRAN</span><span class="pdf-val">${o.pbtMax||o.limPeso}t / ${Math.round((o.pbtMax||o.limPeso)*1000)}kg</span></div>
+      <div class="pdf-row"><span class="pdf-label">Limite c/ Tolerância ${tol}%</span><span class="pdf-val">${((o.pbtMax||o.limPeso)*(1+tol/100)).toFixed(1)}t</span></div>
+    </div>
+
+    <div class="pdf-section">
+      <h3>⚖️ Pesagem</h3>
+      <div class="pdf-row"><span class="pdf-label">Tara (vazio)</span><span class="pdf-val">${o.tara.toFixed(3)}t / ${Math.round(o.tara*1000)}kg</span></div>
+      <div class="pdf-row"><span class="pdf-label">Peso Bruto (carregado)</span><span class="pdf-val">${(o.pesoBruto||0).toFixed(3)}t / ${Math.round((o.pesoBruto||0)*1000)}kg</span></div>
+      <div class="pdf-row" style="border-top:1.5px solid #1a5c45;margin-top:4px;padding-top:8px">
+        <span class="pdf-label" style="font-weight:700">Carga Líquida</span>
+        <span class="pdf-val" style="font-size:15px;color:#1a5c45;font-weight:800">${(o.cargaLiquida||0).toFixed(3)}t / ${Math.round((o.cargaLiquida||0)*1000)}kg</span>
+      </div>
+    </div>
+
+    ${o.obs?`<div class="pdf-section"><h3>📝 Observações</h3><p style="font-size:12px;color:#444">${o.obs}</p></div>`:''}
+
+    <div class="pdf-section">
+      <h3>👷 Responsável</h3>
+      <div class="pdf-row"><span class="pdf-label">Funcionário</span><span class="pdf-val">${o.funcionario||'—'}</span></div>
+    </div>
+
+    ${o.assinatura?`<div class="pdf-section pdf-sig"><h3>✍️ Assinatura do Motorista</h3><img src="${o.assinatura}" alt="Assinatura"></div>`:''}
+
+    <div style="text-align:center;margin-top:16px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px">
+      Documento gerado em ${new Date().toLocaleString('pt-BR')} · ${emp}
+    </div>
+  `;
+
+  document.getElementById('pdf-frame').classList.add('show');
+}
+
+function fecharPDF(){
+  document.getElementById('pdf-frame').classList.remove('show');
+}
+function imprimirPDF(){
+  window.print();
+}
+
+/* ══ MOSTRAR BOTÃO EDITAR PARA ADMIN ═══════════════════════════ */
+const _rTicketOrig = rTicket;
+function rTicket(o){
+  _rTicketOrig(o);
+  const btnEdit = document.getElementById('btn-edit-tk');
+  if(btnEdit) btnEdit.style.display = (usr&&usr.nivel==='admin') ? 'block' : 'none';
+}
+
+/* ══ SYNC CONTRATOS AO ABRIR APP ═══════════════════════════════ */
+const _openAppOrig = openApp;
+function openApp(u){
+  _openAppOrig(u);
+  // Carregar contratos da planilha em background
+  setTimeout(()=>loadContratosDaPlanilha(), 3000);
+}
+
+/* ══ RESET FOTOS TARA NO IRBNOVA ═══════════════════════════════ */
+const _irNovaOrig = irNova;
+function irNova(){
+  _irNovaOrig();
+  ['fb-tara','fb-oc'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('ok');});
+  ['fi-tara','fi-oc'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=i===0?'📊':'📄';});
+  ['fl-tara','fl-oc'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=i===0?'Fotografar display da balança':'Fotografar contrato ou ordem';});
+  ['prev-tara','prev-oc'].forEach(id=>{const p=document.getElementById(id);if(p){p.style.display='none';p.src='';}});
+}
 </script>
 </body>
 </html>
