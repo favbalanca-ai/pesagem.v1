@@ -554,8 +554,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
   <!-- ORDENS ADMIN -->
   <div class="pg" id="pg-oc">
     <div class="card">
-      <div class="ct">➕ Cadastrar Ordem</div>
-      <div class="f"><label>Nº do Contrato / Ordem *</label><input type="text" id="oc-n" placeholder="OC-2024-001"></div>
+      <div class="ct">➕ Cadastrar Contrato</div>
+      <div class="f"><label>Nº do Contrato*</label><input type="text" id="oc-n" placeholder="2026.CS-01"></div>
       <div class="r2">
         <div class="f"><label>Data</label><input type="date" id="oc-d"></div>
         <div class="f"><label>Produto</label><input type="text" id="oc-p" placeholder="Soja, Milho..."></div>
@@ -564,7 +564,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
       <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar</button>
     </div>
     <div class="card">
-      <div class="ct">📋 Ordens Cadastradas</div>
+      <div class="ct">📋 Contrato Cadastradas</div>
       <div id="lst-oc"></div>
     </div>
   </div>
@@ -645,9 +645,9 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxFlt5mnjwGn1tn1RcL6
 const TOKEN      = "pesagem@fav2024";
 
 const USERS = [
-  {email:"fav.balanca@gmail.com",     pw:"fazenda2024", nome:"Admin",     nivel:"admin"},
-  {email:"balanca@fazendaaguaviva.com",pw:"balanca123",  nome:"Balanceiro",nivel:"op"},
-  {email:"escritorio@fazendaaguaviva.com",pw:"escrit456",nome:"Escritório",nivel:"view"},
+  {email:"fav.balanca@gmail.com",     pw:"123", nome:"Admin",     nivel:"admin"},
+  {email:"balanca@fazendaaguaviva.com",pw:"123",  nome:"Balanceiro",nivel:"op"},
+  {email:"escritorio@fazendaaguaviva.com",pw:"123",nome:"Escritório",nivel:"view"},
 ];
 
 /* ══ ESTADO ═══════════════════════════════════════════════════ */
@@ -1084,7 +1084,7 @@ function vTicket(id){
 }
 function sendWA(){
   if(!atual)return;
-  const n=DB.cfg.wa||'5561999999999',tol=DB.cfg.tol||7;
+  const n=DB.cfg.wa||'5561999995351',tol=DB.cfg.tol||7;
   const msg=encodeURIComponent(
     `🚛 *PESAGEM FINALIZADA*\n*${DB.cfg.empresa||'Pesagem'}*\n\n`+
     `📋 Contrato: ${atual.numOrdem}\n🚛 Placa: ${atual.placa}\n👤 Motorista: ${atual.motorista}\n\n`+
