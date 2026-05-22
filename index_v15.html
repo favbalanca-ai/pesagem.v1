@@ -754,9 +754,19 @@ function infoOC(v){
 
 function addOC(){
   var nm=document.getElementById('oc-n').value.trim();
-  if(!nm){toast('⚠️ Informe o nº do contrato!');return;}
+
+  if(!nm){
+    toast('⚠️ Informe o nº do contrato!');
+    return;
+  }
+
   var ocs=JSON.parse(localStorage.getItem('poc')||'[]');
-  for(var i=0;i<ocs.length;i++){if(ocs[i].n===nm){toast('⚠️ Contrato já existe!');return;}}
+
+  if(ocs.find(function(o){return o.n===nm;})){
+    toast('⚠️ Contrato já existe!');
+    return;
+  }
+
   var contrato={
     n: nm,
     d: document.getElementById('oc-d').value,
@@ -764,28 +774,56 @@ function addOC(){
     vol: parseFloat(document.getElementById('oc-vol').value)||0,
     o: document.getElementById('oc-o').value.trim()
   };
+
   ocs.push(contrato);
+
   localStorage.setItem('poc',JSON.stringify(ocs));
+
+  // limpar campos
   document.getElementById('oc-n').value='';
   document.getElementById('oc-d').value='';
   document.getElementById('oc-p').value='';
   document.getElementById('oc-vol').value='';
   document.getElementById('oc-o').value='';
-  if(SHEETS_URL&&navigator.onLine){
-    var payload=JSON.stringify({acao:'salvarContrato',contrato:contrato,token:TOKEN});
-    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload})
-      .then(function(r){return r.text();})
-      .then(function(t){
-        try{
-          var j=JSON.parse(t);
-          if(j.ok) toast('✅ Contrato gravado na planilha!');
-          else toast('❌ Erro: '+(j.erro||'desconhecido'));
-        }catch(e){toast('❌ Resposta: '+t.substring(0,40));}
+
+  // enviar para planilha
+  if(SHEETS_URL && navigator.onLine){
+
+    fetch(SHEETS_URL,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        acao:'salvarContrato',
+        contrato:contrato,
+        token:TOKEN
       })
-      .catch(function(e){toast('❌ Sem conexão');});
-  } else {
-    toast('✅ Salvo — enviará quando conectar');
+    })
+
+    .then(r=>r.json())
+
+    .then(j=>{
+
+      console.log('RESPOSTA CONTRATO:',j);
+
+      if(j.ok){
+        toast('✅ Contrato gravado na planilha!');
+      }else{
+        toast('❌ '+(j.erro||'Erro desconhecido'));
+      }
+
+    })
+
+    .catch(e=>{
+      console.error(e);
+      toast('❌ Falha conexão planilha');
+    });
+
+  }else{
+    toast('✅ Salvo localmente');
   }
+
   rOC();
 }
 
