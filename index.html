@@ -981,24 +981,70 @@ function addOC(){
   document.getElementById('oc-p').value='';
   document.getElementById('oc-vol').value='';
   document.getElementById('oc-o').value='';
-  // Enviar para planilha
-  if(SHEETS_URL&&navigator.onLine){
-    var payload=JSON.stringify({acao:'salvarContrato',contrato:contrato,token:TOKEN});
-    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload})
-      .then(function(r){return r.text();})
-      .then(function(t){
-        try{
-          var j=JSON.parse(t);
-          if(j.ok) toast('✅ Contrato gravado na planilha!');
-          else toast('❌ Erro planilha: '+(j.erro||'desconhecido'));
-        }catch(e){
-          toast('❌ Resposta inválida: '+t.substring(0,50));
-        }
-      })
-      .catch(function(e){toast('❌ Sem conexão: '+e.message);});
-  } else {
-    toast('✅ Salvo localmente — enviará quando conectar');
-  }
+```javascript
+// Enviar para planilha
+if(SHEETS_URL && navigator.onLine){
+
+  fetch(SHEETS_URL,{
+    method:'POST',
+    headers:{
+      'Content-Type':'text/plain'
+    },
+    body:JSON.stringify({
+      acao:'salvarContrato',
+      n: contrato.n,
+      d: contrato.d,
+      p: contrato.p,
+      vol: contrato.vol,
+      o: contrato.o,
+      token:TOKEN
+    })
+  })
+  .then(r => r.text())
+  .then(t => {
+
+    console.log('RETORNO CONTRATO:', t);
+
+    try{
+
+      var j = JSON.parse(t);
+
+      if(j.ok){
+
+        toast('✅ Contrato gravado na planilha!');
+
+        loadContratosDaPlanilha();
+
+      }else{
+
+        toast('❌ '+(j.erro || 'Erro ao salvar'));
+
+      }
+
+    }catch(err){
+
+      console.error(err);
+
+      toast('❌ Resposta inválida do servidor');
+
+    }
+
+  })
+  .catch(err => {
+
+    console.error(err);
+
+    toast('❌ Erro de conexão');
+
+  });
+
+}else{
+
+  toast('📵 Sem internet — salvo localmente');
+
+}
+```
+
   rOC();
 }
 
