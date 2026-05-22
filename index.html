@@ -522,10 +522,12 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
       <div class="tk"><span class="tkl">Motorista</span><span class="tkv" id="tk-mt">—</span></div>
       <div class="tk"><span class="tkl">CPF</span><span class="tkv" id="tk-cp">—</span></div>
       <div class="tk"><span class="tkl">Município / UF</span><span class="tkv" id="tk-mun">—</span></div>
+      <div class="tk"><span class="tkl">Eixos</span><span class="tkv" id="tk-ex">—</span></div>
+      <div class="tk"><span class="tkl">PBT Máx (CONTRAN)</span><span class="tkv" id="tk-pm">—</span></div>
       <div class="tk"><span class="tkl">Tara</span><span class="tkv" id="tk-tr">—</span></div>
       <div class="tk"><span class="tkl">Peso Bruto</span><span class="tkv" id="tk-br">—</span></div>
       <div class="tk"><span class="tkl">Carga Líquida</span><span class="tkv big" id="tk-cl">—</span></div>
-     
+      <div class="tk"><span class="tkl">Limite c/ Tolerância</span><span class="tkv" id="tk-tl">—</span></div>
       <div class="tk"><span class="tkl">Funcionário</span><span class="tkv" id="tk-fn">—</span></div>
     </div>
     <div class="st" id="tk-st"></div>
@@ -691,7 +693,6 @@ const USERS = [
 /* ══ ESTADO ═══════════════════════════════════════════════════ */
 let DB={ordens:[],cfg:{}}, pend=[], atual=null, usr=null;
 let fotos={}, utTara='kg', utBruto='kg', filAtivo='all', cloud=[];
-let contratosCloud=[]; // única fonte de verdade de contratos — vem da planilha
 let pgAtual='pg-home', pgAntes=null;
 let sigC, sigX, sigDraw=false, sigOk=false;
 
@@ -730,10 +731,11 @@ function openApp(u){
   loadDB(); loadCfg(); initSig();
   // Carregar planilha assim que abrir
   setTimeout(async()=>{
-    await syncP();
-    await Promise.all([carregarDaPlanilha(), loadContratosDaPlanilha()]);
+    await syncP(); // enviar pendentes primeiro
+    await carregarDaPlanilha(); // depois carregar planilha
     updHome();
-  },1000);
+    loadContratosDaPlanilha();
+  }, 1000);
   updHome();
 }
 function logout(){
@@ -748,12 +750,12 @@ function logout(){
 // ══ DADOS: planilha é a fonte de verdade ══════════════════════
 // Localmente só guardamos pendentes (offline) e cache temporário
 function saveDB(){
+  // Não salvar mais ordens no localStorage — planilha é a fonte
   localStorage.setItem('ppd',JSON.stringify(pend));
 }
 function loadDB(){
-  DB.ordens=[];
+  DB.ordens=[]; // sempre começa vazio — carrega da planilha
   pend=JSON.parse(localStorage.getItem('ppd')||'[]');
-  carregarContratosLocal();
 }
 function loadCfg(){
   DB.cfg=JSON.parse(localStorage.getItem('pcfg')||'{"empresa":"Fazenda Água Viva","wa":"5561999995351","tol":7}');
@@ -890,32 +892,30 @@ function abrirSelContrato(){
   const lista=document.getElementById('sel-contrato-lista');
   if(box.style.display==='block'){box.style.display='none';return;}
   box.style.display='block';
-  if(!contratosCloud.length){
+  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  if(!ocs.length){
     lista.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:var(--ink3)">Carregando da planilha...</div>';
     loadContratosDaPlanilha().then(()=>{
-      if(contratosCloud.length) renderSelContrato(contratosCloud,lista);
+      const ocs2=JSON.parse(localStorage.getItem('poc')||'[]');
+      if(ocs2.length) renderSelContrato(ocs2,lista);
       else lista.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:var(--ink3)">Nenhum contrato. Cadastre em Ordens.</div>';
     });
     return;
   }
-  renderSelContrato(contratosCloud,lista);
+  renderSelContrato(ocs,lista);
 }
 function renderSelContrato(ocs,lista){
-  var html='';
-  for(var i=0;i<ocs.length;i++){
-    var o=ocs[i];
-    var vol=parseFloat(o.vol)||0;
-    var entregues=0;
-    for(var j=0;j<cloud.length;j++){var x=cloud[j];if(x.numOrdem===o.n&&(x.status||'').indexOf('Finalizado')>=0)entregues+=parseFloat(x.cargaLiquida||0)*1000;}
-    var saldo=vol>0?vol-entregues:null;
-    var cor=saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)';
-    html+='<div onclick="selecionarContrato(\''+o.n+'\')" style="padding:10px 13px;cursor:pointer;border-bottom:.5px solid var(--brd)" onmouseover="this.style.background=\'var(--g3)\'" onmouseout="this.style.background=\'\'">';
-    html+='<div style="font-weight:700;font-size:13px">'+o.n+'</div>';
-    html+='<div style="font-size:11px;color:var(--ink3)">'+(o.p||'—')+(o.d?' · '+o.d:'')+'</div>';
-    if(vol>0) html+='<div style="font-size:11px;color:'+cor+';font-weight:600">Saldo: '+Math.round(saldo).toLocaleString('pt-BR')+'kg / '+vol.toLocaleString('pt-BR')+'kg</div>';
-    html+='</div>';
-  }
-  lista.innerHTML=html;
+  lista.innerHTML=ocs.map(o=>{
+    const vol=parseFloat(o.vol)||0;
+    const entregues=cloud.filter(x=>x.numOrdem===o.n&&(x.status||'').includes('Finalizado'))
+      .reduce((sum,x)=>sum+parseFloat(x.cargaLiquida||0)*1000,0);
+    const saldo=vol>0?vol-entregues:null;
+    return `<div onclick="selecionarContrato('${o.n}')" style="padding:10px 13px;cursor:pointer;border-bottom:.5px solid var(--brd)" onmouseover="this.style.background='var(--g3)'" onmouseout="this.style.background=''">
+      <div style="font-weight:700;font-size:13px">${o.n}</div>
+      <div style="font-size:11px;color:var(--ink3)">${o.p||'—'}${o.d?' · '+o.d:''}</div>
+      ${vol>0?`<div style="font-size:11px;color:${saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)'};font-weight:600">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')}kg / ${vol.toLocaleString('pt-BR')}kg</div>`:''}
+    </div>`;
+  }).join('');
 }
 function selecionarContrato(n){
   document.getElementById('f-oc').value=n;
@@ -932,28 +932,31 @@ function selecionarProduto(p){
   document.getElementById('oc-p').value=p;
   document.getElementById('prod-drop').style.display='none';
 }
-document.addEventListener('click',function(e){
+// Fechar dropdown ao clicar fora
+document.addEventListener('click',e=>{
   const d=document.getElementById('prod-drop');
   if(d&&!e.target.closest('#pg-oc')) d.style.display='none';
 });
 function infoOC(v){
-  var o=contratosCloud.find(function(x){return x.n===v;});
+  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  const o=ocs.find(x=>x.n===v);
   const el=document.getElementById('oc-info');
   if(!o){el.style.display='none';return;}
-  var entregues=0;
-  for(var j=0;j<cloud.length;j++){var x=cloud[j];if(x.numOrdem===v&&(x.status||'').indexOf('Finalizado')>=0)entregues+=parseFloat(x.cargaLiquida||0)*1000;}
+  // calcular kg já entregues neste contrato
+  const entregues=cloud.filter(x=>x.numOrdem===v&&(x.status||'').includes('Finalizado'))
+    .reduce((sum,x)=>sum+parseFloat(x.cargaLiquida||0)*1000,0);
   const vol=parseFloat(o.vol)||0;
   const saldo=vol>0?vol-entregues:null;
-  let html='📋 <b>'+o.n+'</b>';
-  if(o.p) html+=' · '+o.p;
-  if(o.d) html+=' · '+o.d;
+  let html=`📋 <b>${o.n}</b>`;
+  if(o.p) html+=` · ${o.p}`;
+  if(o.d) html+=` · ${o.d}`;
   if(vol>0){
     const cor=saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)';
-    html+='<br>📦 Volume: <b>'+vol.toLocaleString('pt-BR')+' kg</b>';
-    html+=' · Entregue: <b>'+Math.round(entregues).toLocaleString('pt-BR')+' kg</b>';
-    html+=' · <span style="color:'+cor+';font-weight:800">Saldo: '+Math.round(saldo).toLocaleString('pt-BR')+' kg</span>';
+    html+=`<br>📦 Volume contrato: <b>${vol.toLocaleString('pt-BR')} kg</b>`;
+    html+=` · Entregue: <b>${Math.round(entregues).toLocaleString('pt-BR')} kg</b>`;
+    html+=` · <span style="color:${cor};font-weight:800">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')} kg</span>`;
   }
-  if(o.o) html+='<br>'+o.o;
+  if(o.o) html+=`<br>${o.o}`;
   el.style.display='block'; el.innerHTML=html;
 }
 
@@ -961,8 +964,8 @@ function infoOC(v){
 function addOC(){
   var nm=document.getElementById('oc-n').value.trim();
   if(!nm){toast('⚠️ Informe o nº do contrato!');return;}
-  // checar duplicata na lista atual
-  if(contratosCloud.find(function(o){return o.n===nm;})){toast('⚠️ Contrato já existe!');return;}
+  var ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  if(ocs.find(function(o){return o.n===nm;})){toast('⚠️ Contrato já existe!');return;}
   var contrato={
     n: nm,
     d: document.getElementById('oc-d').value,
@@ -970,143 +973,82 @@ function addOC(){
     vol: parseFloat(document.getElementById('oc-vol').value)||0,
     o: document.getElementById('oc-o').value.trim()
   };
-  // Limpar campos imediatamente
+  ocs.push(contrato);
+  localStorage.setItem('poc',JSON.stringify(ocs));
+  // limpar campos
   document.getElementById('oc-n').value='';
   document.getElementById('oc-d').value='';
   document.getElementById('oc-p').value='';
   document.getElementById('oc-vol').value='';
   document.getElementById('oc-o').value='';
-  if(!SHEETS_URL||!navigator.onLine){
-    // offline: salvar localmente e marcar para envio
-    contratosCloud.push(contrato);
-    salvarContratosLocal();
-    rOC();
-    toast('📵 Salvo localmente — enviará quando conectar');
-    return;
-  }
-  // online: enviar direto para planilha
-  toast('⏳ Enviando para planilha...');
-  var payload=JSON.stringify({acao:'salvarContrato',contrato:contrato,token:TOKEN});
-  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload})
-    .then(function(r){return r.text();})
-    .then(function(t){
-      try{
-        var j=JSON.parse(t);
-        if(j.ok){
-          toast('✅ Contrato gravado na planilha!');
-          // recarregar da planilha para todos verem
-          loadContratosDaPlanilha().then(function(){rOC();});
-        } else {
-          toast('❌ Erro: '+(j.erro||'desconhecido'));
-          // salvar local como fallback
-          contratosCloud.push(contrato);
-          salvarContratosLocal();
-          rOC();
+  // Enviar para planilha
+  if(SHEETS_URL&&navigator.onLine){
+    var payload=JSON.stringify({acao:'salvarContrato',contrato:contrato,token:TOKEN});
+    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload})
+      .then(function(r){return r.text();})
+      .then(function(t){
+        try{
+          var j=JSON.parse(t);
+          if(j.ok) toast('✅ Contrato gravado na planilha!');
+          else toast('❌ Erro planilha: '+(j.erro||'desconhecido'));
+        }catch(e){
+          toast('❌ Resposta inválida: '+t.substring(0,50));
         }
-      }catch(e){
-        toast('❌ Erro ao processar resposta');
-        contratosCloud.push(contrato);
-        salvarContratosLocal();
-        rOC();
-      }
-    })
-    .catch(function(){
-      toast('❌ Sem conexão — salvo localmente');
-      contratosCloud.push(contrato);
-      salvarContratosLocal();
-      rOC();
-    });
+      })
+      .catch(function(e){toast('❌ Sem conexão: '+e.message);});
+  } else {
+    toast('✅ Salvo localmente — enviará quando conectar');
+  }
+  rOC();
 }
 
 function rOC(){
-  var ocs=contratosCloud;
-  var el=document.getElementById('lst-oc');
-  // popular datalists
-  var dl1=document.getElementById('dl-oc-n');
-  var dl2=document.getElementById('dl-oc');
-  var opts=ocs.map(function(o){return '<option value="'+o.n+'">'+o.n+(o.p?' — '+o.p:'')+'</option>';}).join('');
-  if(dl1) dl1.innerHTML=opts;
-  if(dl2) dl2.innerHTML=opts;
+  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  const el=document.getElementById('lst-oc');
+  // popular datalist do campo nº contrato
+  const dl=document.getElementById('dl-oc-n');
+  if(dl) dl.innerHTML=ocs.map(o=>`<option value="${o.n}">${o.n}${o.p?' — '+o.p:''}</option>`).join('');
   if(!ocs.length){
-    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:12px">Nenhum contrato.<br>Cadastre acima ou toque ☁️ para carregar da planilha.</div>';
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:12px">Nenhum contrato cadastrado<br>Toque em ☁️ Atualizar para carregar da planilha</div>';
     return;
   }
-  var html='';
-  for(var i=ocs.length-1;i>=0;i--){
-    var o=ocs[i];
-    var vol=parseFloat(o.vol)||0;
-    var entregues=0;
-    for(var j=0;j<cloud.length;j++){
-      var x=cloud[j];
-      if(x.numOrdem===o.n&&(x.status||'').indexOf('Finalizado')>=0)
-        entregues+=parseFloat(x.cargaLiquida||0)*1000;
-    }
-    var saldo=vol>0?vol-entregues:null;
-    var pct=vol>0?Math.min(100,Math.round(entregues/vol*100)):null;
-    var cor=saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)';
-    html+='<div style="padding:10px 0;border-bottom:.5px solid var(--brd)">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-    html+='<div style="flex:1">';
-    html+='<div style="font-weight:800;font-size:14px">'+o.n+'</div>';
-    html+='<div style="font-size:11px;color:var(--ink3);margin-top:1px">'+(o.p||'—')+' · '+(o.d||'—')+'</div>';
-    if(vol>0){
-      html+='<div style="font-size:11px;color:var(--ink2);margin-top:3px">📦 Total: <b>'+vol.toLocaleString('pt-BR')+'kg</b> · Entregue: <b>'+Math.round(entregues).toLocaleString('pt-BR')+'kg</b> · <b style="color:'+cor+'">Saldo: '+Math.round(saldo).toLocaleString('pt-BR')+'kg</b></div>';
-      html+='<div style="background:#e0e0e0;border-radius:4px;height:4px;margin-top:5px"><div style="background:'+(pct>=100?'var(--r1)':pct>=90?'var(--a1)':'var(--g1)')+';width:'+pct+'%;height:4px;border-radius:4px"></div></div>';
-    }
-    if(o.o) html+='<div style="font-size:10px;color:var(--ink3);margin-top:3px">'+o.o+'</div>';
-    html+='</div>';
-    html+='<button onclick="delOC(\''+o.n+'\')" style="background:var(--r2);color:var(--r1);border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:700;margin-left:8px;flex-shrink:0">×</button>';
-    html+='</div></div>';
-  }
-  el.innerHTML=html;
+  el.innerHTML=[...ocs].reverse().map(o=>{
+    const vol=parseFloat(o.vol)||0;
+    const entregues=cloud.filter(x=>x.numOrdem===o.n&&(x.status||'').includes('Finalizado'))
+      .reduce((sum,x)=>sum+parseFloat(x.cargaLiquida||0)*1000,0);
+    const saldo=vol>0?vol-entregues:null;
+    const pct=vol>0?Math.min(100,Math.round(entregues/vol*100)):null;
+    return `<div style="padding:10px 0;border-bottom:.5px solid var(--brd)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:14px">${o.n}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:1px">${o.p||'—'} · ${o.d||'—'}</div>
+          ${vol>0?`<div style="font-size:11px;color:var(--ink2);margin-top:3px">
+            📦 Total: <b>${vol.toLocaleString('pt-BR')}kg</b> · 
+            Entregue: <b>${Math.round(entregues).toLocaleString('pt-BR')}kg</b> · 
+            <b style="color:${saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)'}">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')}kg</b>
+          </div>
+          <div style="background:#e0e0e0;border-radius:4px;height:4px;margin-top:5px">
+            <div style="background:${pct>=100?'var(--r1)':pct>=90?'var(--a1)':'var(--g1)'};width:${pct}%;height:4px;border-radius:4px;transition:width .3s"></div>
+          </div>`:''}
+          ${o.o?`<div style="font-size:10px;color:var(--ink3);margin-top:3px">${o.o}</div>`:''}
+        </div>
+        <button onclick="delOC('${o.n}')" style="background:var(--r2);color:var(--r1);border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:700;margin-left:8px;flex-shrink:0">×</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function delOC(n){
-  if(!confirm('Excluir contrato '+n+'?'))return;
+  if(!confirm(`Excluir contrato ${n}?`))return;
+  let ocs=JSON.parse(localStorage.getItem('poc')||'[]');
+  localStorage.setItem('poc',JSON.stringify(ocs.filter(o=>o.n!==n)));
+  // marcar como inativo na planilha
   if(SHEETS_URL&&navigator.onLine){
     fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao:'delContrato',num:n,token:TOKEN})})
-      .then(function(){
-        // recarregar da planilha
-        loadContratosDaPlanilha().then(function(){rOC();});
-        toast('🗑️ Contrato excluído');
-      })
-      .catch(function(){
-        // remover localmente
-        contratosCloud=contratosCloud.filter(function(o){return o.n!==n;});
-        salvarContratosLocal(); rOC();
-        toast('🗑️ Excluído localmente');
-      });
-  } else {
-    contratosCloud=contratosCloud.filter(function(o){return o.n!==n;});
-    salvarContratosLocal(); rOC();
-    toast('🗑️ Excluído (sincronizará quando conectar)');
+      body:JSON.stringify({acao:'delContrato',num:n,token:TOKEN})}).catch(()=>{});
   }
-}
-
-// Carregar contratos da planilha — fonte de verdade
-async function loadContratosDaPlanilha(){
-  if(!SHEETS_URL||!navigator.onLine) return;
-  try{
-    var r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao:'listarContratos',token:TOKEN})});
-    var j=JSON.parse(await r.text());
-    if(j.ok&&j.contratos){
-      contratosCloud=j.contratos; // planilha substitui tudo
-      salvarContratosLocal();
-      // atualizar datalists
-      var opts=j.contratos.map(function(c){return '<option value="'+c.n+'">'+c.n+(c.p?' — '+c.p:'')+'</option>';}).join('');
-      var dl=document.getElementById('dl-oc'); if(dl) dl.innerHTML=opts;
-      var dl2=document.getElementById('dl-oc-n'); if(dl2) dl2.innerHTML=opts;
-    }
-  }catch(e){}
-}
-
-function salvarContratosLocal(){
-  localStorage.setItem('poc',JSON.stringify(contratosCloud));
-}
-function carregarContratosLocal(){
-  contratosCloud=JSON.parse(localStorage.getItem('poc')||'[]');
+  rOC(); toast('🗑️ Contrato excluído');
 }
 
 /* ══ LEITURA DE PLACA POR IA ═══════════════════════════════════ */
@@ -1393,10 +1335,11 @@ function sendWA(){
   const msg=encodeURIComponent(
     `🚛 *PESAGEM FINALIZADA*\n*${DB.cfg.empresa||'Pesagem'}*\n\n`+
     `📋 Contrato: ${atual.numOrdem}\n🚛 Placa: ${atual.placa}\n👤 Motorista: ${atual.motorista}\n\n`+
-  
+    `🔢 Eixos: ${atual.formulaEixos}\n`+
     `⚖️ Tara: ${atual.tara.toFixed(3)}t (${Math.round(atual.tara*1000)}kg)\n`+
     `⚖️ Bruto: ${(atual.pesoBruto||0).toFixed(3)}t (${Math.round((atual.pesoBruto||0)*1000)}kg)\n`+
-    `📦 Carga: ${(atual.cargaLiquida||0).toFixed(3)}t (${Math.round((atual.cargaLiquida||0)*1000)}kg)\n`
+    `📦 Carga: ${(atual.cargaLiquida||0).toFixed(3)}t (${Math.round((atual.cargaLiquida||0)*1000)}kg)\n`+
+    `📏 PBT Máx: ${atual.pbtMax}t · Tol.${tol}%: ${(atual.pbtMax*(1+tol/100)).toFixed(1)}t\n\n`+
     `*Status: ${atual.statusPeso||'CONFORME'}*\n📅 ${atual.dataHoraFim||''}`
   );
   window.open(`https://wa.me/${n}?text=${msg}`,'_blank');
@@ -1496,20 +1439,19 @@ async function carregarDaPlanilha(){
   return false;
 }
 
-// Botão Sincronizar na home — sincroniza TUDO
+// Botão Sincronizar na home
 async function syncM(){
   const btn=document.getElementById('btn-sy');
   if(btn){btn.disabled=true;btn.textContent='⏳...';}
-  await syncP(); // enviar pendentes offline
-  const [okP, okC] = await Promise.all([
-    carregarDaPlanilha(),      // pesagens
-    loadContratosDaPlanilha()  // contratos
-  ]);
+  // 1. Enviar pendentes offline
+  await syncP();
+  // 2. Carregar planilha
+  const ok=await carregarDaPlanilha();
   updHome();
   if(btn){btn.disabled=false;btn.textContent='Sincronizar';}
-  if(okP) toast('☁️ '+cloud.length+' pesagem(s) · '+contratosCloud.length+' contrato(s)');
+  if(ok) toast(`☁️ ${cloud.length} registro(s) na planilha`);
   else if(!navigator.onLine) toast('📵 Sem internet');
-  else toast('❌ Erro ao sincronizar');
+  else toast('❌ Erro ao carregar planilha');
 }
 
 // Carregar ao abrir histórico
@@ -1557,6 +1499,19 @@ function normOrdem(o){
 }
 
 // ── Contratos — da planilha (fonte de verdade) ────────────────
+async function loadContratosDaPlanilha(){
+  if(!SHEETS_URL||!navigator.onLine)return;
+  try{
+    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listarContratos',token:TOKEN})});
+    const j=JSON.parse(await r.text());
+    if(j.ok&&j.contratos){
+      // planilha é a fonte — substitui lista local
+      localStorage.setItem('poc',JSON.stringify(j.contratos));
+      const dl=document.getElementById('dl-oc');
+      if(dl) dl.innerHTML=j.contratos.map(c=>`<option value="${c.n}">${c.n}${c.p?' — '+c.p:''}</option>`).join('');
+    }
+  }catch(e){}
+}
 
 /* ══ EDITAR TICKET (admin) ═════════════════════════════════════ */
 function abrirEditar(){
