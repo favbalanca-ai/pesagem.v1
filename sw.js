@@ -1,9 +1,40 @@
-const CACHE='pesagem-v7';
-const ASSETS=['/pesagem/','/pesagem/index.html','/pesagem/manifest.json'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>{})).then(()=>self.skipWaiting()));});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
+const CACHE='pesagem-v8';
+
+const ASSETS=[
+ './',
+ './index.html',
+ './manifest.json'
+];
+
+self.addEventListener('install',e=>{
+ e.waitUntil(
+  caches.open(CACHE).then(c=>c.addAll(ASSETS))
+ );
+ self.skipWaiting();
+});
+
+self.addEventListener('activate',e=>{
+ e.waitUntil(
+  caches.keys().then(keys=>{
+   return Promise.all(
+    keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))
+   );
+  }).then(()=>self.clients.claim())
+ );
+});
+
 self.addEventListener('fetch',e=>{
-  const u=e.request.url;
-  if(u.includes('script.google.com')||u.includes('googleapis.com')||u.includes('fonts.g')||!u.includes('favbalanca-ai.github.io'))return;
-  e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
+ if(e.request.method!=='GET') return;
+
+ e.respondWith(
+  fetch(e.request)
+   .then(r=>{
+     const copy=r.clone();
+     caches.open(CACHE).then(c=>c.put(e.request,copy));
+     return r;
+   })
+   .catch(()=>{
+     return caches.match(e.request).then(r=>r||caches.match('./index.html'));
+   })
+ );
 });

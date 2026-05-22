@@ -14,8 +14,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--g1:#1a5c45;--g2:#256b52;--g3:#e6f4ee;--g4:#0d2b1e;--r1:#c0392b;--r2:#fdecea;--a1:#92650a;--a2:#fef3c7;--ink:#0f1a14;--ink2:#3a5244;--ink3:#7a9e8a;--bg:#eef4f0;--card:#fff;--brd:#c8dfd3;--r:14px;--r2px:10px;--r3:8px;--sh:0 1px 6px rgba(13,43,30,.07);}
-html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;overflow:hidden}
-#app{height:100%;display:flex;flex-direction:column}
+html,body{height:100dvh;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;overflow:hidden}
+#app{height:100dvh;display:flex;flex-direction:column}
 .top{background:var(--g1);color:#fff;flex-shrink:0;padding:env(safe-area-inset-top,0) 0 0;position:relative;z-index:50}
 .top-in{padding:13px 16px 11px;display:flex;align-items:center;gap:10px}
 .top h1{font-size:15px;font-weight:700;flex:1}
@@ -502,6 +502,14 @@ window.addEventListener('load',function(){
   if(!navigator.onLine) document.getElementById('offb').style.display='block';
   document.addEventListener('touchmove',function(e){if(document.body.getAttribute('data-sig')==='1')e.preventDefault();},{passive:false});
   checkSess(); calcPBT();
+setInterval(function(){
+  if(navigator.onLine){
+    syncP();
+    carregarDaPlanilha();
+    loadContratosDaPlanilha();
+  }
+},30000);
+
 });
 
 function login(){
@@ -546,8 +554,18 @@ function logout(){
   document.getElementById('l-pw').value='';
 }
 
-function saveDB(){localStorage.setItem('ppd',JSON.stringify(pend));}
-function loadDB(){DB.ordens=[];pend=JSON.parse(localStorage.getItem('ppd')||'[]');}
+function saveDB(){
+  localStorage.setItem('ppd',JSON.stringify(pend));
+  localStorage.setItem('pdb',JSON.stringify(DB.ordens));
+  localStorage.setItem('pbackup',JSON.stringify({
+    data:new Date().toISOString(),
+    ordens:DB.ordens
+  }));
+}
+function loadDB(){
+  DB.ordens=JSON.parse(localStorage.getItem('pdb')||'[]');
+  pend=JSON.parse(localStorage.getItem('ppd')||'[]');
+}
 function loadCfg(){
   DB.cfg=JSON.parse(localStorage.getItem('pcfg')||'{"empresa":"Fazenda Água Viva","wa":"5561999995351","tol":7}');
   document.getElementById('cfg-em').value=DB.cfg.empresa||'Fazenda Água Viva';
@@ -898,8 +916,27 @@ function salvar(){
     tara:tara,limPeso:pbt,obs:document.getElementById('f-ob').value,fotos:JSON.parse(JSON.stringify(fotos)),
     status:'Aguardando',pesoBruto:null,cargaLiquida:null,statusPeso:null,dataHoraFim:null,assinatura:null
   };
-  DB.ordens.push(o); saveDB();
-  enviar(o,'salvar');
+  var existe=DB.ordens.find(function(x){
+    return x.placa===o.placa &&
+    x.status==='Aguardando';
+  });
+
+  if(existe){
+    toast('⚠️ Já existe pesagem aguardando para esta placa');
+    return;
+  }
+
+  DB.ordens.push(o);
+  saveDB();
+
+  enviar(o,'salvar')
+  .then(function(){
+    if(navigator.onLine){
+      carregarDaPlanilha().then(function(){
+        updHome();
+      });
+    }
+  });
   atual=o; toast('✅ Tara registrada!'); updHome(); irAg();
 }
 
@@ -1130,7 +1167,7 @@ function carregarDaPlanilha(){
       var j=JSON.parse(t);
       if(j.ok&&j.ordens){
         cloud=j.ordens.map(normOrdem);
-        DB.ordens=cloud.slice();
+        DB.ordens=cloud.slice(); saveDB();
         return true;
       }
       return false;
