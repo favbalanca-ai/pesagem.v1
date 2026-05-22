@@ -1393,11 +1393,10 @@ function sendWA(){
   const msg=encodeURIComponent(
     `🚛 *PESAGEM FINALIZADA*\n*${DB.cfg.empresa||'Pesagem'}*\n\n`+
     `📋 Contrato: ${atual.numOrdem}\n🚛 Placa: ${atual.placa}\n👤 Motorista: ${atual.motorista}\n\n`+
-    `🔢 Eixos: ${atual.formulaEixos}\n`+
+  
     `⚖️ Tara: ${atual.tara.toFixed(3)}t (${Math.round(atual.tara*1000)}kg)\n`+
     `⚖️ Bruto: ${(atual.pesoBruto||0).toFixed(3)}t (${Math.round((atual.pesoBruto||0)*1000)}kg)\n`+
-    `📦 Carga: ${(atual.cargaLiquida||0).toFixed(3)}t (${Math.round((atual.cargaLiquida||0)*1000)}kg)\n`+
-    `📏 PBT Máx: ${atual.pbtMax}t · Tol.${tol}%: ${(atual.pbtMax*(1+tol/100)).toFixed(1)}t\n\n`+
+    `📦 Carga: ${(atual.cargaLiquida||0).toFixed(3)}t (${Math.round((atual.cargaLiquida||0)*1000)}kg)\n`
     `*Status: ${atual.statusPeso||'CONFORME'}*\n📅 ${atual.dataHoraFim||''}`
   );
   window.open(`https://wa.me/${n}?text=${msg}`,'_blank');
