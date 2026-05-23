@@ -551,9 +551,15 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
   <!-- HISTÓRICO -->
   <div class="pg" id="pg-hist">
     <div style="display:flex;gap:7px;margin-bottom:9px">
-      <input type="text" id="h-bsc" placeholder="🔍 Placa ou motorista..." oninput="rHist()"
+      <input type="text" id="h-bsc" placeholder="🔍 Placa, motorista ou contrato..." oninput="rHist()"
         style="flex:1;padding:9px 13px;border:1.5px solid var(--brd);border-radius:var(--r2px);font-size:13px;background:#fff;font-family:'Inter',sans-serif">
       <button onclick="loadCl()" style="padding:9px 11px;border-radius:var(--r2px);border:1.5px solid var(--brd);background:#fff;font-size:17px;cursor:pointer">☁️</button>
+    </div>
+    <!-- Filtro de contrato -->
+    <div style="margin-bottom:9px">
+      <select id="h-contrato" onchange="rHist()" style="width:100%;padding:9px 13px;border:1.5px solid var(--brd);border-radius:var(--r2px);font-size:13px;font-family:'Inter',sans-serif;background:#fff;color:var(--ink);-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22><path fill=%22%237a9e8a%22 d=%22M7 10l5 5 5-5z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center">
+        <option value="">📋 Todos os contratos</option>
+      </select>
     </div>
     <div class="fils">
       <button class="fil on" onclick="setF(this,'all')">Todos</button>
@@ -811,7 +817,29 @@ function irNova(){
   showPg('pg-nova','📋 Nova Pesagem',true,1);
 }
 function irAg(){rAg();showPg('pg-ag','⏳ Aguardando');}
-function irHist(){rHist();showPg('pg-hist','📊 Histórico');if(navigator.onLine)loadCl();}
+function irHist(){
+  rHist();
+  showPg('pg-hist','📊 Histórico');
+  if(navigator.onLine) loadCl().then(function(){
+    popContratosHist();
+    rHist();
+  });
+  popContratosHist();
+}
+function popContratosHist(){
+  var sel=document.getElementById('h-contrato');
+  if(!sel) return;
+  var val=sel.value; // preservar seleção atual
+  // pegar contratos únicos das pesagens
+  var nums={};
+  for(var i=0;i<cloud.length;i++) if(cloud[i].numOrdem) nums[cloud[i].numOrdem]=true;
+  var opts='<option value="">📋 Todos os contratos</option>';
+  var sorted=Object.keys(nums).sort();
+  for(var i=0;i<sorted.length;i++){
+    opts+='<option value="'+sorted[i]+'"'+(val===sorted[i]?' selected':'')+'>'+sorted[i]+'</option>';
+  }
+  sel.innerHTML=opts;
+}
 function irOrdens(){rOC();showPg('pg-oc','📝 Ordens');loadContratosDaPlanilha().then(()=>rOC());}
 
 /* ══ EIXOS ════════════════════════════════════════════════════ */
@@ -1415,13 +1443,17 @@ function sendWA(){
 function setF(btn,f){filAtivo=f;document.querySelectorAll('.fil').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rHist();}
 function rHist(){
   const bsc=(document.getElementById('h-bsc')?.value||'').toLowerCase();
+  const contratoFil=(document.getElementById('h-contrato')?.value||'');
   const hj=new Date().toLocaleDateString('pt-BR');
-  // SEMPRE usa cloud — fiel à planilha
   let ls=[...cloud].reverse();
+  // filtro de status
   if(filAtivo==='hj') ls=ls.filter(o=>o.dataEntrada===hj);
   else if(filAtivo==='ag') ls=ls.filter(o=>(o.status||'').toLowerCase().includes('aguardando'));
   else if(filAtivo==='ok') ls=ls.filter(o=>(o.statusPeso||'').includes('CONFORME'));
   else if(filAtivo==='er') ls=ls.filter(o=>(o.statusPeso||'').includes('EXCEDIDO'));
+  // filtro de contrato
+  if(contratoFil) ls=ls.filter(o=>o.numOrdem===contratoFil);
+  // busca texto
   if(bsc) ls=ls.filter(o=>(o.placa||'').toLowerCase().includes(bsc)||(o.motorista||'').toLowerCase().includes(bsc)||(o.numOrdem||'').toLowerCase().includes(bsc));
   const el=document.getElementById('lst-hist');
   if(!ls.length){
@@ -1437,7 +1469,7 @@ function rHist(){
         <div class="plc">${o.placa}</div>
         <span style="font-size:10px;color:var(--ink3)">${o.dataEntrada||''} ${o.horaEntrada||''}</span>
       </div>
-      <div class="oi">👤 ${o.motorista} · ${o.numOrdem||'—'}</div>
+      <div class="oi">👤 ${o.motorista} · <span style="color:var(--g1);font-weight:700">${o.numOrdem||'—'}</span></div>
       ${o.formulaEixos?`<div class="oi" style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.formulaEixos}</div>`:''}
       ${o.pesoBruto?`<div class="oi">⚖️ ${parseFloat(o.pesoBruto).toFixed(3)}t → Carga: ${parseFloat(o.cargaLiquida||0).toFixed(3)}t (${Math.round(parseFloat(o.cargaLiquida||0)*1000)}kg)</div>`:''}
       <span class="obg ${bg}">${st}</span>
