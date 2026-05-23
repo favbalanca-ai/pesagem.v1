@@ -1435,14 +1435,15 @@ function sendWA(){
   const cargaKg=Math.round((atual.cargaLiquida||0)*1000);
   const pbtKg=Math.round(atual.pbtMax*1000);
   const tolKg=Math.round(atual.pbtMax*(1+tol/100)*1000);
+  const local=(atual.municipio||'')+(atual.municipio&&atual.estado?' - ':'')+( atual.estado||'');
   const msg=encodeURIComponent(
     `🚛 *PESAGEM FINALIZADA*\n*${emp}*\n\n`+
     `📋 Contrato: ${atual.numOrdem||'—'}\n`+
-    `🚛 Placa: ${atual.placa}\n`+
+    `🚛 Placa: ${atual.placa}${local?' | '+local:''}\n`+
     `👤 Motorista: ${atual.motorista}\n`+
     `🪪 CPF: ${atual.cpf||'—'}\n\n`+
-    `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
     `⚖️ Bruto: ${brutoKg.toLocaleString('pt-BR')} kg\n`+
+    `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
     `📦 Carga: ${cargaKg.toLocaleString('pt-BR')} kg\n`+
     `📏 PBT Máx: ${pbtKg.toLocaleString('pt-BR')} kg · Tol.${tol}%: ${tolKg.toLocaleString('pt-BR')} kg\n\n`+
     `*${stIcon} Status: Finalizado - ${st}*\n`+
