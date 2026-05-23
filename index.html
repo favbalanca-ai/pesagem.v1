@@ -195,6 +195,18 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
 .pdf-er{background:#fce8e8;color:#c0392b}
 .pdf-sig{margin-top:10px}
 .pdf-sig img{width:100%;max-height:100px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px}
+/* MODO ESCURO */
+body.dark{--bg:#0f1a14;--card:#1a2d22;--brd:#2a4535;--ink:#e8f5e9;--ink2:#9dbfaa;--ink3:#5a8a6a;--sh:0 1px 6px rgba(0,0,0,.3)}
+body.dark .lc{background:#1a2d22;color:#e8f5e9}
+body.dark .li{background:#0f1a14;color:#e8f5e9;border-color:#2a4535}
+body.dark .modal-box{background:#1a2d22}
+body.dark #pg-cfg{background:#0f1a14}
+body.dark .fil{background:#1a2d22;color:#9dbfaa}
+body.dark .f input,body.dark .f textarea{background:#0f1a14;color:#e8f5e9;border-color:#2a4535}
+body.dark .oc{background:#1a2d22}
+body.dark .hb{background:#1a2d22}
+body.dark .sbar{background:#1a2d22}
+body.dark .card{background:#1a2d22}
 @media print{
   body * { visibility: hidden; }
   #pdf-frame, #pdf-frame * { visibility: visible; }
@@ -247,6 +259,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
     <div class="top-in">
       <button class="bk" id="btn-bk" onclick="goBack()" style="display:none">‹</button>
       <h1 id="pgtit">⚖️ Pesagem</h1>
+      <button onclick="toggleDark()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:34px;height:34px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center" id="btn-dark" title="Modo escuro">🌙</button>
       <button onclick="logout()" style="background:rgba(255,255,255,.12);border:none;color:#fff;padding:5px 9px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif" id="btn-logout">Sair</button>
     </div>
     <div class="dots" id="dots" style="display:none">
@@ -322,7 +335,18 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
     <!-- Veículo + Eixos -->
     <div class="card">
       <div class="ct">🚛 Veículo e Eixos</div>
-      <div class="f"><label>Placa *</label><input type="text" id="f-pl" class="placa" placeholder="ABC1D23" maxlength="8" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="f"><label>Placa *</label><input type="text" id="f-pl" class="placa" placeholder="ABC1D23" maxlength="8" oninput="this.value=this.value.toUpperCase();onPlaca(this.value)"></div>
+      <!-- Sugestão histórico placa -->
+      <div id="placa-hist" style="display:none;padding:9px 12px;background:#fff3cd;border-radius:9px;margin-bottom:6px;border:.5px solid #e6a817">
+        <div style="font-size:10px;font-weight:700;color:#856404;margin-bottom:4px">🚛 Último registro desta placa</div>
+        <div id="placa-hist-txt" style="font-size:12px;color:#856404"></div>
+        <button onclick="usarDadosPlaca()" style="margin-top:6px;padding:5px 12px;border-radius:6px;border:1.5px solid #e6a817;background:transparent;color:#856404;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✅ Usar estes dados</button>
+      </div>
+      <!-- Alerta blacklist -->
+      <div id="placa-black" style="display:none;padding:9px 12px;background:var(--r2);border-radius:9px;margin-bottom:6px;border:.5px solid var(--r1)">
+        <div style="font-size:12px;font-weight:700;color:var(--r1)">🚫 PLACA COM OCORRÊNCIA</div>
+        <div id="placa-black-txt" style="font-size:11px;color:var(--r1);margin-top:2px"></div>
+      </div>
       <!-- Resultado da leitura da placa por IA -->
       <div id="placa-ia" style="display:none;padding:9px 12px;background:var(--g3);border-radius:9px;margin-bottom:9px;border:.5px solid var(--brd)">
         <div style="font-size:10px;font-weight:700;color:var(--g1);margin-bottom:5px">🤖 Identificação por IA</div>
@@ -410,7 +434,24 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
       </div>
     </div>
 
-    <!-- Tara -->
+    <!-- Scanner CNH -->
+    <div class="card">
+      <div class="ct">🪪 Scanner CNH / Documento</div>
+      <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Fotografe ou envie a CNH — a IA lê os dados automaticamente</div>
+      <label class="fb" id="fb-scan" style="width:100%;flex-direction:row;padding:13px;gap:10px;justify-content:flex-start;min-height:56px;border-color:var(--g1);background:var(--g3)">
+        <span style="font-size:22px">🪪</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--g1)" id="scan-lbl">Fotografar ou escolher CNH</div>
+          <div style="font-size:10px;color:var(--ink3)">Aceita foto ou PDF</div>
+        </div>
+        <input type="file" accept="image/*,application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="scanCNH(this)">
+      </label>
+      <div id="cnh-res" style="display:none;margin-top:9px;padding:11px 13px;background:var(--g3);border-radius:9px;border:.5px solid var(--g1)">
+        <div style="font-size:10px;font-weight:700;color:var(--g1);margin-bottom:7px">🤖 DADOS LIDOS PELA IA</div>
+        <div id="cnh-dados" style="font-size:13px;color:var(--ink);line-height:1.9"></div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:6px">⚠️ Confira os dados nos campos acima</div>
+      </div>
+    </div>
     <div class="card">
       <div class="ct">⚖️ Tara do Veículo</div>
       <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Peso <b>vazio</b> na balança</div>
@@ -613,10 +654,22 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
       <div class="f"><label>Obs / Comprador</label><input type="text" id="oc-o" placeholder="Ex: Bunge, Cargill..."></div>
       <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar Contrato</button>
     </div>
+    <div class="card" id="card-black" style="display:none">
+      <div class="ct">🚫 Placas com Ocorrência</div>
+      <div class="r2" style="margin-bottom:9px">
+        <div class="f"><label>Placa</label><input type="text" id="bl-pl" placeholder="ABC1D23" maxlength="8" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="f"><label>Motivo</label><input type="text" id="bl-mo" placeholder="Ex: Fraude, irregular..."></div>
+      </div>
+      <button class="btn btnd" onclick="addBlack()" style="margin-top:0">🚫 Adicionar à lista</button>
+      <div id="lst-black" style="margin-top:9px"></div>
+    </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div class="ct" style="margin:0">📋 Contratos Cadastrados</div>
-        <button onclick="loadContratosDaPlanilha().then(()=>rOC())" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--brd);background:#fff;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">☁️ Atualizar</button>
+        <div style="display:flex;gap:6px">
+          <button onclick="toggleBlack()" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--r1);background:var(--r2);color:var(--r1);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700">🚫 Blacklist</button>
+          <button onclick="loadContratosDaPlanilha().then(()=>rOC())" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--brd);background:#fff;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">☁️ Atualizar</button>
+        </div>
       </div>
       <div id="lst-oc"></div>
     </div>
@@ -646,6 +699,13 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
   <div class="card">
     <div class="ct">⚙️ Sistema</div>
     <div class="f"><label>Tolerância de Pesagem (%)</label><input type="number" id="cfg-tl" value="7" min="0" max="15"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:.5px solid var(--brd);margin-top:6px">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--ink)">WhatsApp automático</div>
+        <div style="font-size:11px;color:var(--ink3)">Enviar ao escritório ao finalizar</div>
+      </div>
+      <input type="checkbox" id="cfg-wa-auto" style="width:22px;height:22px;cursor:pointer;accent-color:var(--g1)">
+    </div>
   </div>
   <button class="btn btnp" onclick="saveCfg()">💾 Salvar Configurações</button>
   <button class="btn btnd" onclick="if(confirm('Sair?'))logout()" style="margin-top:7px">🚪 Sair</button>
@@ -749,7 +809,7 @@ function openApp(u){
   document.getElementById('app').style.display='flex';
   if(u.nivel==='admin') document.getElementById('btn-admin').style.display='block';
   if(u.nivel==='view')  document.getElementById('bi-nova').style.display='none';
-  loadDB(); loadCfg(); initSig();
+  loadDB(); loadCfg(); initSig(); initDark();
   // Carregar planilha assim que abrir
   setTimeout(async()=>{
     await syncP();
@@ -782,9 +842,16 @@ function loadCfg(){
   document.getElementById('cfg-em').value=DB.cfg.empresa||'Fazenda Água Viva';
   document.getElementById('cfg-wa').value=DB.cfg.wa||'5561999995351';
   document.getElementById('cfg-tl').value=DB.cfg.tol||7;
+  const cb=document.getElementById('cfg-wa-auto');
+  if(cb) cb.checked=!!DB.cfg.waAuto;
 }
 function saveCfg(){
-  DB.cfg={empresa:document.getElementById('cfg-em').value,wa:document.getElementById('cfg-wa').value,tol:parseFloat(document.getElementById('cfg-tl').value)||7};
+  DB.cfg={
+    empresa:document.getElementById('cfg-em').value,
+    wa:document.getElementById('cfg-wa').value,
+    tol:parseFloat(document.getElementById('cfg-tl').value)||7,
+    waAuto:document.getElementById('cfg-wa-auto').checked
+  };
   localStorage.setItem('pcfg',JSON.stringify(DB.cfg));
   toast('✅ Configurações salvas!'); hideCfg();
 }
@@ -814,7 +881,11 @@ function irNova(){
   // preencher funcionário com o nome do login
   const fnEl=document.getElementById('f-fn');
   if(fnEl) fnEl.value=usr?usr.email:'—';;
-  document.getElementById('placa-ia').style.display='none';;
+  document.getElementById('placa-ia').style.display='none';
+  const cnhRes=document.getElementById('cnh-res');
+  if(cnhRes) cnhRes.style.display='none';
+  const scanLbl=document.getElementById('scan-lbl');
+  if(scanLbl) scanLbl.textContent='Fotografar ou escolher CNH';;
   ['nd','ns','ndd','nt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='nd'?'1':'0';});
   document.getElementById('pbt-box').style.display='none';
   document.getElementById('oc-info').style.display='none';
@@ -1164,17 +1235,13 @@ function carregarContratosLocal(){
 /* ══ SCANNER CNH / DOCUMENTO ═══════════════════════════════════ */
 async function scanCNH(inp) {
   const file = inp.files[0]; if (!file) return;
-  const btn = document.getElementById('fb-cn');
-  const fi  = document.getElementById('fi-cn');
-  const fl  = document.getElementById('fl-cn');
-  fi.textContent = '⏳'; fl.textContent = 'Lendo...';
-  btn.classList.add('ok');
-  const res = document.getElementById('cnh-resultado');
-  const dados = document.getElementById('cnh-dados');
+  const lbl  = document.getElementById('scan-lbl');
+  const res  = document.getElementById('cnh-res');
+  const dados= document.getElementById('cnh-dados');
+  lbl.textContent = '⏳ Lendo documento com IA...';
   res.style.display = 'block';
-  dados.innerHTML = '⏳ Analisando documento com IA...';
+  dados.innerHTML = '<span style="color:var(--ink3)">Aguarde...</span>';
   try {
-    // Ler arquivo como base64
     const b64 = await new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = e => resolve(e.target.result.split(',')[1]);
@@ -1182,53 +1249,192 @@ async function scanCNH(inp) {
       r.readAsDataURL(file);
     });
     const mime = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
-    // Montar conteúdo para a API
+    // salvar foto para Drive
+    fotos['cnh'] = 'data:'+mime+';base64,'+b64;
+    document.getElementById('fb-cn').classList.add('ok');
+    document.getElementById('fi-cn').textContent = '✅';
+    document.getElementById('fl-cn').textContent = 'CNH ✓';
+    // montar conteúdo para IA
     const content = [];
     if (mime === 'application/pdf') {
       content.push({type:'document', source:{type:'base64', media_type:'application/pdf', data:b64}});
     } else {
       content.push({type:'image', source:{type:'base64', media_type:mime, data:b64}});
-      // salvar foto para envio ao Drive
-      fotos['cnh'] = 'data:'+mime+';base64,'+b64;
     }
-    content.push({type:'text', text:'Analise este documento (CNH, RG, CPF ou outro documento de identificação brasileiro). Extraia SOMENTE os dados presentes. Responda APENAS em JSON válido, sem explicações:\n{"nome":"NOME COMPLETO","cpf":"000.000.000-00","rg":"","nascimento":"dd/mm/aaaa","cnh_numero":"","cnh_categoria":"","cnh_validade":"dd/mm/aaaa","documento_tipo":"CNH"}\nSe um campo não existir no documento, use null.'});
+    content.push({type:'text', text:'Analise este documento brasileiro (CNH, RG, CPF ou identidade). Extraia os dados presentes. Responda SOMENTE em JSON válido sem explicações:\n{"nome":"NOME COMPLETO","cpf":"000.000.000-00","rg":"","nascimento":"dd/mm/aaaa","cnh_numero":"","cnh_categoria":"","cnh_validade":"dd/mm/aaaa","tipo_doc":"CNH"}\nSe um campo não existir, use null.'});
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:500, messages:[{role:'user', content}]})
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:400, messages:[{role:'user', content}]})
     });
     const data = await resp.json();
     const txt  = data.content && data.content[0] ? data.content[0].text : '';
-    const match = txt.match(/\{[\s\S]*\}/);
+    const match = txt.match(/\{[\s\S]*?\}/);
     if (match) {
       const info = JSON.parse(match[0]);
-      // Preencher campos automaticamente
+      // preencher campos automaticamente
       if (info.nome && !document.getElementById('f-mt').value)
         document.getElementById('f-mt').value = info.nome;
       if (info.cpf && !document.getElementById('f-cpf').value)
         document.getElementById('f-cpf').value = info.cpf;
-      // Montar resumo visual
+      // montar display
       let html = '';
-      if (info.documento_tipo) html += `<b>Tipo:</b> ${info.documento_tipo}<br>`;
-      if (info.nome)           html += `<b>Nome:</b> ${info.nome}<br>`;
-      if (info.cpf)            html += `<b>CPF:</b> ${info.cpf}<br>`;
-      if (info.rg)             html += `<b>RG:</b> ${info.rg}<br>`;
-      if (info.nascimento)     html += `<b>Nascimento:</b> ${info.nascimento}<br>`;
-      if (info.cnh_numero)     html += `<b>CNH Nº:</b> ${info.cnh_numero}<br>`;
-      if (info.cnh_categoria)  html += `<b>Categoria:</b> ${info.cnh_categoria}<br>`;
-      if (info.cnh_validade)   html += `<b>Validade CNH:</b> ${info.cnh_validade}<br>`;
-      dados.innerHTML = html || 'Documento lido — dados não identificados';
-      fi.textContent = '✅'; fl.textContent = 'Doc ✓';
+      if (info.tipo_doc) html += `<b>Tipo:</b> ${info.tipo_doc}<br>`;
+      if (info.nome)     html += `<b>Nome:</b> ${info.nome}<br>`;
+      if (info.cpf)      html += `<b>CPF:</b> ${info.cpf}<br>`;
+      if (info.rg)       html += `<b>RG:</b> ${info.rg}<br>`;
+      if (info.nascimento) html += `<b>Nascimento:</b> ${info.nascimento}<br>`;
+      if (info.cnh_numero)   html += `<b>CNH Nº:</b> ${info.cnh_numero}<br>`;
+      if (info.cnh_categoria)html += `<b>Categoria:</b> ${info.cnh_categoria}<br>`;
+      if (info.cnh_validade) html += `<b>Validade:</b> ${info.cnh_validade}<br>`;
+      dados.innerHTML = html || 'Documento lido — verifique os dados';
+      lbl.textContent = '✅ CNH lida com sucesso';
     } else {
-      dados.innerHTML = '⚠️ Não foi possível ler o documento. Preencha manualmente.';
-      fi.textContent = '🪪'; fl.textContent = 'CNH / Doc';
+      dados.innerHTML = '⚠️ Não identificou os dados — preencha manualmente';
+      lbl.textContent = '⚠️ Leitura incompleta';
     }
   } catch(err) {
     dados.innerHTML = '⚠️ Erro: ' + err.message;
-    fi.textContent = '🪪'; fl.textContent = 'CNH / Doc';
+    lbl.textContent = '⚠️ Erro na leitura';
   }
 }
 // Comprimir imagem para max 800px e qualidade 70%
+/* ══ MODO ESCURO ════════════════════════════════════════════════ */
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  const on=document.body.classList.contains('dark');
+  document.getElementById('btn-dark').textContent=on?'☀️':'🌙';
+  localStorage.setItem('darkMode',on?'1':'0');
+}
+function initDark(){
+  if(localStorage.getItem('darkMode')==='1'){
+    document.body.classList.add('dark');
+    const btn=document.getElementById('btn-dark');
+    if(btn) btn.textContent='☀️';
+  }
+}
+
+/* ══ SONS DE ALERTA ═════════════════════════════════════════════ */
+function beep(tipo){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if(tipo==='ok'){osc.frequency.value=880;gain.gain.value=0.3;osc.start();setTimeout(()=>osc.stop(),200);}
+    else if(tipo==='warn'){
+      osc.frequency.value=440;gain.gain.value=0.4;osc.start();
+      setTimeout(()=>{osc.frequency.value=330;},200);
+      setTimeout(()=>osc.stop(),500);
+    }
+    else if(tipo==='erro'){
+      osc.frequency.value=220;gain.gain.value=0.5;osc.type='sawtooth';osc.start();
+      setTimeout(()=>osc.stop(),600);
+    }
+  }catch(e){}
+}
+
+/* ══ HISTÓRICO DE PLACAS ════════════════════════════════════════ */
+var _dadosPlacaAnterior={};
+function onPlaca(placa){
+  const ph=document.getElementById('placa-hist');
+  const pb=document.getElementById('placa-black');
+  ph.style.display='none'; pb.style.display='none';
+  if(placa.length<7) return;
+  // Checar blacklist
+  const black=JSON.parse(localStorage.getItem('blacklist')||'[]');
+  const bl=black.find(b=>b.p===placa);
+  if(bl){
+    document.getElementById('placa-black-txt').textContent=bl.m||'Ocorrência registrada';
+    pb.style.display='block';
+    beep('erro');
+    return;
+  }
+  // Buscar último registro desta placa no histórico
+  const hist=[...cloud].reverse().find(o=>o.placa===placa&&o.motorista);
+  if(hist){
+    _dadosPlacaAnterior={motorista:hist.motorista, cpf:hist.cpf||''};
+    document.getElementById('placa-hist-txt').innerHTML=
+      `👤 <b>${hist.motorista}</b>${hist.cpf?' · CPF: '+hist.cpf:''}<br>`+
+      `📋 Último: ${hist.numOrdem} · ${hist.dataEntrada}`;
+    ph.style.display='block';
+  }
+}
+function usarDadosPlaca(){
+  if(_dadosPlacaAnterior.motorista) document.getElementById('f-mt').value=_dadosPlacaAnterior.motorista;
+  if(_dadosPlacaAnterior.cpf) document.getElementById('f-cpf').value=_dadosPlacaAnterior.cpf;
+  document.getElementById('placa-hist').style.display='none';
+  toast('✅ Dados preenchidos!');
+}
+
+/* ══ BLACKLIST DE PLACAS ════════════════════════════════════════ */
+function addBlack(){
+  const pl=document.getElementById('bl-pl').value.trim().toUpperCase();
+  const mo=document.getElementById('bl-mo').value.trim();
+  if(!pl){toast('⚠️ Informe a placa!');return;}
+  const black=JSON.parse(localStorage.getItem('blacklist')||'[]');
+  if(black.find(b=>b.p===pl)){toast('⚠️ Placa já na lista!');return;}
+  black.push({p:pl,m:mo,d:new Date().toLocaleDateString('pt-BR')});
+  localStorage.setItem('blacklist',JSON.stringify(black));
+  document.getElementById('bl-pl').value='';
+  document.getElementById('bl-mo').value='';
+  rBlack(); toast('🚫 Placa adicionada!');
+}
+function rBlack(){
+  const black=JSON.parse(localStorage.getItem('blacklist')||'[]');
+  const el=document.getElementById('lst-black');
+  if(!el) return;
+  if(!black.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:10px">Nenhuma placa na lista</div>';return;}
+  el.innerHTML=black.map(b=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid var(--brd)">
+      <div style="flex:1">
+        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px">${b.p}</div>
+        <div style="font-size:11px;color:var(--r1)">${b.m||'—'} · ${b.d||''}</div>
+      </div>
+      <button onclick="delBlack('${b.p}')" style="background:var(--r2);color:var(--r1);border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:700">×</button>
+    </div>`).join('');
+}
+function delBlack(pl){
+  let black=JSON.parse(localStorage.getItem('blacklist')||'[]');
+  localStorage.setItem('blacklist',JSON.stringify(black.filter(b=>b.p!==pl)));
+  rBlack(); toast('✅ Removida da lista');
+}
+function toggleBlack(){
+  const c=document.getElementById('card-black');
+  if(!c) return;
+  c.style.display=c.style.display==='none'?'block':'none';
+  if(c.style.display==='block') rBlack();
+}
+
+/* ══ WHATSAPP AUTOMÁTICO ════════════════════════════════════════ */
+function sendWAauto(o){
+  if(!DB.cfg.waAuto) return;
+  const n=DB.cfg.wa||'5561999999999';
+  const tol=DB.cfg.tol||7;
+  const emp=DB.cfg.empresa||'Fazenda Água Viva';
+  const st=o.statusPeso||'CONFORME';
+  const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
+  const taraKg=Math.round(o.tara*1000);
+  const brutoKg=Math.round((o.pesoBruto||0)*1000);
+  const cargaKg=Math.round((o.cargaLiquida||0)*1000);
+  const pbtKg=Math.round(o.pbtMax*1000);
+  const tolKg=Math.round(o.pbtMax*(1+tol/100)*1000);
+  const local=(o.municipio||'')+(o.municipio&&o.estado?' - ':'')+( o.estado||'');
+  const msg=encodeURIComponent(
+    `🚛 *PESAGEM FINALIZADA*\n*${emp}*\n\n`+
+    `📋 Contrato: ${o.numOrdem||'—'}\n`+
+    `🚛 Placa: ${o.placa}${local?' | '+local:''}\n`+
+    `👤 Motorista: ${o.motorista}\n`+
+    `🪪 CPF: ${o.cpf||'—'}\n\n`+
+    `⚖️ Bruto: ${brutoKg.toLocaleString('pt-BR')} kg\n`+
+    `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
+    `📦 Carga: ${cargaKg.toLocaleString('pt-BR')} kg\n`+
+    `📏 PBT Máx: ${pbtKg.toLocaleString('pt-BR')} kg · Tol.${tol}%: ${tolKg.toLocaleString('pt-BR')} kg\n\n`+
+    `*${stIcon} Status: Finalizado - ${st}*\n📅 ${o.dataHoraFim||''}`
+  );
+  window.open('https://wa.me/'+n+'?text='+msg,'_blank');
+}
+
 function comprimirImagem(b64full, callback){
   var img=new Image();
   img.onload=function(){
@@ -1399,6 +1605,7 @@ function salvar(){
   };
   DB.ordens.push(o); saveDB();
   enviar(o,'salvar');
+  beep('ok'); // bip ao registrar tara
   atual=o; toast('✅ Tara registrada!'); updHome(); irAg();
 }
 
@@ -1407,18 +1614,38 @@ function rAg(){
   const ls=DB.ordens.filter(o=>o.status==='Aguardando');
   const el=document.getElementById('lst-ag');
   if(!ls.length){el.innerHTML='<div class="emp"><div class="ei">⏳</div><p>Nenhum caminhão aguardando</p></div>';return;}
-  el.innerHTML=ls.map(o=>`
-    <div class="oc" onclick="irBruto('${o.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="plc">${o.placa}</div>
-        <span style="font-size:10px;color:var(--ink3)">${o.horaEntrada}</span>
+  const agora=Date.now();
+  el.innerHTML=ls.map(o=>{
+    // calcular tempo de espera
+    let tempo='';
+    try{
+      const entrada=new Date(o.dataEntrada+' '+o.horaEntrada);
+      const min=Math.floor((agora-entrada.getTime())/60000);
+      if(!isNaN(min)&&min>=0){
+        const h=Math.floor(min/60), m=min%60;
+        tempo=h>0?h+'h '+m+'min':m+' min';
+      }
+    }catch(e){}
+    const corTempo=tempo&&parseInt(tempo)>60?'var(--r1)':'var(--ink3)';
+    return `<div class="oc" onclick="irBruto('${o.id}')" style="padding:15px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="plc" style="font-size:20px">${o.placa}</div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--ink3)">${o.horaEntrada}</div>
+          ${tempo?`<div style="font-size:12px;font-weight:700;color:${corTempo}">⏱️ ${tempo}</div>`:''}
+        </div>
       </div>
       <div class="oi">👤 ${o.motorista}</div>
-      <div class="oi">⚖️ Tara: <b>${o.tara.toFixed(3)}t</b> (${Math.round(o.tara*1000)}kg)</div>
+      <div class="oi">⚖️ Tara: <b style="color:var(--g1)">${Math.round(o.tara*1000).toLocaleString('pt-BR')} kg</b></div>
       <div class="oi" style="font-family:'JetBrains Mono',monospace;font-size:11px">📋 ${o.numOrdem} · ${o.formulaEixos}</div>
-      <div class="obg bag">Toque → Registrar peso bruto →</div>
-    </div>`).join('');
+      <div class="obg bag" style="margin-top:7px">Toque → Registrar peso bruto →</div>
+    </div>`;
+  }).join('');
+  // atualizar timer a cada minuto
+  if(_timerAg) clearInterval(_timerAg);
+  _timerAg=setInterval(rAg, 60000);
 }
+var _timerAg=null;
 
 /* ══ PESO BRUTO ════════════════════════════════════════════════ */
 function irBruto(id){
@@ -1536,7 +1763,11 @@ function finalizar(){
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
   if(idx>=0)DB.ordens[idx]={...atual};
   saveDB(); enviar(atual,'atualizar');
-  uploadFotosDrive(atual); // enviar fotos para o Drive
+  uploadFotosDrive(atual);
+  // som de alerta conforme status
+  beep(atual.statusPeso==='EXCEDIDO'?'erro':atual.statusPeso==='ATENÇÃO'?'warn':'ok');
+  // WhatsApp automático
+  setTimeout(()=>sendWAauto(atual), 1500);
   rTicket(atual); showPg('pg-tk','🎫 Ticket',true,5);
   toast('🎉 Pesagem finalizada!'); updHome();
 }
