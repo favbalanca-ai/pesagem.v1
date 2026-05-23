@@ -1065,43 +1065,49 @@ function rOC(){
 
 function delOC(n){
   if(!confirm('Excluir contrato '+n+'?'))return;
+  // remover localmente imediatamente
+  contratosCloud=contratosCloud.filter(function(o){return o.n!==n;});
+  salvarContratosLocal();
+  rOC();
+  // enviar para planilha
   if(SHEETS_URL&&navigator.onLine){
     fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({acao:'delContrato',num:n,token:TOKEN})})
-      .then(function(){
-        // recarregar da planilha
-        loadContratosDaPlanilha().then(function(){rOC();});
-        toast('🗑️ Contrato excluído');
+      .then(function(r){return r.text();})
+      .then(function(t){
+        try{
+          var j=JSON.parse(t);
+          if(j.ok) toast('🗑️ Excluído da planilha!');
+          else toast('⚠️ Excluído localmente. Planilha: '+(j.erro||'erro'));
+        }catch(e){toast('🗑️ Excluído localmente');}
       })
-      .catch(function(){
-        // remover localmente
-        contratosCloud=contratosCloud.filter(function(o){return o.n!==n;});
-        salvarContratosLocal(); rOC();
-        toast('🗑️ Excluído localmente');
-      });
+      .catch(function(){toast('🗑️ Excluído (sem internet)');});
   } else {
-    contratosCloud=contratosCloud.filter(function(o){return o.n!==n;});
-    salvarContratosLocal(); rOC();
-    toast('🗑️ Excluído (sincronizará quando conectar)');
+    toast('🗑️ Excluído (enviará para planilha quando conectar)');
   }
 }
 
 // Carregar contratos da planilha — fonte de verdade
-async function loadContratosDaPlanilha(){
-  if(!SHEETS_URL||!navigator.onLine) return;
-  try{
-    var r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao:'listarContratos',token:TOKEN})});
-    var j=JSON.parse(await r.text());
-    if(j.ok&&j.contratos){
-      contratosCloud=j.contratos; // planilha substitui tudo
-      salvarContratosLocal();
-      // atualizar datalists
-      var opts=j.contratos.map(function(c){return '<option value="'+c.n+'">'+c.n+(c.p?' — '+c.p:'')+'</option>';}).join('');
-      var dl=document.getElementById('dl-oc'); if(dl) dl.innerHTML=opts;
-      var dl2=document.getElementById('dl-oc-n'); if(dl2) dl2.innerHTML=opts;
-    }
-  }catch(e){}
+function loadContratosDaPlanilha(){
+  if(!SHEETS_URL||!navigator.onLine) return Promise.resolve();
+  return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({acao:'listarContratos',token:TOKEN})})
+    .then(function(r){return r.text();})
+    .then(function(t){
+      try{
+        var j=JSON.parse(t);
+        if(j.ok&&j.contratos){
+          contratosCloud=j.contratos;
+          salvarContratosLocal();
+          var opts=j.contratos.map(function(c){
+            return '<option value="'+c.n+'">'+c.n+(c.p?' — '+c.p:'')+'</option>';
+          }).join('');
+          var dl=document.getElementById('dl-oc'); if(dl) dl.innerHTML=opts;
+          var dl2=document.getElementById('dl-oc-n'); if(dl2) dl2.innerHTML=opts;
+        }
+      }catch(e){}
+    })
+    .catch(function(){});
 }
 
 function salvarContratosLocal(){
