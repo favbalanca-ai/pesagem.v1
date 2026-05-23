@@ -309,7 +309,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
           <img id="prev-oc" style="display:none;width:52px;height:52px;object-fit:cover;border-radius:6px;margin-left:auto;flex-shrink:0">
         </label>
       </div>
-      <div class="f"><label>Funcionário Responsável *</label><input type="text" id="f-fn" placeholder="Nome de quem registra"></div>
+      <div class="f"><label>Funcionário Responsável</label><input type="text" id="f-fn" readonly style="background:var(--g3);color:var(--g1);font-weight:700;cursor:default"></div>
     </div>
 
     <!-- Veículo + Eixos -->
@@ -384,9 +384,9 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
     <div class="card">
       <div class="ct">📷 Fotos do Veículo</div>
       <div class="fgrid">
-        <label class="fb" id="fb-cn">
-          <span class="fi" id="fi-cn">📸</span><span class="fl" id="fl-cn">CNH</span>
-          <input type="file" accept="image/*" capture="environment" onchange="foto(this,'fb-cn',null,'cnh','fi-cn','fl-cn','CNH ✓')">
+        <label class="fb" id="fb-cn" onclick="event.preventDefault();document.getElementById('inp-cnh').click()">
+          <span class="fi" id="fi-cn">🪪</span><span class="fl" id="fl-cn">CNH / Doc</span>
+          <input type="file" id="inp-cnh" accept="image/*,application/pdf" style="display:none" onchange="scanCNH(this)">
         </label>
         <label class="fb" id="fb-pl">
           <span class="fi" id="fi-pl">📸</span><span class="fl" id="fl-pl">Placa</span>
@@ -400,6 +400,12 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
           <span class="fi" id="fi-ex">📸</span><span class="fl" id="fl-ex">Extra</span>
           <input type="file" accept="image/*" capture="environment" onchange="foto(this,'fb-ex',null,'ext','fi-ex','fl-ex','Extra ✓')">
         </label>
+      </div>
+      <!-- Resultado do scan da CNH -->
+      <div id="cnh-resultado" style="display:none;margin-top:9px;padding:10px 13px;background:var(--g3);border-radius:9px;border:.5px solid var(--brd)">
+        <div style="font-size:10px;font-weight:700;color:var(--g1);margin-bottom:6px">🪪 DADOS LIDOS DO DOCUMENTO</div>
+        <div id="cnh-dados" style="font-size:12px;color:var(--ink2);line-height:1.8"></div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:4px">⚠️ Confira e corrija se necessário nos campos acima</div>
       </div>
     </div>
 
@@ -691,9 +697,16 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxFlt5mnjwGn1tn1RcL6
 const TOKEN      = "pesagem@fav2024";
 
 const USERS = [
-  {email:"fav.balanca@gmail.com",     pw:"fazenda2024", nome:"Admin",     nivel:"admin"},
-  {email:"balanca@fazendaaguaviva.com",pw:"balanca123",  nome:"Balanceiro",nivel:"op"},
-  {email:"escritorio@fazendaaguaviva.com",pw:"escrit456",nome:"Escritório",nivel:"view"},
+  {email:"JOVANE",    pw:"2024", nome:"Jovane",    nivel:"admin"},
+  {email:"JOAQUIM",   pw:"2024", nome:"Joaquim",   nivel:"admin"},
+  {email:"TAIS",      pw:"2024", nome:"Tais",      nivel:"admin"},
+  {email:"RAFAEL",    pw:"123",  nome:"Rafael",    nivel:"op"},
+  {email:"FABIO",     pw:"123",  nome:"Fabio",     nivel:"op"},
+  {email:"FABRICIO",  pw:"123",  nome:"Fabricio",  nivel:"op"},
+  {email:"DEYVID",    pw:"123",  nome:"Deyvid",    nivel:"op"},
+  {email:"RUDIERIO",  pw:"123",  nome:"Rudierio",  nivel:"op"},
+  {email:"ALDYNEY",   pw:"123",  nome:"Aldyney",   nivel:"op"},
+  {email:"ESCRITORIO",pw:"2024", nome:"Escritório",nivel:"view"},
 ];
 
 /* ══ ESTADO ═══════════════════════════════════════════════════ */
@@ -796,7 +809,10 @@ function showCfg(){document.getElementById('pg-cfg').style.display='block';}
 function hideCfg(){document.getElementById('pg-cfg').style.display='none';}
 function irNova(){
   fotos={}; atual=null; utTara='kg'; utBruto='kg';
-  ['f-oc','f-fn','f-pl','f-mt','f-cpf','f-tr','f-ob','f-mun','f-uf'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['f-oc','f-pl','f-mt','f-cpf','f-tr','f-ob','f-mun','f-uf'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  // preencher funcionário com o nome do login
+  const fnEl=document.getElementById('f-fn');
+  if(fnEl) fnEl.value=usr?usr.email:'—';;
   document.getElementById('placa-ia').style.display='none';;
   ['nd','ns','ndd','nt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='nd'?'1':'0';});
   document.getElementById('pbt-box').style.display='none';
@@ -1145,7 +1161,73 @@ function carregarContratosLocal(){
   contratosCloud=JSON.parse(localStorage.getItem('poc')||'[]');
 }
 
-/* ══ UPLOAD FOTOS PARA O DRIVE ════════════════════════════════ */
+/* ══ SCANNER CNH / DOCUMENTO ═══════════════════════════════════ */
+async function scanCNH(inp) {
+  const file = inp.files[0]; if (!file) return;
+  const btn = document.getElementById('fb-cn');
+  const fi  = document.getElementById('fi-cn');
+  const fl  = document.getElementById('fl-cn');
+  fi.textContent = '⏳'; fl.textContent = 'Lendo...';
+  btn.classList.add('ok');
+  const res = document.getElementById('cnh-resultado');
+  const dados = document.getElementById('cnh-dados');
+  res.style.display = 'block';
+  dados.innerHTML = '⏳ Analisando documento com IA...';
+  try {
+    // Ler arquivo como base64
+    const b64 = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = e => resolve(e.target.result.split(',')[1]);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+    const mime = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+    // Montar conteúdo para a API
+    const content = [];
+    if (mime === 'application/pdf') {
+      content.push({type:'document', source:{type:'base64', media_type:'application/pdf', data:b64}});
+    } else {
+      content.push({type:'image', source:{type:'base64', media_type:mime, data:b64}});
+      // salvar foto para envio ao Drive
+      fotos['cnh'] = 'data:'+mime+';base64,'+b64;
+    }
+    content.push({type:'text', text:'Analise este documento (CNH, RG, CPF ou outro documento de identificação brasileiro). Extraia SOMENTE os dados presentes. Responda APENAS em JSON válido, sem explicações:\n{"nome":"NOME COMPLETO","cpf":"000.000.000-00","rg":"","nascimento":"dd/mm/aaaa","cnh_numero":"","cnh_categoria":"","cnh_validade":"dd/mm/aaaa","documento_tipo":"CNH"}\nSe um campo não existir no documento, use null.'});
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:500, messages:[{role:'user', content}]})
+    });
+    const data = await resp.json();
+    const txt  = data.content && data.content[0] ? data.content[0].text : '';
+    const match = txt.match(/\{[\s\S]*\}/);
+    if (match) {
+      const info = JSON.parse(match[0]);
+      // Preencher campos automaticamente
+      if (info.nome && !document.getElementById('f-mt').value)
+        document.getElementById('f-mt').value = info.nome;
+      if (info.cpf && !document.getElementById('f-cpf').value)
+        document.getElementById('f-cpf').value = info.cpf;
+      // Montar resumo visual
+      let html = '';
+      if (info.documento_tipo) html += `<b>Tipo:</b> ${info.documento_tipo}<br>`;
+      if (info.nome)           html += `<b>Nome:</b> ${info.nome}<br>`;
+      if (info.cpf)            html += `<b>CPF:</b> ${info.cpf}<br>`;
+      if (info.rg)             html += `<b>RG:</b> ${info.rg}<br>`;
+      if (info.nascimento)     html += `<b>Nascimento:</b> ${info.nascimento}<br>`;
+      if (info.cnh_numero)     html += `<b>CNH Nº:</b> ${info.cnh_numero}<br>`;
+      if (info.cnh_categoria)  html += `<b>Categoria:</b> ${info.cnh_categoria}<br>`;
+      if (info.cnh_validade)   html += `<b>Validade CNH:</b> ${info.cnh_validade}<br>`;
+      dados.innerHTML = html || 'Documento lido — dados não identificados';
+      fi.textContent = '✅'; fl.textContent = 'Doc ✓';
+    } else {
+      dados.innerHTML = '⚠️ Não foi possível ler o documento. Preencha manualmente.';
+      fi.textContent = '🪪'; fl.textContent = 'CNH / Doc';
+    }
+  } catch(err) {
+    dados.innerHTML = '⚠️ Erro: ' + err.message;
+    fi.textContent = '🪪'; fl.textContent = 'CNH / Doc';
+  }
+}
 function uploadFotosDrive(ordem){
   if(!SHEETS_URL||!navigator.onLine||!ordem) return;
   const contrato=(ordem.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
@@ -1254,7 +1336,6 @@ function salvar(){
   const tara=getTon('t');
   const {d,s,dd,t,tot,pbt}=calcPBT();
   if(!oc){toast('⚠️ Informe o contrato/ordem!');return;}
-  if(!fn){toast('⚠️ Informe o funcionário!');return;}
   if(!pl){toast('⚠️ Informe a placa!');return;}
   if(!mt){toast('⚠️ Informe o motorista!');return;}
   if(pbt<=0){toast('⚠️ Configure os eixos!');return;}
@@ -1436,12 +1517,17 @@ function rTicket(o){
   var mun=(o.municipio||'')+(o.municipio&&o.estado?' / ':'')+( o.estado||'');
   document.getElementById('tk-mun').textContent=mun||'—';
   document.getElementById('tk-ex').textContent=o.formulaEixos||`${o.totalEixos} eixos`;
-  document.getElementById('tk-pm').textContent=`${o.pbtMax}t / ${Math.round(o.pbtMax*1000)}kg`;
-  document.getElementById('tk-tr').textContent=`${o.tara.toFixed(3)}t / ${Math.round(o.tara*1000)}kg`;
-  document.getElementById('tk-br').textContent=`${(o.pesoBruto||0).toFixed(3)}t / ${Math.round((o.pesoBruto||0)*1000)}kg`;
-  document.getElementById('tk-cl').textContent=`${(o.cargaLiquida||0).toFixed(3)}t / ${Math.round((o.cargaLiquida||0)*1000)}kg`;
+  const pbtKg=Math.round((o.pbtMax||0)*1000);
+  const taraKg=Math.round((o.tara||0)*1000);
+  const brutoKg=Math.round((o.pesoBruto||0)*1000);
+  const cargaKg=Math.round((o.cargaLiquida||0)*1000);
   const tol=DB.cfg.tol||7;
-  document.getElementById('tk-tl').textContent=`${(o.pbtMax*(1+tol/100)).toFixed(1)}t (${tol}%)`;
+  const tolKg=Math.round((o.pbtMax||0)*(1+tol/100)*1000);
+  document.getElementById('tk-pm').textContent=`${pbtKg.toLocaleString('pt-BR')} kg`;
+  document.getElementById('tk-tr').textContent=`${taraKg.toLocaleString('pt-BR')} kg`;
+  document.getElementById('tk-br').textContent=`${brutoKg.toLocaleString('pt-BR')} kg`;
+  document.getElementById('tk-cl').textContent=`${cargaKg.toLocaleString('pt-BR')} kg`;
+  document.getElementById('tk-tl').textContent=`${tolKg.toLocaleString('pt-BR')} kg (${tol}%)`;
   document.getElementById('tk-fn').textContent=o.funcionario||'—';
   const st=o.statusPeso||'CONFORME';
   const sb=document.getElementById('tk-st');
@@ -1707,12 +1793,23 @@ function gerarPDF(){
   const stCls=st==='EXCEDIDO'?'pdf-er':st==='ATENÇÃO'?'pdf-wn':'pdf-ok';
   const stTxt=st==='EXCEDIDO'?'🚨 EXCEDIDO':st==='ATENÇÃO'?'⚠️ ATENÇÃO':'✅ CONFORME';
   const emp=DB.cfg.empresa||'Sistema de Pesagem';
+  const pbtKg=Math.round((o.pbtMax||0)*1000);
+  const taraKg=Math.round((o.tara||0)*1000);
+  const brutoKg=Math.round((o.pesoBruto||0)*1000);
+  const cargaKg=Math.round((o.cargaLiquida||0)*1000);
+  const tolKg=Math.round((o.pbtMax||0)*(1+tol/100)*1000);
+  const mun=(o.municipio||'')+(o.municipio&&o.estado?' / ':'')+( o.estado||'');
   document.getElementById('pdf-page').innerHTML=`
-    <div class="pdf-logo"><h1>⚖️ ${emp}</h1><p>Ticket de Pesagem — ${o.dataHoraFim||o.dataEntrada+' '+o.horaEntrada}</p><p style="font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:4px">OS: ${o.id}</p></div>
+    <div class="pdf-logo">
+      <h1>⚖️ ${emp}</h1>
+      <p>Ticket de Pesagem · ${o.dataHoraFim||o.dataEntrada+' '+o.horaEntrada}</p>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:3px;color:#888">OS: ${o.id}</p>
+    </div>
     <div class="pdf-status ${stCls}">${stTxt}</div>
     <div class="pdf-section"><h3>📋 Identificação</h3>
       <div class="pdf-row"><span class="pdf-label">Contrato/Ordem</span><span class="pdf-val">${o.numOrdem||'—'}</span></div>
       <div class="pdf-row"><span class="pdf-label">Placa</span><span class="pdf-val">${o.placa}</span></div>
+      ${mun?`<div class="pdf-row"><span class="pdf-label">Município / UF</span><span class="pdf-val">${mun}</span></div>`:''}
       <div class="pdf-row"><span class="pdf-label">Entrada</span><span class="pdf-val">${o.dataEntrada} ${o.horaEntrada}</span></div>
       <div class="pdf-row"><span class="pdf-label">Finalização</span><span class="pdf-val">${o.dataHoraFim||'—'}</span></div>
     </div>
@@ -1720,25 +1817,27 @@ function gerarPDF(){
       <div class="pdf-row"><span class="pdf-label">Nome</span><span class="pdf-val">${o.motorista}</span></div>
       <div class="pdf-row"><span class="pdf-label">CPF</span><span class="pdf-val">${o.cpf||'—'}</span></div>
     </div>
-    <div class="pdf-section"><h3>🚛 Eixos</h3>
+    <div class="pdf-section"><h3>🚛 Eixos / PBT</h3>
       <div class="pdf-row"><span class="pdf-label">Configuração</span><span class="pdf-val">${o.formulaEixos||o.totalEixos+' eixos'}</span></div>
-      <div class="pdf-row"><span class="pdf-label">PBT Máx CONTRAN</span><span class="pdf-val">${o.pbtMax||o.limPeso}t / ${Math.round((o.pbtMax||o.limPeso)*1000)}kg</span></div>
-      <div class="pdf-row"><span class="pdf-label">Tolerância ${tol}%</span><span class="pdf-val">${((o.pbtMax||o.limPeso)*(1+tol/100)).toFixed(1)}t</span></div>
+      <div class="pdf-row"><span class="pdf-label">PBT Máx CONTRAN</span><span class="pdf-val">${pbtKg.toLocaleString('pt-BR')} kg</span></div>
+      <div class="pdf-row"><span class="pdf-label">Limite c/ Tolerância ${tol}%</span><span class="pdf-val">${tolKg.toLocaleString('pt-BR')} kg</span></div>
     </div>
     <div class="pdf-section"><h3>⚖️ Pesagem</h3>
-      <div class="pdf-row"><span class="pdf-label">Tara</span><span class="pdf-val">${o.tara.toFixed(3)}t / ${Math.round(o.tara*1000)}kg</span></div>
-      <div class="pdf-row"><span class="pdf-label">Peso Bruto</span><span class="pdf-val">${(o.pesoBruto||0).toFixed(3)}t / ${Math.round((o.pesoBruto||0)*1000)}kg</span></div>
+      <div class="pdf-row"><span class="pdf-label">Peso Bruto</span><span class="pdf-val">${brutoKg.toLocaleString('pt-BR')} kg</span></div>
+      <div class="pdf-row"><span class="pdf-label">Tara</span><span class="pdf-val">${taraKg.toLocaleString('pt-BR')} kg</span></div>
       <div class="pdf-row" style="border-top:1.5px solid #1a5c45;margin-top:4px;padding-top:8px">
-        <span class="pdf-label" style="font-weight:700">Carga Líquida</span>
-        <span class="pdf-val" style="font-size:15px;color:#1a5c45;font-weight:800">${(o.cargaLiquida||0).toFixed(3)}t / ${Math.round((o.cargaLiquida||0)*1000)}kg</span>
+        <span class="pdf-label" style="font-weight:700;color:#1a5c45">Carga Líquida</span>
+        <span class="pdf-val" style="font-size:16px;color:#1a5c45;font-weight:800">${cargaKg.toLocaleString('pt-BR')} kg</span>
       </div>
     </div>
     ${o.obs?`<div class="pdf-section"><h3>📝 Obs</h3><p style="font-size:12px;color:#444">${o.obs}</p></div>`:''}
     <div class="pdf-section"><h3>👷 Responsável</h3>
       <div class="pdf-row"><span class="pdf-label">Funcionário</span><span class="pdf-val">${o.funcionario||'—'}</span></div>
     </div>
-    ${o.assinatura?`<div class="pdf-section pdf-sig"><h3>✍️ Assinatura</h3><img src="${o.assinatura}" alt="Assinatura"></div>`:''}
-    <div style="text-align:center;margin-top:16px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px">Gerado em ${new Date().toLocaleString('pt-BR')} · ${emp}</div>`;
+    ${o.assinatura?`<div class="pdf-section pdf-sig"><h3>✍️ Assinatura do Motorista</h3><img src="${o.assinatura}" alt="Assinatura" style="width:100%;max-height:120px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px"></div>`:''}
+    <div style="text-align:center;margin-top:16px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px">
+      Gerado em ${new Date().toLocaleString('pt-BR')} · ${emp}
+    </div>`;
   document.getElementById('pdf-frame').classList.add('show');
 }
 function fecharPDF(){ document.getElementById('pdf-frame').classList.remove('show'); }
