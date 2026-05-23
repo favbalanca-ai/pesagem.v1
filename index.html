@@ -1228,36 +1228,69 @@ async function scanCNH(inp) {
     fi.textContent = '🪪'; fl.textContent = 'CNH / Doc';
   }
 }
-function uploadFotosDrive(ordem){
+// Comprimir imagem para max 800px e qualidade 70%
+function comprimirImagem(b64full, callback){
+  var img=new Image();
+  img.onload=function(){
+    var max=800;
+    var w=img.width, h=img.height;
+    if(w>max||h>max){
+      if(w>h){h=Math.round(h*max/w);w=max;}
+      else{w=Math.round(w*max/h);h=max;}
+    }
+    var canvas=document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    var ctx=canvas.getContext('2d');
+    ctx.drawImage(img,0,0,w,h);
+    var compressed=canvas.toDataURL('image/jpeg',0.7);
+    callback(compressed);
+  };
+  img.src=b64full;
+}
+
+async function uploadFotosDrive(ordem){
   if(!SHEETS_URL||!navigator.onLine||!ordem) return;
   const contrato=(ordem.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
   const data=(ordem.dataEntrada||new Date().toLocaleDateString('pt-BR')).replace(/\//g,'-');
   const placa=(ordem.placa||'SEM-PLACA').replace(/[^a-zA-Z0-9]/g,'');
   const tipos={
-    oc:   'CONTRATO',
-    fpl:  'PLACA',
-    cnh:  'CNH',
-    cam:  'CAMINHAO',
-    ext:  'EXTRA',
-    fotaTara:  'BALANCA-TARA',
-    fotaBruto: 'BALANCA-BRUTO'
+    oc:'CONTRATO', fpl:'PLACA', cnh:'CNH', cam:'CAMINHAO',
+    ext:'EXTRA', fotaTara:'BALANCA-TARA', fotaBruto:'BALANCA-BRUTO'
   };
+  // Coletar fotos existentes
+  const lista=[];
   Object.keys(tipos).forEach(function(tipo){
-    var b64 = fotos[tipo];
-    if(!b64) return;
-    // extrair mime e dados
-    var parts = b64.split(',');
-    var mime  = (parts[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
-    var dados_b64 = parts[1];
-    if(!dados_b64) return;
-    var payload = JSON.stringify({
-      acao: 'salvarFoto',
-      dados: {contrato, data, placa, tipo: tipos[tipo], base64: dados_b64, mime},
-      token: TOKEN
-    });
-    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload})
-      .catch(function(){});
+    if(fotos[tipo]) lista.push({tipo:tipo, nome:tipos[tipo], b64:fotos[tipo]});
   });
+  // Adicionar assinatura se existir
+  if(ordem.assinatura && ordem.assinatura.length>100){
+    lista.push({tipo:'sig', nome:'ASSINATURA', b64:ordem.assinatura});
+  }
+  if(!lista.length) return;
+  toast('📤 Enviando '+lista.length+' foto(s)...');
+  var ok=0;
+  for(var i=0;i<lista.length;i++){
+    var item=lista[i];
+    await new Promise(function(resolve){
+      comprimirImagem(item.b64, async function(comprimida){
+        try{
+          var parts=comprimida.split(',');
+          var mime='image/jpeg';
+          var dados_b64=parts[1];
+          var payload=JSON.stringify({
+            acao:'salvarFoto',
+            dados:{contrato:contrato, data:data, placa:placa, tipo:item.nome, base64:dados_b64, mime:mime},
+            token:TOKEN
+          });
+          var r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
+          var j=JSON.parse(await r.text());
+          if(j.ok) ok++;
+        }catch(e){}
+        resolve();
+      });
+    });
+  }
+  toast('✅ '+ok+'/'+lista.length+' foto(s) salvas no Drive!');
 }
 
 async function fotoPlaca(inp) {
