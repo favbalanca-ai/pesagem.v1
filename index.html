@@ -867,18 +867,17 @@ function adj(id,d){
 }
 function calcPBT(){
   const d=parseInt(document.getElementById('nd').textContent)||1;
-  const s=parseInt(document.getElementById('ns').textContent)||0;
+  const es=parseInt(document.getElementById('ns').textContent)||0;
   const dd=parseInt(document.getElementById('ndd').textContent)||0;
   const t=parseInt(document.getElementById('nt').textContent)||0;
-  const pbt=(d*6)+(s*10)+(dd*17)+(t*25.5);
-  const tot=d+s+(dd*2)+(t*3);
+  const pbt=(d*6)+(es*10)+(dd*17)+(t*25.5);
+  const tot=d+es+(dd*2)+(t*3);
   const tol=(DB.cfg.tol||7)/100;
-  // fórmula resumida
   const pts=[];
-  if(d>0) pts.push(d===1?'6':`(${d}×6)`);
-  if(s>0) pts.push(s===1?'10':`(${s}×10)`);
-  if(dd>0)pts.push(dd===1?'17':`(${dd}×17)`);
-  if(t>0) pts.push(t===1?'25,5':`(${t}×25,5)`);
+  if(d>0)  pts.push(d===1?'6':`(${d}×6)`);
+  if(es>0) pts.push(es===1?'10':`(${es}×10)`);
+  if(dd>0) pts.push(dd===1?'17':`(${dd}×17)`);
+  if(t>0)  pts.push(t===1?'25,5':`(${t}×25,5)`);
   const box=document.getElementById('pbt-box');
   if(pbt>0){
     box.style.display='block';
@@ -887,7 +886,7 @@ function calcPBT(){
     document.getElementById('pb-kg').textContent='/ '+(pbt*1000)+'kg';
     document.getElementById('pb-tol').textContent=`${tot} eixos · Tolerância ${DB.cfg.tol||7}%: ${(pbt*(1+tol)).toFixed(1)}t / ${Math.round(pbt*(1+tol)*1000)}kg`;
   } else box.style.display='none';
-  return {d,s,dd,t,tot,pbt};
+  return {d, s:es, dd, t, tot, pbt};
 }
 
 /* ══ UNIDADE ══════════════════════════════════════════════════ */
@@ -1335,7 +1334,8 @@ function salvar(){
   const pl=document.getElementById('f-pl').value.trim().toUpperCase();
   const mt=document.getElementById('f-mt').value.trim();
   const tara=getTon('t');
-  const {d,s,dd,t,tot,pbt}=calcPBT();
+  const res=calcPBT();
+  const d=res.d, es=res.s, dd=res.dd, t=res.t, tot=res.tot, pbt=res.pbt;
   if(!oc){toast('⚠️ Informe o contrato/ordem!');return;}
   if(!pl){toast('⚠️ Informe a placa!');return;}
   if(!mt){toast('⚠️ Informe o motorista!');return;}
@@ -1343,7 +1343,7 @@ function salvar(){
   if(tara<=0){toast('⚠️ Informe a tara!');return;}
   const pts=[];
   if(d>0)pts.push(d===1?'6':`(${d}×6)`);
-  if(s>0)pts.push(s===1?'10':`(${s}×10)`);
+  if(es>0)pts.push(es===1?'10':`(${es}×10)`);
   if(dd>0)pts.push(dd===1?'17':`(${dd}×17)`);
   if(t>0)pts.push(t===1?'25,5':`(${t}×25,5)`);
   const formula=pts.join('+')+' = '+pbt+'t';
@@ -1356,13 +1356,13 @@ function salvar(){
     cpf:document.getElementById('f-cpf').value,
     municipio:document.getElementById('f-mun').value.trim(),
     estado:document.getElementById('f-uf').value.trim().toUpperCase(),
-    eixosDianteiro:d,eixosSimples:s,eixosDuplos:dd,eixosTriplos:t,
-    totalEixos:tot,pbtMax:pbt,formulaEixos:formula,
-    tara,limPeso:pbt,
+    eixosDianteiro:d, eixosSimples:es, eixosDuplos:dd, eixosTriplos:t,
+    totalEixos:tot, pbtMax:pbt, formulaEixos:formula,
+    tara, limPeso:pbt,
     obs:document.getElementById('f-ob').value,
     fotos:{...fotos},
     status:'Aguardando',
-    pesoBruto:null,cargaLiquida:null,statusPeso:null,dataHoraFim:null,assinatura:null
+    pesoBruto:null, cargaLiquida:null, statusPeso:null, dataHoraFim:null, assinatura:null
   };
   DB.ordens.push(o); saveDB();
   enviar(o,'salvar');
