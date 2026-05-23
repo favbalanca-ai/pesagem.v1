@@ -1425,16 +1425,28 @@ function vTicket(id){
 }
 function sendWA(){
   if(!atual)return;
-  const n=DB.cfg.wa||'5561999999999',tol=DB.cfg.tol||7;
+  const n=DB.cfg.wa||'5561999999999';
+  const tol=DB.cfg.tol||7;
+  const emp=DB.cfg.empresa||'Fazenda Água Viva';
+  const st=atual.statusPeso||'CONFORME';
+  const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
+  const taraKg=Math.round(atual.tara*1000);
+  const brutoKg=Math.round((atual.pesoBruto||0)*1000);
+  const cargaKg=Math.round((atual.cargaLiquida||0)*1000);
+  const pbtKg=Math.round(atual.pbtMax*1000);
+  const tolKg=Math.round(atual.pbtMax*(1+tol/100)*1000);
   const msg=encodeURIComponent(
-    `🚛 *PESAGEM FINALIZADA*\n*${DB.cfg.empresa||'Pesagem'}*\n\n`+
-    `📋 Contrato: ${atual.numOrdem}\n🚛 Placa: ${atual.placa}\n👤 Motorista: ${atual.motorista}\n\n`+
-    `🔢 Eixos: ${atual.formulaEixos}\n`+
-    `⚖️ Tara: ${atual.tara.toFixed(3)}t (${Math.round(atual.tara*1000)}kg)\n`+
-    `⚖️ Bruto: ${(atual.pesoBruto||0).toFixed(3)}t (${Math.round((atual.pesoBruto||0)*1000)}kg)\n`+
-    `📦 Carga: ${(atual.cargaLiquida||0).toFixed(3)}t (${Math.round((atual.cargaLiquida||0)*1000)}kg)\n`+
-    `📏 PBT Máx: ${atual.pbtMax}t · Tol.${tol}%: ${(atual.pbtMax*(1+tol/100)).toFixed(1)}t\n\n`+
-    `*Status: ${atual.statusPeso||'CONFORME'}*\n📅 ${atual.dataHoraFim||''}`
+    `🚛 *PESAGEM FINALIZADA*\n*${emp}*\n\n`+
+    `📋 Contrato: ${atual.numOrdem||'—'}\n`+
+    `🚛 Placa: ${atual.placa}\n`+
+    `👤 Motorista: ${atual.motorista}\n`+
+    `🪪 CPF: ${atual.cpf||'—'}\n\n`+
+    `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
+    `⚖️ Bruto: ${brutoKg.toLocaleString('pt-BR')} kg\n`+
+    `📦 Carga: ${cargaKg.toLocaleString('pt-BR')} kg\n`+
+    `📏 PBT Máx: ${pbtKg.toLocaleString('pt-BR')} kg · Tol.${tol}%: ${tolKg.toLocaleString('pt-BR')} kg\n\n`+
+    `*${stIcon} Status: Finalizado - ${st}*\n`+
+    `📅 ${atual.dataHoraFim||''}`
   );
   window.open(`https://wa.me/${n}?text=${msg}`,'_blank');
 }
