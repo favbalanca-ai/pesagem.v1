@@ -410,7 +410,24 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',
       </div>
     </div>
 
-    <!-- Tara -->
+    <!-- Scanner CNH -->
+    <div class="card">
+      <div class="ct">🪪 Scanner CNH / Documento</div>
+      <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Fotografe ou envie a CNH — a IA lê os dados automaticamente</div>
+      <label class="fb" id="fb-scan" style="width:100%;flex-direction:row;padding:13px;gap:10px;justify-content:flex-start;min-height:56px;border-color:var(--g1);background:var(--g3)">
+        <span style="font-size:22px">🪪</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--g1)" id="scan-lbl">Fotografar ou escolher CNH</div>
+          <div style="font-size:10px;color:var(--ink3)">Aceita foto ou PDF</div>
+        </div>
+        <input type="file" accept="image/*,application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="scanCNH(this)">
+      </label>
+      <div id="cnh-res" style="display:none;margin-top:9px;padding:11px 13px;background:var(--g3);border-radius:9px;border:.5px solid var(--g1)">
+        <div style="font-size:10px;font-weight:700;color:var(--g1);margin-bottom:7px">🤖 DADOS LIDOS PELA IA</div>
+        <div id="cnh-dados" style="font-size:13px;color:var(--ink);line-height:1.9"></div>
+        <div style="font-size:10px;color:var(--ink3);margin-top:6px">⚠️ Confira os dados nos campos acima</div>
+      </div>
+    </div>
     <div class="card">
       <div class="ct">⚖️ Tara do Veículo</div>
       <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Peso <b>vazio</b> na balança</div>
@@ -814,7 +831,11 @@ function irNova(){
   // preencher funcionário com o nome do login
   const fnEl=document.getElementById('f-fn');
   if(fnEl) fnEl.value=usr?usr.email:'—';;
-  document.getElementById('placa-ia').style.display='none';;
+  document.getElementById('placa-ia').style.display='none';
+  const cnhRes=document.getElementById('cnh-res');
+  if(cnhRes) cnhRes.style.display='none';
+  const scanLbl=document.getElementById('scan-lbl');
+  if(scanLbl) scanLbl.textContent='Fotografar ou escolher CNH';;
   ['nd','ns','ndd','nt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='nd'?'1':'0';});
   document.getElementById('pbt-box').style.display='none';
   document.getElementById('oc-info').style.display='none';
@@ -1164,17 +1185,13 @@ function carregarContratosLocal(){
 /* ══ SCANNER CNH / DOCUMENTO ═══════════════════════════════════ */
 async function scanCNH(inp) {
   const file = inp.files[0]; if (!file) return;
-  const btn = document.getElementById('fb-cn');
-  const fi  = document.getElementById('fi-cn');
-  const fl  = document.getElementById('fl-cn');
-  fi.textContent = '⏳'; fl.textContent = 'Lendo...';
-  btn.classList.add('ok');
-  const res = document.getElementById('cnh-resultado');
-  const dados = document.getElementById('cnh-dados');
+  const lbl  = document.getElementById('scan-lbl');
+  const res  = document.getElementById('cnh-res');
+  const dados= document.getElementById('cnh-dados');
+  lbl.textContent = '⏳ Lendo documento com IA...';
   res.style.display = 'block';
-  dados.innerHTML = '⏳ Analisando documento com IA...';
+  dados.innerHTML = '<span style="color:var(--ink3)">Aguarde...</span>';
   try {
-    // Ler arquivo como base64
     const b64 = await new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = e => resolve(e.target.result.split(',')[1]);
@@ -1182,50 +1199,53 @@ async function scanCNH(inp) {
       r.readAsDataURL(file);
     });
     const mime = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
-    // Montar conteúdo para a API
+    // salvar foto para Drive
+    fotos['cnh'] = 'data:'+mime+';base64,'+b64;
+    document.getElementById('fb-cn').classList.add('ok');
+    document.getElementById('fi-cn').textContent = '✅';
+    document.getElementById('fl-cn').textContent = 'CNH ✓';
+    // montar conteúdo para IA
     const content = [];
     if (mime === 'application/pdf') {
       content.push({type:'document', source:{type:'base64', media_type:'application/pdf', data:b64}});
     } else {
       content.push({type:'image', source:{type:'base64', media_type:mime, data:b64}});
-      // salvar foto para envio ao Drive
-      fotos['cnh'] = 'data:'+mime+';base64,'+b64;
     }
-    content.push({type:'text', text:'Analise este documento (CNH, RG, CPF ou outro documento de identificação brasileiro). Extraia SOMENTE os dados presentes. Responda APENAS em JSON válido, sem explicações:\n{"nome":"NOME COMPLETO","cpf":"000.000.000-00","rg":"","nascimento":"dd/mm/aaaa","cnh_numero":"","cnh_categoria":"","cnh_validade":"dd/mm/aaaa","documento_tipo":"CNH"}\nSe um campo não existir no documento, use null.'});
+    content.push({type:'text', text:'Analise este documento brasileiro (CNH, RG, CPF ou identidade). Extraia os dados presentes. Responda SOMENTE em JSON válido sem explicações:\n{"nome":"NOME COMPLETO","cpf":"000.000.000-00","rg":"","nascimento":"dd/mm/aaaa","cnh_numero":"","cnh_categoria":"","cnh_validade":"dd/mm/aaaa","tipo_doc":"CNH"}\nSe um campo não existir, use null.'});
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:500, messages:[{role:'user', content}]})
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:400, messages:[{role:'user', content}]})
     });
     const data = await resp.json();
     const txt  = data.content && data.content[0] ? data.content[0].text : '';
-    const match = txt.match(/\{[\s\S]*\}/);
+    const match = txt.match(/\{[\s\S]*?\}/);
     if (match) {
       const info = JSON.parse(match[0]);
-      // Preencher campos automaticamente
+      // preencher campos automaticamente
       if (info.nome && !document.getElementById('f-mt').value)
         document.getElementById('f-mt').value = info.nome;
       if (info.cpf && !document.getElementById('f-cpf').value)
         document.getElementById('f-cpf').value = info.cpf;
-      // Montar resumo visual
+      // montar display
       let html = '';
-      if (info.documento_tipo) html += `<b>Tipo:</b> ${info.documento_tipo}<br>`;
-      if (info.nome)           html += `<b>Nome:</b> ${info.nome}<br>`;
-      if (info.cpf)            html += `<b>CPF:</b> ${info.cpf}<br>`;
-      if (info.rg)             html += `<b>RG:</b> ${info.rg}<br>`;
-      if (info.nascimento)     html += `<b>Nascimento:</b> ${info.nascimento}<br>`;
-      if (info.cnh_numero)     html += `<b>CNH Nº:</b> ${info.cnh_numero}<br>`;
-      if (info.cnh_categoria)  html += `<b>Categoria:</b> ${info.cnh_categoria}<br>`;
-      if (info.cnh_validade)   html += `<b>Validade CNH:</b> ${info.cnh_validade}<br>`;
-      dados.innerHTML = html || 'Documento lido — dados não identificados';
-      fi.textContent = '✅'; fl.textContent = 'Doc ✓';
+      if (info.tipo_doc) html += `<b>Tipo:</b> ${info.tipo_doc}<br>`;
+      if (info.nome)     html += `<b>Nome:</b> ${info.nome}<br>`;
+      if (info.cpf)      html += `<b>CPF:</b> ${info.cpf}<br>`;
+      if (info.rg)       html += `<b>RG:</b> ${info.rg}<br>`;
+      if (info.nascimento) html += `<b>Nascimento:</b> ${info.nascimento}<br>`;
+      if (info.cnh_numero)   html += `<b>CNH Nº:</b> ${info.cnh_numero}<br>`;
+      if (info.cnh_categoria)html += `<b>Categoria:</b> ${info.cnh_categoria}<br>`;
+      if (info.cnh_validade) html += `<b>Validade:</b> ${info.cnh_validade}<br>`;
+      dados.innerHTML = html || 'Documento lido — verifique os dados';
+      lbl.textContent = '✅ CNH lida com sucesso';
     } else {
-      dados.innerHTML = '⚠️ Não foi possível ler o documento. Preencha manualmente.';
-      fi.textContent = '🪪'; fl.textContent = 'CNH / Doc';
+      dados.innerHTML = '⚠️ Não identificou os dados — preencha manualmente';
+      lbl.textContent = '⚠️ Leitura incompleta';
     }
   } catch(err) {
     dados.innerHTML = '⚠️ Erro: ' + err.message;
-    fi.textContent = '🪪'; fl.textContent = 'CNH / Doc';
+    lbl.textContent = '⚠️ Erro na leitura';
   }
 }
 // Comprimir imagem para max 800px e qualidade 70%
