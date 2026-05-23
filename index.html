@@ -1656,34 +1656,33 @@ async function syncP(){
 
 // Carregar TUDO da planilha — substitui cache local
 async function carregarDaPlanilha(){
-  if(!SHEETS_URL||!navigator.onLine)return false;
-  try{
-    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listar',token:TOKEN})});
-    const j=JSON.parse(await r.text());
-    if(j.ok&&j.ordens){
-      // planilha é a fonte de verdade — substitui tudo
-      cloud=j.ordens.map(normOrdem);
-      DB.ordens=[...cloud]; // app mostra exatamente o que está na planilha
-      return true;
-    }
-  }catch(e){}
-  return false;
+  if(!SHEETS_URL||!navigator.onLine) return false;
+  const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listar',token:TOKEN})});
+  const txt=await r.text();
+  const j=JSON.parse(txt);
+  if(j.ok&&j.ordens){
+    cloud=j.ordens.map(normOrdem);
+    DB.ordens=[...cloud];
+    return true;
+  }
+  throw new Error(j.erro||txt.substring(0,80));
 }
 
-// Botão Sincronizar na home — sincroniza TUDO
 async function syncM(){
   const btn=document.getElementById('btn-sy');
   if(btn){btn.disabled=true;btn.textContent='⏳...';}
-  await syncP(); // enviar pendentes offline
-  const [okP, okC] = await Promise.all([
-    carregarDaPlanilha(),      // pesagens
-    loadContratosDaPlanilha()  // contratos
-  ]);
-  updHome();
-  if(btn){btn.disabled=false;btn.textContent='Sincronizar';}
-  if(okP) toast('☁️ '+cloud.length+' pesagem(s) · '+contratosCloud.length+' contrato(s)');
-  else if(!navigator.onLine) toast('📵 Sem internet');
-  else toast('❌ Erro ao sincronizar');
+  await syncP();
+  try{
+    const ok=await carregarDaPlanilha();
+    await loadContratosDaPlanilha();
+    updHome();
+    if(btn){btn.disabled=false;btn.textContent='Sincronizar';}
+    if(ok) toast(`☁️ ${cloud.length} pesagem(s) · ${contratosCloud.length} contrato(s)`);
+    else toast('❌ Planilha não respondeu — verifique conexão');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Sincronizar';}
+    toast('❌ Erro: '+e.message);
+  }
 }
 
 // Carregar ao abrir histórico
