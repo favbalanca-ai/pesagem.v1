@@ -1,1 +1,18 @@
-{"name":"Pesagem","short_name":"Pesagem","start_url":"/pesagem/","scope":"/pesagem/","display":"standalone","background_color":"#0d2b1e","theme_color":"#1a5c45","orientation":"portrait","lang":"pt-BR","icons":[]}
+{
+  "name": "Pesagem FAV",
+  "short_name": "Pesagem",
+  "start_url": "/pesagem.v1/",
+  "scope": "/pesagem.v1/",
+  "display": "standalone",
+  "background_color": "#0d2b1e",
+  "theme_color": "#1a5c45",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/favbalanca-ai/pesagem.v1/main/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
