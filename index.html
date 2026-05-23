@@ -1145,39 +1145,7 @@ function carregarContratosLocal(){
   contratosCloud=JSON.parse(localStorage.getItem('poc')||'[]');
 }
 
-/* ══ UPLOAD FOTOS PARA O DRIVE ════════════════════════════════ */
-function uploadFotosDrive(ordem){
-  if(!SHEETS_URL||!navigator.onLine||!ordem) return;
-  const contrato=(ordem.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
-  const data=(ordem.dataEntrada||new Date().toLocaleDateString('pt-BR')).replace(/\//g,'-');
-  const placa=(ordem.placa||'SEM-PLACA').replace(/[^a-zA-Z0-9]/g,'');
-  const tipos={
-    oc:   'CONTRATO',
-    fpl:  'PLACA',
-    cnh:  'CNH',
-    cam:  'CAMINHAO',
-    ext:  'EXTRA',
-    fotaTara:  'BALANCA-TARA',
-    fotaBruto: 'BALANCA-BRUTO'
-  };
-  Object.keys(tipos).forEach(function(tipo){
-    var b64 = fotos[tipo];
-    if(!b64) return;
-    // extrair mime e dados
-    var parts = b64.split(',');
-    var mime  = (parts[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
-    var dados_b64 = parts[1];
-    if(!dados_b64) return;
-    var payload = JSON.stringify({
-      acao: 'salvarFoto',
-      dados: {contrato, data, placa, tipo: tipos[tipo], base64: dados_b64, mime},
-      token: TOKEN
-    });
-    fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload})
-      .catch(function(){});
-  });
-}
-
+/* ══ LEITURA DE PLACA POR IA ═══════════════════════════════════ */
 async function fotoPlaca(inp) {
   var file = inp.files[0]; if (!file) return;
   // salvar foto normalmente
@@ -1421,7 +1389,6 @@ function finalizar(){
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
   if(idx>=0)DB.ordens[idx]={...atual};
   saveDB(); enviar(atual,'atualizar');
-  uploadFotosDrive(atual); // enviar fotos para o Drive
   rTicket(atual); showPg('pg-tk','🎫 Ticket',true,5);
   toast('🎉 Pesagem finalizada!'); updHome();
 }
