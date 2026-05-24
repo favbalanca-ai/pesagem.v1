@@ -342,11 +342,6 @@ body.dark .card{background:#1a2d22}
         <div id="placa-hist-txt" style="font-size:12px;color:#856404"></div>
         <button onclick="usarDadosPlaca()" style="margin-top:6px;padding:5px 12px;border-radius:6px;border:1.5px solid #e6a817;background:transparent;color:#856404;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✅ Usar estes dados</button>
       </div>
-      <!-- Alerta blacklist -->
-      <div id="placa-black" style="display:none;padding:9px 12px;background:var(--r2);border-radius:9px;margin-bottom:6px;border:.5px solid var(--r1)">
-        <div style="font-size:12px;font-weight:700;color:var(--r1)">🚫 PLACA COM OCORRÊNCIA</div>
-        <div id="placa-black-txt" style="font-size:11px;color:var(--r1);margin-top:2px"></div>
-      </div>
       <!-- Resultado da leitura da placa por IA -->
       <div id="placa-ia" style="display:none;padding:9px 12px;background:var(--g3);border-radius:9px;margin-bottom:9px;border:.5px solid var(--brd)">
         <div style="font-size:10px;font-weight:700;color:var(--g1);margin-bottom:5px">🤖 Identificação por IA</div>
@@ -434,24 +429,6 @@ body.dark .card{background:#1a2d22}
       </div>
     </div>
 
-    <!-- Scanner CNH -->
-    <div class="card">
-      <div class="ct">🪪 Scanner CNH / Documento</div>
-      <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Fotografe ou envie a CNH — a IA lê os dados automaticamente</div>
-      <label class="fb" id="fb-scan" style="width:100%;flex-direction:row;padding:13px;gap:10px;justify-content:flex-start;min-height:56px;border-color:var(--g1);background:var(--g3)">
-        <span style="font-size:22px">🪪</span>
-        <div>
-          <div style="font-size:12px;font-weight:700;color:var(--g1)" id="scan-lbl">Fotografar ou escolher CNH</div>
-          <div style="font-size:10px;color:var(--ink3)">Aceita foto ou PDF</div>
-        </div>
-        <input type="file" accept="image/*,application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="scanCNH(this)">
-      </label>
-      <div id="cnh-res" style="display:none;margin-top:9px;padding:11px 13px;background:var(--g3);border-radius:9px;border:.5px solid var(--g1)">
-        <div style="font-size:10px;font-weight:700;color:var(--g1);margin-bottom:7px">🤖 DADOS LIDOS PELA IA</div>
-        <div id="cnh-dados" style="font-size:13px;color:var(--ink);line-height:1.9"></div>
-        <div style="font-size:10px;color:var(--ink3);margin-top:6px">⚠️ Confira os dados nos campos acima</div>
-      </div>
-    </div>
     <div class="card">
       <div class="ct">⚖️ Tara do Veículo</div>
       <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Peso <b>vazio</b> na balança</div>
@@ -654,22 +631,10 @@ body.dark .card{background:#1a2d22}
       <div class="f"><label>Obs / Comprador</label><input type="text" id="oc-o" placeholder="Ex: Bunge, Cargill..."></div>
       <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar Contrato</button>
     </div>
-    <div class="card" id="card-black" style="display:none">
-      <div class="ct">🚫 Placas com Ocorrência</div>
-      <div class="r2" style="margin-bottom:9px">
-        <div class="f"><label>Placa</label><input type="text" id="bl-pl" placeholder="ABC1D23" maxlength="8" oninput="this.value=this.value.toUpperCase()"></div>
-        <div class="f"><label>Motivo</label><input type="text" id="bl-mo" placeholder="Ex: Fraude, irregular..."></div>
-      </div>
-      <button class="btn btnd" onclick="addBlack()" style="margin-top:0">🚫 Adicionar à lista</button>
-      <div id="lst-black" style="margin-top:9px"></div>
-    </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div class="ct" style="margin:0">📋 Contratos Cadastrados</div>
-        <div style="display:flex;gap:6px">
-          <button onclick="toggleBlack()" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--r1);background:var(--r2);color:var(--r1);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700">🚫 Blacklist</button>
-          <button onclick="loadContratosDaPlanilha().then(()=>rOC())" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--brd);background:#fff;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">☁️ Atualizar</button>
-        </div>
+        <button onclick="loadContratosDaPlanilha().then(()=>rOC())" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--brd);background:#fff;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">☁️ Atualizar</button>
       </div>
       <div id="lst-oc"></div>
     </div>
@@ -904,7 +869,13 @@ function irNova(){
   calcPBT();
   showPg('pg-nova','📋 Nova Pesagem',true,1);
 }
-function irAg(){rAg();showPg('pg-ag','⏳ Aguardando');}
+function irAg(){
+  rAg();
+  showPg('pg-ag','⏳ Aguardando');
+  // iniciar timer de atualização
+  if(_timerAg) clearInterval(_timerAg);
+  _timerAg=setInterval(rAg, 60000);
+}
 function irHist(){
   rHist();
   showPg('pg-hist','📊 Histórico');
@@ -1338,72 +1309,31 @@ function beep(tipo){
 var _dadosPlacaAnterior={};
 function onPlaca(placa){
   const ph=document.getElementById('placa-hist');
-  const pb=document.getElementById('placa-black');
-  ph.style.display='none'; pb.style.display='none';
+  ph.style.display='none';
   if(placa.length<7) return;
-  // Checar blacklist
-  const black=JSON.parse(localStorage.getItem('blacklist')||'[]');
-  const bl=black.find(b=>b.p===placa);
-  if(bl){
-    document.getElementById('placa-black-txt').textContent=bl.m||'Ocorrência registrada';
-    pb.style.display='block';
-    beep('erro');
-    return;
-  }
-  // Buscar último registro desta placa no histórico
   const hist=[...cloud].reverse().find(o=>o.placa===placa&&o.motorista);
   if(hist){
-    _dadosPlacaAnterior={motorista:hist.motorista, cpf:hist.cpf||''};
+    _dadosPlacaAnterior={
+      motorista: hist.motorista,
+      cpf:       hist.cpf||'',
+      municipio: hist.municipio||'',
+      estado:    hist.estado||''
+    };
+    const local=(hist.municipio||'')+(hist.municipio&&hist.estado?' - ':'')+( hist.estado||'');
     document.getElementById('placa-hist-txt').innerHTML=
       `👤 <b>${hist.motorista}</b>${hist.cpf?' · CPF: '+hist.cpf:''}<br>`+
+      `${local?'📍 '+local+'<br>':''}`+
       `📋 Último: ${hist.numOrdem} · ${hist.dataEntrada}`;
     ph.style.display='block';
   }
 }
 function usarDadosPlaca(){
   if(_dadosPlacaAnterior.motorista) document.getElementById('f-mt').value=_dadosPlacaAnterior.motorista;
-  if(_dadosPlacaAnterior.cpf) document.getElementById('f-cpf').value=_dadosPlacaAnterior.cpf;
+  if(_dadosPlacaAnterior.cpf)       document.getElementById('f-cpf').value=_dadosPlacaAnterior.cpf;
+  if(_dadosPlacaAnterior.municipio) document.getElementById('f-mun').value=_dadosPlacaAnterior.municipio;
+  if(_dadosPlacaAnterior.estado)    document.getElementById('f-uf').value=_dadosPlacaAnterior.estado;
   document.getElementById('placa-hist').style.display='none';
   toast('✅ Dados preenchidos!');
-}
-
-/* ══ BLACKLIST DE PLACAS ════════════════════════════════════════ */
-function addBlack(){
-  const pl=document.getElementById('bl-pl').value.trim().toUpperCase();
-  const mo=document.getElementById('bl-mo').value.trim();
-  if(!pl){toast('⚠️ Informe a placa!');return;}
-  const black=JSON.parse(localStorage.getItem('blacklist')||'[]');
-  if(black.find(b=>b.p===pl)){toast('⚠️ Placa já na lista!');return;}
-  black.push({p:pl,m:mo,d:new Date().toLocaleDateString('pt-BR')});
-  localStorage.setItem('blacklist',JSON.stringify(black));
-  document.getElementById('bl-pl').value='';
-  document.getElementById('bl-mo').value='';
-  rBlack(); toast('🚫 Placa adicionada!');
-}
-function rBlack(){
-  const black=JSON.parse(localStorage.getItem('blacklist')||'[]');
-  const el=document.getElementById('lst-black');
-  if(!el) return;
-  if(!black.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:10px">Nenhuma placa na lista</div>';return;}
-  el.innerHTML=black.map(b=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid var(--brd)">
-      <div style="flex:1">
-        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px">${b.p}</div>
-        <div style="font-size:11px;color:var(--r1)">${b.m||'—'} · ${b.d||''}</div>
-      </div>
-      <button onclick="delBlack('${b.p}')" style="background:var(--r2);color:var(--r1);border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:700">×</button>
-    </div>`).join('');
-}
-function delBlack(pl){
-  let black=JSON.parse(localStorage.getItem('blacklist')||'[]');
-  localStorage.setItem('blacklist',JSON.stringify(black.filter(b=>b.p!==pl)));
-  rBlack(); toast('✅ Removida da lista');
-}
-function toggleBlack(){
-  const c=document.getElementById('card-black');
-  if(!c) return;
-  c.style.display=c.style.display==='none'?'block':'none';
-  if(c.style.display==='block') rBlack();
 }
 
 /* ══ WHATSAPP AUTOMÁTICO ════════════════════════════════════════ */
@@ -1641,9 +1571,6 @@ function rAg(){
       <div class="obg bag" style="margin-top:7px">Toque → Registrar peso bruto →</div>
     </div>`;
   }).join('');
-  // atualizar timer a cada minuto
-  if(_timerAg) clearInterval(_timerAg);
-  _timerAg=setInterval(rAg, 60000);
 }
 var _timerAg=null;
 
