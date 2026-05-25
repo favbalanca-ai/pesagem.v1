@@ -528,17 +528,36 @@ body.dark .card{background:#1a2d22}
     <div class="card" id="sig-info"></div>
     <div class="card">
       <div class="ct">✍️ Assinatura Digital</div>
-      <div style="font-size:12px;color:var(--ink2);margin-bottom:9px;text-align:center">Peça ao motorista que assine abaixo</div>
-      <div id="sig-wrap" style="position:relative;touch-action:none;-webkit-user-select:none">
-        <canvas id="sig-c"></canvas>
-        <div id="sig-h" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.3;font-size:13px;color:var(--ink3)">✍️ Assine aqui</div>
-      </div>
-      <div style="display:flex;gap:7px;margin-top:9px;align-items:center">
-        <button class="btn btns bsm" onclick="clrSig()">🗑️ Limpar</button>
-        <div id="sig-st" style="flex:1;font-size:11px;color:var(--ink3);text-align:center">Aguardando assinatura...</div>
+      <div style="font-size:12px;color:var(--ink2);margin-bottom:9px;text-align:center">Toque no botão — gire o celular para assinar</div>
+      <button class="btn btnp" onclick="abrirSig()" id="btn-abrir-sig" style="margin-bottom:0">✍️ Abrir campo de assinatura</button>
+      <div id="sig-preview" style="display:none;margin-top:9px">
+        <img id="sig-preview-img" style="width:100%;border-radius:7px;border:1.5px solid var(--g1)">
+        <div style="display:flex;gap:7px;margin-top:7px">
+          <button class="btn btns bsm" onclick="abrirSig()">✏️ Refazer</button>
+          <div style="flex:1;font-size:11px;color:var(--g1);text-align:center;line-height:2.5">✅ Assinatura registrada</div>
+        </div>
       </div>
     </div>
     <button class="btn btnp" onclick="finalizar()">🏁 Finalizar e Emitir Ticket</button>
+  </div>
+
+  <!-- OVERLAY DE ASSINATURA FULLSCREEN -->
+  <div id="sig-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;flex-direction:column">
+    <div style="background:#1a5c45;color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="font-weight:700;font-size:14px">✍️ Assinatura do Motorista</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="clrSig()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🗑️ Limpar</button>
+        <button onclick="confirmarSig()" style="background:#fff;border:none;color:#1a5c45;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Confirmar</button>
+        <button onclick="fecharSig()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 10px;border-radius:7px;font-size:13px;cursor:pointer">✕</button>
+      </div>
+    </div>
+    <div style="flex:1;position:relative;overflow:hidden">
+      <canvas id="sig-c" style="position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none;-webkit-user-select:none"></canvas>
+      <div id="sig-h" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.25;font-size:20px;color:#1a5c45">✍️ Assine aqui</div>
+    </div>
+    <div style="background:#f5f5f5;padding:8px 14px;text-align:center;font-size:11px;color:#888;flex-shrink:0">
+      Melhor em modo paisagem (celular deitado)
+    </div>
   </div>
 
   <!-- TICKET -->
@@ -1896,21 +1915,23 @@ function confBr(){
   document.getElementById('app').style.overflow='hidden';
 }
 
-/* ══ ASSINATURA ════════════════════════════════════════════════ */
+/* ══ ASSINATURA (overlay fullscreen) ══════════════════════════ */
 function initSig(){
   sigC=document.getElementById('sig-c');if(!sigC)return;
   sigX=sigC.getContext('2d');
+  // Tamanho é controlado por abrirSig() quando o overlay abre
   function rsz(){
-    const w=sigC.parentElement?sigC.parentElement.offsetWidth:window.innerWidth-40;
+    if(!document.getElementById('sig-overlay')||document.getElementById('sig-overlay').style.display==='none') return;
     const dpr=window.devicePixelRatio||1;
-    sigC.width=Math.floor(w*dpr);sigC.height=Math.floor(185*dpr);
-    sigC.style.width=w+'px';sigC.style.height='185px';
-    sigX.setTransform(1,0,0,1,0,0);sigX.scale(dpr,dpr);
-    sigX.strokeStyle='#1a5c45';sigX.lineWidth=3;sigX.lineCap='round';sigX.lineJoin='round';
+    const W=window.innerWidth, H=window.innerHeight-52-36; // 52=header 36=footer
+    sigC.width=Math.floor(W*dpr); sigC.height=Math.floor(H*dpr);
+    sigX.setTransform(1,0,0,1,0,0); sigX.scale(dpr,dpr);
+    sigX.strokeStyle='#1a5c45'; sigX.lineWidth=3; sigX.lineCap='round'; sigX.lineJoin='round';
   }
-  rsz(); window.addEventListener('resize',rsz);
+  window.addEventListener('resize', rsz);
+  window.addEventListener('orientationchange', ()=>setTimeout(rsz,200));
   const gp=e=>{const r=sigC.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return{x:s.clientX-r.left,y:s.clientY-r.top};};
-  const st=(x,y)=>{sigDraw=true;sigOk=true;sigX.beginPath();sigX.moveTo(x,y);sigC.classList.add('ok');document.getElementById('sig-h').style.display='none';document.getElementById('sig-st').textContent='✅ Assinatura registrada';document.getElementById('sig-st').style.color='var(--g1)';};
+  const st=(x,y)=>{sigDraw=true;sigOk=true;sigX.beginPath();sigX.moveTo(x,y);const h=document.getElementById('sig-h');if(h)h.style.display='none';};
   const dr=(x,y)=>{if(!sigDraw)return;sigX.lineTo(x,y);sigX.stroke();sigX.beginPath();sigX.moveTo(x,y);};
   const sp=()=>{sigDraw=false;sigX.beginPath();};
   sigC.addEventListener('mousedown',e=>{e.preventDefault();const p=gp(e);st(p.x,p.y);});
@@ -1923,11 +1944,54 @@ function initSig(){
   sigC.addEventListener('touchend',  e=>{e.preventDefault();e.stopPropagation();sp();},o);
   sigC.addEventListener('touchcancel',e=>{e.preventDefault();sp();},o);
 }
+function abrirSig(){
+  const ov=document.getElementById('sig-overlay');
+  ov.style.display='flex';
+  // Redimensionar canvas para tela cheia
+  const dpr=window.devicePixelRatio||1;
+  const W=window.innerWidth, H=window.innerHeight-52-36;
+  sigC.width=Math.floor(W*dpr); sigC.height=Math.floor(H*dpr);
+  sigX.setTransform(1,0,0,1,0,0); sigX.scale(dpr,dpr);
+  sigX.strokeStyle='#1a5c45'; sigX.lineWidth=3; sigX.lineCap='round'; sigX.lineJoin='round';
+  // Restaurar assinatura existente se houver
+  if(sigOk && document.getElementById('sig-preview-img').src){
+    const img=new Image();
+    img.onload=()=>sigX.drawImage(img,0,0,W,H);
+    img.src=document.getElementById('sig-preview-img').src;
+    document.getElementById('sig-h').style.display='none';
+  }
+  // Bloquear scroll do body
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
+}
+function fecharSig(){
+  document.getElementById('sig-overlay').style.display='none';
+  document.body.style.overflow='';
+  document.body.style.position='';
+  document.body.style.width='';
+}
+function confirmarSig(){
+  if(!sigOk){
+    // Verificar se tem traço no canvas
+    const data=sigX.getImageData(0,0,sigC.width,sigC.height).data;
+    const temTraco=data.some((v,i)=>i%4===3&&v>0);
+    if(!temTraco){alert('Por favor, assine antes de confirmar.');return;}
+    sigOk=true;
+  }
+  // Salvar preview
+  const img=document.getElementById('sig-preview-img');
+  img.src=sigC.toDataURL('image/png');
+  document.getElementById('sig-preview').style.display='block';
+  fecharSig();
+}
 function clrSig(){
   if(!sigX||!sigC)return;
-  sigX.clearRect(0,0,sigC.width,sigC.height);sigOk=false;sigC.classList.remove('ok');
+  sigX.clearRect(0,0,sigC.width,sigC.height);
+  sigOk=false;
   const h=document.getElementById('sig-h');if(h)h.style.display='flex';
-  const s=document.getElementById('sig-st');if(s){s.textContent='Aguardando assinatura...';s.style.color='var(--ink3)';}
+  // Limpar preview
+  const pv=document.getElementById('sig-preview');if(pv)pv.style.display='none';
 }
 
 /* ══ FINALIZAR ═════════════════════════════════════════════════ */
@@ -1936,7 +2000,9 @@ function finalizar(){
   document.body.removeAttribute('data-sig');
   document.getElementById('app').style.overflow='';
   const now=new Date();
-  atual.assinatura=sigC.toDataURL('image/png');
+  // Pegar assinatura do preview (salvo por confirmarSig) ou direto do canvas
+  const prevImg=document.getElementById('sig-preview-img');
+  atual.assinatura=prevImg&&prevImg.src&&prevImg.src.length>100?prevImg.src:sigC.toDataURL('image/png');
   atual.status='Finalizado';
   atual.dataHoraFim=now.toLocaleString('pt-BR');
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
