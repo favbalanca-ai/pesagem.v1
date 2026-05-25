@@ -818,13 +818,13 @@ window.addEventListener('load',()=>{
 
 /* ══ LOGIN ════════════════════════════════════════════════════ */
 function login(){
-  const em=document.getElementById('l-em').value.trim().toLowerCase();
+  const em=document.getElementById('l-em').value.trim().toUpperCase();
   const pw=document.getElementById('l-pw').value;
   const er=document.getElementById('l-err');
   er.style.display='none';
-  if(!em||!pw){er.textContent='Preencha e-mail e senha.';er.style.display='block';return;}
-  const u=USERS.find(x=>x.email.toLowerCase()===em&&x.pw===pw);
-  if(!u){er.textContent='❌ E-mail ou senha incorretos.';er.style.display='block';return;}
+  if(!em||!pw){er.textContent='Preencha nome e senha.';er.style.display='block';return;}
+  const u=USERS.find(x=>x.email.toUpperCase()===em&&x.pw===pw);
+  if(!u){er.textContent='❌ Nome ou senha incorretos.';er.style.display='block';return;}
   usr=u; localStorage.setItem('pu',JSON.stringify(u)); openApp(u);
 }
 function checkSess(){
@@ -983,7 +983,6 @@ function renderGrafico7dias(todos){
   const canvas=document.getElementById('dash-chart');
   if(!canvas) return;
   const ctx=canvas.getContext('2d');
-  // Últimos 7 dias
   const dias=[];
   const vals=[];
   for(let i=6;i>=0;i--){
@@ -992,25 +991,27 @@ function renderGrafico7dias(todos){
     dias.push(ds.slice(0,5));
     vals.push(todos.filter(o=>o.dataEntrada===ds).length);
   }
-  const W=canvas.offsetWidth||300; canvas.width=W; canvas.height=140;
+  const W=canvas.parentElement?.offsetWidth||window.innerWidth-40;
+  canvas.width=W; canvas.height=140;
   ctx.clearRect(0,0,W,140);
   const max=Math.max(...vals,1);
-  const bw=Math.floor(W/7)-6; const bh=90;
+  const bw=Math.floor((W-20)/7)-4; const top=10;
   const isDark=document.body.classList.contains('dark');
   const barC=isDark?'#2dd4a0':'#1a5c45';
-  const txtC=isDark?'#aaa':'#555';
+  const txtC=isDark?'#888':'#666';
   vals.forEach((v,i)=>{
-    const x=i*(bw+6)+4;
-    const h=Math.round((v/max)*bh);
-    ctx.fillStyle=barC;
+    const x=10+i*(bw+4);
+    const h=Math.max(2,Math.round((v/max)*100));
+    ctx.fillStyle=v>0?barC:'var(--g3,#e8f5e9)';
     ctx.beginPath();
-    ctx.roundRect(x,100-h,bw,h,3);
+    if(ctx.roundRect) ctx.roundRect(x,120-h,bw,h,3);
+    else ctx.rect(x,120-h,bw,h);
     ctx.fill();
     ctx.fillStyle=txtC;
     ctx.font='9px Inter,sans-serif';
     ctx.textAlign='center';
-    ctx.fillText(dias[i],x+bw/2,138);
-    if(v>0){ctx.fillStyle=barC;ctx.font='bold 10px Inter';ctx.fillText(v,x+bw/2,96-h);}
+    ctx.fillText(dias[i],x+bw/2,136);
+    if(v>0){ctx.fillStyle=barC;ctx.font='bold 10px Inter,sans-serif';ctx.fillText(v,x+bw/2,115-h);}
   });
 }
 
@@ -1098,9 +1099,8 @@ ${ctLines}
 
 /* ══ EXIBIR BOTÃO DASHBOARD PARA ADMIN ════════════════════════ */
 function toggleAdminUI(){
-  const u=DB.usuarios?.find(x=>x.nome===DB.cfg?.usuario);
-  const isAdm=u&&u.nivel==='admin';
-  document.querySelectorAll('.adm-only').forEach(el=>el.style.display=isAdm?'':'none');
+  const isAdm=usr&&usr.nivel==='admin';
+  document.querySelectorAll('.adm-only').forEach(el=>el.style.display=isAdm?'flex':'none');
 }
 
 function popContratosHist(){
