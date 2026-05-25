@@ -239,18 +239,19 @@ body.dark .card{background:#1a2d22}
 
 <!-- LOGIN -->
 <div id="login">
-  <div style="font-size:50px;margin-bottom:9px">⚖️</div>
-  <div style="font-size:21px;font-weight:800;color:#fff;margin-bottom:2px">Pesagem</div>
-  <div style="font-size:11px;color:rgba(255,255,255,.55);margin-bottom:26px">Sistema de pesagem única</div>
+  <img src="https://raw.githubusercontent.com/favbalanca-ai/pesagem.v1/main/icon.png" onerror="this.style.display='none';document.getElementById('login-emoji').style.display='block'" style="width:110px;height:110px;border-radius:22px;margin-bottom:12px;box-shadow:0 8px 32px rgba(0,0,0,.35);object-fit:cover">
+  <div id="login-emoji" style="font-size:50px;margin-bottom:9px;display:none">⚖️</div>
+  <div style="font-size:21px;font-weight:800;color:#fff;margin-bottom:2px">Balança Água Viva</div>
+  <div style="font-size:11px;color:rgba(255,255,255,.55);margin-bottom:26px">Sistema de pesagem · Espora</div>
   <div class="lc">
-    <div class="ll">E-mail</div>
-    <input class="li" type="email" id="l-em" placeholder="seu@email.com" autocomplete="email">
+    <div class="ll">Nome</div>
+    <input class="li" type="text" id="l-em" placeholder="Seu nome" autocomplete="username" autocapitalize="off" style="text-transform:uppercase">
     <div class="ll">Senha</div>
     <input class="li" type="password" id="l-pw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
     <button class="lbtn" onclick="login()">Entrar →</button>
-    <div class="lerr" id="l-err">E-mail ou senha incorretos</div>
+    <div class="lerr" id="l-err">Nome ou senha incorretos</div>
   </div>
-  <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:16px">v7.0</div>
+  <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:16px">v7.1</div>
 </div>
 
 <div id="app" style="display:none">
@@ -432,6 +433,15 @@ body.dark .card{background:#1a2d22}
     <div class="card">
       <div class="ct">⚖️ Tara do Veículo</div>
       <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Peso <b>vazio</b> na balança</div>
+      <!-- Seleção de balança -->
+      <div class="f" style="margin-bottom:11px">
+        <label>🏭 Balança</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+          <button type="button" id="bal-btn-1" onclick="selBalanca(1)" class="btn btnp" style="padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)">⚖️ Balança 1<br><span style="font-size:10px;font-weight:400;opacity:.8">Água Viva</span></button>
+          <button type="button" id="bal-btn-2" onclick="selBalanca(2)" class="btn btns" style="padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)">⚖️ Balança 2<br><span style="font-size:10px;font-weight:400;opacity:.8">Espora</span></button>
+        </div>
+        <input type="hidden" id="f-balanca" value="1">
+      </div>
       <div class="f">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
           <label style="margin:0">Peso da Tara *</label>
@@ -548,6 +558,7 @@ body.dark .card{background:#1a2d22}
       <div class="tk"><span class="tkl">CPF</span><span class="tkv" id="tk-cp">—</span></div>
       <div class="tk"><span class="tkl">Município / UF</span><span class="tkv" id="tk-mun">—</span></div>
       <div class="tk"><span class="tkl">Eixos</span><span class="tkv" id="tk-ex">—</span></div>
+      <div class="tk"><span class="tkl">Balança</span><span class="tkv" id="tk-bal">—</span></div>
       <div class="tk"><span class="tkl">PBT Máx (CONTRAN)</span><span class="tkv" id="tk-pm">—</span></div>
       <div class="tk"><span class="tkl">Tara</span><span class="tkv" id="tk-tr">—</span></div>
       <div class="tk"><span class="tkl">Peso Bruto</span><span class="tkv" id="tk-br">—</span></div>
@@ -845,7 +856,7 @@ function irNova(){
   ['f-oc','f-pl','f-mt','f-cpf','f-tr','f-ob','f-mun','f-uf'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   // preencher funcionário com o nome do login
   const fnEl=document.getElementById('f-fn');
-  if(fnEl) fnEl.value=usr?usr.email:'—';;
+  if(fnEl) fnEl.value=usr?usr.nome:'—';;
   document.getElementById('placa-ia').style.display='none';
   const cnhRes=document.getElementById('cnh-res');
   if(cnhRes) cnhRes.style.display='none';
@@ -854,6 +865,8 @@ function irNova(){
   ['nd','ns','ndd','nt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='nd'?'1':'0';});
   document.getElementById('pbt-box').style.display='none';
   document.getElementById('oc-info').style.display='none';
+  // resetar balança para padrão (1 — Água Viva)
+  selBalanca(1);
   document.getElementById('ct').textContent='';
   document.getElementById('ut').textContent='kg';
   document.getElementById('tk').className='ut on'; document.getElementById('tt').className='ut off';
@@ -955,6 +968,20 @@ function onTara(){
   const v=parseFloat(document.getElementById('f-tr').value)||0;
   const ton=utTara==='kg'?v/1000:v;
   document.getElementById('ct').textContent=v>0?(utTara==='kg'?`= ${ton.toFixed(3)} ton`:`= ${Math.round(ton*1000)} kg`):'';
+}
+
+/* ══ BALANÇA ══════════════════════════════════════════════════ */
+function selBalanca(n){
+  document.getElementById('f-balanca').value=n;
+  const b1=document.getElementById('bal-btn-1');
+  const b2=document.getElementById('bal-btn-2');
+  if(n===1){
+    b1.className='btn btnp'; b1.style.cssText='padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)';
+    b2.className='btn btns'; b2.style.cssText='padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)';
+  } else {
+    b2.className='btn btnp'; b2.style.cssText='padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)';
+    b1.className='btn btns'; b1.style.cssText='padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)';
+  }
 }
 
 /* ══ FOTOS ════════════════════════════════════════════════════ */
@@ -1517,6 +1544,8 @@ function salvar(){
   if(t>0)pts.push(t===1?'25,5':`(${t}×25,5)`);
   const formula=pts.join('+')+' = '+pbt+'t';
   const now=new Date();
+  const balNum=parseInt(document.getElementById('f-balanca').value)||1;
+  const balNome=balNum===1?'Balança 1 — Água Viva':'Balança 2 — Espora';
   const o={
     id:geraID(),
     dataEntrada:now.toLocaleDateString('pt-BR'),
@@ -1529,6 +1558,7 @@ function salvar(){
     totalEixos:tot, pbtMax:pbt, formulaEixos:formula,
     tara, limPeso:pbt,
     obs:document.getElementById('f-ob').value,
+    balanca:balNome,
     fotos:{...fotos},
     status:'Aguardando',
     pesoBruto:null, cargaLiquida:null, statusPeso:null, dataHoraFim:null, assinatura:null
@@ -1566,7 +1596,7 @@ function rAg(){
         </div>
       </div>
       <div class="oi">👤 ${o.motorista}</div>
-      <div class="oi">⚖️ Tara: <b style="color:var(--g1)">${Math.round(o.tara*1000).toLocaleString('pt-BR')} kg</b></div>
+      <div class="oi">⚖️ Tara: <b style="color:var(--g1)">${Math.round(o.tara*1000).toLocaleString('pt-BR')} kg</b>${o.balanca?` · <b style="color:var(--ink3);font-size:10px">${o.balanca}</b>`:''}</div>
       <div class="oi" style="font-family:'JetBrains Mono',monospace;font-size:11px">📋 ${o.numOrdem} · ${o.formulaEixos}</div>
       <div class="obg bag" style="margin-top:7px">Toque → Registrar peso bruto →</div>
     </div>`;
@@ -1709,6 +1739,7 @@ function rTicket(o){
   var mun=(o.municipio||'')+(o.municipio&&o.estado?' / ':'')+( o.estado||'');
   document.getElementById('tk-mun').textContent=mun||'—';
   document.getElementById('tk-ex').textContent=o.formulaEixos||`${o.totalEixos} eixos`;
+  document.getElementById('tk-bal').textContent=o.balanca||'—';
   const pbtKg=Math.round((o.pbtMax||0)*1000);
   const taraKg=Math.round((o.tara||0)*1000);
   const brutoKg=Math.round((o.pesoBruto||0)*1000);
@@ -1752,7 +1783,8 @@ function sendWA(){
     `📋 Contrato: ${atual.numOrdem||'—'}\n`+
     `🚛 Placa: ${atual.placa}${local?' | '+local:''}\n`+
     `👤 Motorista: ${atual.motorista}\n`+
-    `🪪 CPF: ${atual.cpf||'—'}\n\n`+
+    `🪪 CPF: ${atual.cpf||'—'}\n`+
+    `⚖️ ${atual.balanca||'Balança'}\n\n`+
     `⚖️ Bruto: ${brutoKg.toLocaleString('pt-BR')} kg\n`+
     `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
     `📦 Carga: ${cargaKg.toLocaleString('pt-BR')} kg\n`+
@@ -2008,6 +2040,7 @@ function gerarPDF(){
     </div>
     <div class="pdf-section"><h3>🚛 Eixos / PBT</h3>
       <div class="pdf-row"><span class="pdf-label">Configuração</span><span class="pdf-val">${o.formulaEixos||o.totalEixos+' eixos'}</span></div>
+      <div class="pdf-row"><span class="pdf-label">Balança</span><span class="pdf-val">${o.balanca||'—'}</span></div>
       <div class="pdf-row"><span class="pdf-label">PBT Máx CONTRAN</span><span class="pdf-val">${pbtKg.toLocaleString('pt-BR')} kg</span></div>
       <div class="pdf-row"><span class="pdf-label">Limite c/ Tolerância ${tol}%</span><span class="pdf-val">${tolKg.toLocaleString('pt-BR')} kg</span></div>
     </div>
