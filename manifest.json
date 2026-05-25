@@ -1,5 +1,5 @@
 {
-  "name": "Pesagem FAV",
+  "name": "Balança Água Viva",
   "short_name": "Pesagem",
   "start_url": "/pesagem.v1/",
   "scope": "/pesagem.v1/",
@@ -12,7 +12,14 @@
     {
       "src": "https://raw.githubusercontent.com/favbalanca-ai/pesagem.v1/main/icon.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/favbalanca-ai/pesagem.v1/main/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
