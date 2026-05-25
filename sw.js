@@ -1,9 +1,13 @@
-// sw.js — limpa tudo e não faz cache
-self.addEventListener('install', e => { self.skipWaiting(); });
+// sw.js v2 — força limpeza total de cache
+const CACHE_VERSION = 'v2';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+});
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(k => Promise.all(k.map(x => caches.delete(x))))
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
-self.addEventListener('fetch', e => { /* sem cache — sempre busca da rede */ });
+self.addEventListener('fetch', e => { /* sem cache — sempre rede */ });
