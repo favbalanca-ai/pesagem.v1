@@ -1410,10 +1410,10 @@ function nomeEmpresa(o){
 
 function sendWAauto(o){
   if(!DB.cfg.waAuto) return;
-  const n=DB.cfg.wa||'5561999995351';
+  const n=DB.cfg.wa||'5561999999999';
   const tol=DB.cfg.tol||7;
   const emp=nomeEmpresa(o);
-  const st=o.statusPeso||'CONFORME';
+  const st=(o.statusPeso||'CONFORME').replace(/^Finalizado\s*[-—]\s*/i,'');
   const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
   const taraKg=Math.round(o.tara*1000);
   const brutoKg=Math.round((o.pesoBruto||0)*1000);
@@ -1430,10 +1430,10 @@ function sendWAauto(o){
     `⚖️ Bruto: ${brutoKg.toLocaleString('pt-BR')} kg\n`+
     `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
     `📦 Carga: ${cargaKg.toLocaleString('pt-BR')} kg\n`+
-    `📏 PBT Máx: ${pbtKg.toLocaleString('pt-BR')} kg · Tol.${tol}%: ${tolKg.toLocaleString('pt-BR')} kg\n\n`+
-    `*${stIcon} Status: Finalizado - ${st}*\n📅 ${o.dataHoraFim||''}`
+    `*${stIcon} Status: ${st}*\n📅 ${o.dataHoraFim||''}`
   );
   window.open('https://wa.me/'+n+'?text='+msg,'_blank');
+  setTimeout(()=>{window.open('https://wa.me/5561999995351?text='+msg,'_blank');}, 1200);
 }
 
 function comprimirImagem(b64full, callback){
@@ -1500,68 +1500,16 @@ async function uploadFotosDrive(ordem){
   toast('✅ '+ok+'/'+lista.length+' foto(s) salvas no Drive!');
 }
 
-async function fotoPlaca(inp) {
+function fotoPlaca(inp) {
   var file = inp.files[0]; if (!file) return;
-  // salvar foto normalmente
   var reader = new FileReader();
-  reader.onload = async function(e) {
+  reader.onload = function(e) {
     fotos['fpl'] = e.target.result;
     document.getElementById('fb-pl').classList.add('ok');
-    document.getElementById('fi-pl').textContent = '🔍';
-    document.getElementById('fl-pl').textContent = 'Analisando...';
+    document.getElementById('fi-pl').textContent = '✅';
+    document.getElementById('fl-pl').textContent = 'Placa ✓';
     var box = document.getElementById('placa-ia');
-    var txt = document.getElementById('placa-ia-txt');
-    box.style.display = 'block';
-    txt.textContent = '⏳ Lendo placa com IA...';
-    try {
-      // converter para base64 sem prefixo
-      var b64 = e.target.result.split(',')[1];
-      var mime = file.type || 'image/jpeg';
-      var resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
-          messages: [{
-            role: 'user',
-            content: [
-              {type: 'image', source: {type: 'base64', media_type: mime, data: b64}},
-              {type: 'text', text: 'Analise esta foto de um caminhão ou veículo. Extraia APENAS:\n1. PLACA (formato brasileiro: ABC1234 ou ABC1D23)\n2. MUNICÍPIO de emplacamento (se visível na placa antiga, ou deduza pelo padrão Mercosul do estado)\n3. ESTADO (UF de 2 letras)\n\nResponda SOMENTE em JSON válido neste formato exato, sem explicações:\n{"placa":"ABC1D23","municipio":"Brasília","estado":"DF","confianca":"alta"}\n\nSe não conseguir identificar algum campo, use null. Campo confianca: alta, media ou baixa.'}
-            ]
-          }]
-        })
-      });
-      var data = await resp.json();
-      var content = data.content && data.content[0] ? data.content[0].text : '';
-      // extrair JSON da resposta
-      var match = content.match(/\{[^}]+\}/);
-      if (match) {
-        var info = JSON.parse(match[0]);
-        // preencher campos automaticamente
-        if (info.placa) {
-          document.getElementById('f-pl').value = info.placa.toUpperCase().replace(/[^A-Z0-9]/g,'');
-        }
-        if (info.municipio) document.getElementById('f-mun').value = info.municipio;
-        if (info.estado)   document.getElementById('f-uf').value  = info.estado.toUpperCase();
-        var conf = info.confianca === 'alta' ? '✅' : info.confianca === 'media' ? '⚠️' : '❓';
-        var partes = [];
-        if (info.placa)    partes.push('Placa: <b>' + info.placa + '</b>');
-        if (info.municipio)partes.push('Município: <b>' + info.municipio + '</b>');
-        if (info.estado)   partes.push('UF: <b>' + info.estado + '</b>');
-        txt.innerHTML = conf + ' ' + partes.join(' · ') + '<br><span style="font-size:10px;color:var(--ink3)">Confiança: ' + (info.confianca||'?') + ' — confira os dados</span>';
-        document.getElementById('fi-pl').textContent = '✅';
-        document.getElementById('fl-pl').textContent = 'Placa ✓';
-      } else {
-        txt.innerHTML = '⚠️ Não foi possível ler a placa. Preencha manualmente.';
-        document.getElementById('fi-pl').textContent = '📸';
-        document.getElementById('fl-pl').textContent = 'Placa (manual)';
-      }
-    } catch(err) {
-      txt.innerHTML = '⚠️ Erro na leitura: ' + err.message + '<br>Preencha manualmente.';
-      document.getElementById('fi-pl').textContent = '📸';
-      document.getElementById('fl-pl').textContent = 'Placa (manual)';
-    }
+    if(box) box.style.display = 'none';
   };
   reader.readAsDataURL(file);
 }
@@ -1813,7 +1761,7 @@ function sendWA(){
   const n=DB.cfg.wa||'5561999999999';
   const tol=DB.cfg.tol||7;
   const emp=nomeEmpresa(atual);
-  const st=atual.statusPeso||'CONFORME';
+  const st=(atual.statusPeso||'CONFORME').replace(/^Finalizado\s*[-—]\s*/i,'');
   const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
   const taraKg=Math.round(atual.tara*1000);
   const brutoKg=Math.round((atual.pesoBruto||0)*1000);
@@ -1827,15 +1775,15 @@ function sendWA(){
     `🚛 Placa: ${atual.placa}${local?' | '+local:''}\n`+
     `👤 Motorista: ${atual.motorista}\n`+
     `🪪 CPF: ${atual.cpf||'—'}\n`+
-    `⚖️ ${atual.balanca||'Balança'}\n\n`+
     `⚖️ Bruto: ${brutoKg.toLocaleString('pt-BR')} kg\n`+
     `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
     `📦 Carga: ${cargaKg.toLocaleString('pt-BR')} kg\n`+
-    `📏 PBT Máx: ${pbtKg.toLocaleString('pt-BR')} kg · Tol.${tol}%: ${tolKg.toLocaleString('pt-BR')} kg\n\n`+
-    `*${stIcon} Status: Finalizado - ${st}*\n`+
+    `*${stIcon} Status: ${st}*\n`+
     `📅 ${atual.dataHoraFim||''}`
   );
   window.open(`https://wa.me/${n}?text=${msg}`,'_blank');
+  // envio automático ao escritório
+  setTimeout(()=>{window.open(`https://wa.me/5561999995351?text=${msg}`,'_blank');}, 1200);
 }
 
 /* ══ HISTÓRICO ═════════════════════════════════════════════════ */
