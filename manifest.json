@@ -1,6 +1,6 @@
 {
   "name": "Balança Água Viva & Espora",
-  "short_name": "Pesagem",
+  "short_name": "Sistema de Pesagem",
   "start_url": "/pesagem.v1/",
   "scope": "/pesagem.v1/",
   "display": "standalone",
