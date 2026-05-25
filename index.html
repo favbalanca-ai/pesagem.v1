@@ -877,10 +877,6 @@ function irNova(){
   ['fi-oc','fi-cn','fi-pl','fi-cm','fi-ex'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='fi-oc'?'📄':'📸';});
   ['fl-oc','fl-cn','fl-pl','fl-cm','fl-ex'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=['Fotografar contrato ou ordem','CNH','Placa','Cam.','Extra'][i];});
   const prev=document.getElementById('prev-oc'); if(prev){prev.style.display='none';prev.src='';}
-  // datalist ordens
-  const dl=document.getElementById('dl-oc');
-  const ocs=JSON.parse(localStorage.getItem('poc')||'[]');
-  dl.innerHTML=ocs.map(o=>`<option value="${o.n}">${o.n}${o.p?' — '+o.p:''}</option>`).join('');
   calcPBT();
   showPg('pg-nova','📋 Nova Pesagem',true,1);
 }
