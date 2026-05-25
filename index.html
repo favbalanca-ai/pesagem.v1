@@ -277,7 +277,7 @@ body.dark .card{background:#1a2d22}
   <div class="pg on" id="pg-home">
     <div class="hero">
       <h2>Pesagem Única</h2>
-      <p>Controle de carregamento com tara e peso bruto</p>
+      <p>Controle de carregamento</p>
       <div class="mets">
         <div class="mc"><div class="mv" id="mh">0</div><div class="ml">Hoje</div></div>
         <div class="mc"><div class="mv" id="ma">0</div><div class="ml">Aguardando</div></div>
@@ -549,11 +549,10 @@ body.dark .card{background:#1a2d22}
         <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;letter-spacing:3px" id="tk-pl">—</div>
         <div style="font-size:10px;color:var(--ink3);margin-top:2px" id="tk-sb">—</div>
       </div>
-      <div class="tk"><span class="tkl">Contrato/Ordem</span><span class="tkv" id="tk-oc">—</span></div>
+      <div class="tk"><span class="tkl">Contrato</span><span class="tkv" id="tk-oc">—</span></div>
       <div class="tk"><span class="tkl">Motorista</span><span class="tkv" id="tk-mt">—</span></div>
       <div class="tk"><span class="tkl">CPF</span><span class="tkv" id="tk-cp">—</span></div>
       <div class="tk"><span class="tkl">Município / UF</span><span class="tkv" id="tk-mun">—</span></div>
-      <div class="tk"><span class="tkl">Eixos</span><span class="tkv" id="tk-ex">—</span></div>
       <div class="tk"><span class="tkl">Balança</span><span class="tkv" id="tk-bal">—</span></div>
       <div class="tk"><span class="tkl">PBT Máx (CONTRAN)</span><span class="tkv" id="tk-pm">—</span></div>
       <div class="tk"><span class="tkl">Tara</span><span class="tkv" id="tk-tr">—</span></div>
@@ -702,7 +701,7 @@ body.dark .card{background:#1a2d22}
     <div class="f"><label>Placa</label><input type="text" id="ed-placa" class="placa"></div>
     <div class="f"><label>Motorista</label><input type="text" id="ed-mot"></div>
     <div class="f"><label>CPF</label><input type="text" id="ed-cpf"></div>
-    <div class="f"><label>Nº Contrato/Ordem</label><input type="text" id="ed-oc"></div>
+    <div class="f"><label>Nº Contrato</label><input type="text" id="ed-oc"></div>
     <div class="f"><label>Tara (toneladas)</label><input type="number" id="ed-tara" step="0.001"></div>
     <div class="f"><label>Peso Bruto (toneladas)</label><input type="number" id="ed-bruto" step="0.001" oninput="calcEditBruto()"></div>
     <div id="ed-resultado" style="padding:8px 10px;background:var(--g3);border-radius:8px;font-size:12px;color:var(--g1);margin-bottom:8px;display:none"></div>
@@ -1398,7 +1397,7 @@ function sendWAauto(o){
   if(!DB.cfg.waAuto) return;
   const n=DB.cfg.wa||'5561999999999';
   const tol=DB.cfg.tol||7;
-  const emp=DB.cfg.empresa||'Fazenda Água Viva';
+  const emp=DB.cfg.empresa||'Fazenda Água Viva & Espora';
   const st=o.statusPeso||'CONFORME';
   const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
   const taraKg=Math.round(o.tara*1000);
