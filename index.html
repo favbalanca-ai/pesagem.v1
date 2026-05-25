@@ -1394,11 +1394,25 @@ function usarDadosPlaca(){
 }
 
 /* ══ WHATSAPP AUTOMÁTICO ════════════════════════════════════════ */
+/* ══ NOME DA FAZENDA POR BALANÇA ═══════════════════════════════ */
+function nomeEmpresa(o){
+  // Se a OS tiver balança definida, usa ela; senão tenta pelo contrato
+  var bal = o && o.balanca ? o.balanca : '';
+  if(bal.indexOf('Espora') >= 0) return 'Fazenda Espora';
+  if(bal.indexOf('Água Viva') >= 0 || bal.indexOf('Agua Viva') >= 0) return 'Fazenda Água Viva';
+  // fallback: busca no contrato cadastrado
+  if(o && o.numOrdem){
+    var ct = contratosCloud.find(function(x){return x.n===o.numOrdem;});
+    if(ct && Number(ct.bal)===2) return 'Fazenda Espora';
+  }
+  return DB.cfg.empresa||'Fazenda Água Viva';
+}
+
 function sendWAauto(o){
   if(!DB.cfg.waAuto) return;
   const n=DB.cfg.wa||'5561999999999';
   const tol=DB.cfg.tol||7;
-  const emp=DB.cfg.empresa||'Fazenda Água Viva';
+  const emp=nomeEmpresa(o);
   const st=o.statusPeso||'CONFORME';
   const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
   const taraKg=Math.round(o.tara*1000);
@@ -1798,7 +1812,7 @@ function sendWA(){
   if(!atual)return;
   const n=DB.cfg.wa||'5561999999999';
   const tol=DB.cfg.tol||7;
-  const emp=DB.cfg.empresa||'Fazenda Água Viva';
+  const emp=nomeEmpresa(atual);
   const st=atual.statusPeso||'CONFORME';
   const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
   const taraKg=Math.round(atual.tara*1000);
@@ -2042,7 +2056,7 @@ function gerarPDF(){
   const o=atual, tol=DB.cfg.tol||7, st=o.statusPeso||'CONFORME';
   const stCls=st==='EXCEDIDO'?'pdf-er':st==='ATENÇÃO'?'pdf-wn':'pdf-ok';
   const stTxt=st==='EXCEDIDO'?'🚨 EXCEDIDO':st==='ATENÇÃO'?'⚠️ ATENÇÃO':'✅ CONFORME';
-  const emp=DB.cfg.empresa||'Sistema de Pesagem';
+  const emp=nomeEmpresa(atual);
   const pbtKg=Math.round((o.pbtMax||0)*1000);
   const taraKg=Math.round((o.tara||0)*1000);
   const brutoKg=Math.round((o.pesoBruto||0)*1000);
