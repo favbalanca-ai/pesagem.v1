@@ -946,7 +946,8 @@ function irHist(){
   if(navigator.onLine) loadCl().then(function(){
     popContratosHist();
     rHist();
-  }
+  });
+}
 
 /* ══ DASHBOARD ADMIN ══════════════════════════════════════════ */
 function irDash(){
@@ -1102,9 +1103,6 @@ function toggleAdminUI(){
   document.querySelectorAll('.adm-only').forEach(el=>el.style.display=isAdm?'':'none');
 }
 
-);
-  popContratosHist();
-}
 function popContratosHist(){
   var sel=document.getElementById('h-contrato');
   if(!sel) return;
