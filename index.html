@@ -305,10 +305,9 @@ body.dark .card{background:#1a2d22}
       <div class="f">
         <label>Nº do Contrato *</label>
         <div style="display:flex;gap:6px">
-          <input type="text" id="f-oc" placeholder="Selecione ou digite..." list="dl-oc" oninput="infoOC(this.value)" autocomplete="off" style="flex:1">
-          <button type="button" onclick="abrirSelContrato()" title="Ver contratos" style="padding:0 14px;border:1.5px solid var(--g1);border-radius:var(--r2px);background:var(--g3);color:var(--g1);font-size:16px;cursor:pointer;flex-shrink:0">☰</button>
+          <input type="text" id="f-oc" placeholder="Toque ☰ para selecionar..." readonly autocomplete="off" style="flex:1;background:var(--g3);color:var(--g1);font-weight:700;cursor:pointer" onclick="abrirSelContrato()">
+          <button type="button" onclick="abrirSelContrato()" title="Ver contratos" style="padding:0 14px;border:1.5px solid var(--g1);border-radius:var(--r2px);background:var(--g1);color:#fff;font-size:16px;cursor:pointer;flex-shrink:0">☰</button>
         </div>
-        <datalist id="dl-oc"></datalist>
       </div>
       <!-- Lista de seleção -->
       <div id="sel-contrato" style="display:none;border:1.5px solid var(--brd);border-radius:var(--r2px);background:#fff;max-height:220px;overflow-y:auto;margin-top:4px">
@@ -432,16 +431,9 @@ body.dark .card{background:#1a2d22}
 
     <div class="card">
       <div class="ct">⚖️ Tara do Veículo</div>
+      <div id="bal-info" style="display:none;margin-bottom:9px;padding:7px 11px;background:var(--g3);border-radius:8px;font-size:12px;color:var(--g1);font-weight:600"></div>
       <div style="font-size:11px;color:var(--ink2);margin-bottom:9px">Peso <b>vazio</b> na balança</div>
-      <!-- Seleção de balança -->
-      <div class="f" style="margin-bottom:11px">
-        <label>🏭 Balança</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
-          <button type="button" id="bal-btn-1" onclick="selBalanca(1)" class="btn btnp" style="padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)">⚖️ Balança 1<br><span style="font-size:10px;font-weight:400;opacity:.8">Água Viva</span></button>
-          <button type="button" id="bal-btn-2" onclick="selBalanca(2)" class="btn btns" style="padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)">⚖️ Balança 2<br><span style="font-size:10px;font-weight:400;opacity:.8">Espora</span></button>
-        </div>
-        <input type="hidden" id="f-balanca" value="1">
-      </div>
+      <input type="hidden" id="f-balanca" value="">
       <div class="f">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
           <label style="margin:0">Peso da Tara *</label>
@@ -640,6 +632,15 @@ body.dark .card{background:#1a2d22}
         <div class="f"><label>Volume Total (kg) *</label><input type="number" id="oc-vol" placeholder="0" min="0" step="1000"></div>
       </div>
       <div class="f"><label>Obs / Comprador</label><input type="text" id="oc-o" placeholder="Ex: Bunge, Cargill..."></div>
+      <!-- Balança vinculada ao contrato -->
+      <div class="f">
+        <label>⚖️ Balança *</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+          <button type="button" id="oc-bal-btn-1" onclick="selBalancaContrato(1)" class="btn btnp" style="padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)">⚖️ Balança 1<br><span style="font-size:10px;font-weight:400;opacity:.8">Água Viva</span></button>
+          <button type="button" id="oc-bal-btn-2" onclick="selBalancaContrato(2)" class="btn btns" style="padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)">⚖️ Balança 2<br><span style="font-size:10px;font-weight:400;opacity:.8">Espora</span></button>
+        </div>
+        <input type="hidden" id="oc-bal" value="1">
+      </div>
       <button class="btn btnp" onclick="addOC()" style="margin-top:3px">➕ Cadastrar Contrato</button>
     </div>
     <div class="card">
@@ -865,8 +866,9 @@ function irNova(){
   ['nd','ns','ndd','nt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='nd'?'1':'0';});
   document.getElementById('pbt-box').style.display='none';
   document.getElementById('oc-info').style.display='none';
-  // resetar balança para padrão (1 — Água Viva)
-  selBalanca(1);
+  // limpar balança e banner
+  document.getElementById('f-balanca').value='';
+  const bi=document.getElementById('bal-info'); if(bi) bi.style.display='none';
   document.getElementById('ct').textContent='';
   document.getElementById('ut').textContent='kg';
   document.getElementById('tk').className='ut on'; document.getElementById('tt').className='ut off';
@@ -970,11 +972,11 @@ function onTara(){
   document.getElementById('ct').textContent=v>0?(utTara==='kg'?`= ${ton.toFixed(3)} ton`:`= ${Math.round(ton*1000)} kg`):'';
 }
 
-/* ══ BALANÇA ══════════════════════════════════════════════════ */
-function selBalanca(n){
-  document.getElementById('f-balanca').value=n;
-  const b1=document.getElementById('bal-btn-1');
-  const b2=document.getElementById('bal-btn-2');
+/* ══ BALANÇA — vinculada ao contrato ══════════════════════════ */
+function selBalancaContrato(n){
+  document.getElementById('oc-bal').value=n;
+  const b1=document.getElementById('oc-bal-btn-1');
+  const b2=document.getElementById('oc-bal-btn-2');
   if(n===1){
     b1.className='btn btnp'; b1.style.cssText='padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)';
     b2.className='btn btns'; b2.style.cssText='padding:10px;font-size:13px;margin:0;border-radius:var(--r2px)';
@@ -1024,17 +1026,36 @@ function renderSelContrato(ocs,lista){
     for(var j=0;j<cloud.length;j++){var x=cloud[j];if(x.numOrdem===o.n&&(x.status||'').indexOf('Finalizado')>=0)entregues+=parseFloat(x.cargaLiquida||0)*1000;}
     var saldo=vol>0?vol-entregues:null;
     var cor=saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)';
+    var balLabel=o.bal===2?'⚖️ Balança 2 — Espora':'⚖️ Balança 1 — Água Viva';
+    var balCor=o.bal===2?'var(--a1)':'var(--g1)';
     html+='<div onclick="selecionarContrato(\''+o.n+'\')" style="padding:10px 13px;cursor:pointer;border-bottom:.5px solid var(--brd)" onmouseover="this.style.background=\'var(--g3)\'" onmouseout="this.style.background=\'\'">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center">';
     html+='<div style="font-weight:700;font-size:13px">'+o.n+'</div>';
+    html+='<span style="font-size:10px;font-weight:700;color:'+balCor+'">'+balLabel+'</span>';
+    html+='</div>';
     html+='<div style="font-size:11px;color:var(--ink3)">'+(o.p||'—')+(o.d?' · '+o.d:'')+'</div>';
     if(vol>0) html+='<div style="font-size:11px;color:'+cor+';font-weight:600">Saldo: '+Math.round(saldo).toLocaleString('pt-BR')+'kg / '+vol.toLocaleString('pt-BR')+'kg</div>';
     html+='</div>';
   }
-  lista.innerHTML=html;
+  lista.innerHTML=html||'<div style="padding:14px;text-align:center;font-size:12px;color:var(--ink3)">Nenhum contrato cadastrado.</div>';
 }
 function selecionarContrato(n){
   document.getElementById('f-oc').value=n;
   document.getElementById('sel-contrato').style.display='none';
+  // aplicar balança do contrato automaticamente
+  var o=contratosCloud.find(function(x){return x.n===n;});
+  if(o){
+    var balNum=parseInt(o.bal)||1;
+    var balNome=balNum===2?'Balança 2 — Espora':'Balança 1 — Água Viva';
+    document.getElementById('f-balanca').value=balNome;
+    var balInfo=document.getElementById('bal-info');
+    if(balInfo){
+      balInfo.style.display='block';
+      balInfo.style.color=balNum===2?'var(--a1)':'var(--g1)';
+      balInfo.style.background=balNum===2?'var(--a2)':'var(--g3)';
+      balInfo.innerHTML='⚖️ '+balNome;
+    }
+  }
   infoOC(n);
 }
 
@@ -1059,9 +1080,12 @@ function infoOC(v){
   for(var j=0;j<cloud.length;j++){var x=cloud[j];if(x.numOrdem===v&&(x.status||'').indexOf('Finalizado')>=0)entregues+=parseFloat(x.cargaLiquida||0)*1000;}
   const vol=parseFloat(o.vol)||0;
   const saldo=vol>0?vol-entregues:null;
+  var balNum=parseInt(o.bal)||1;
+  var balNome=balNum===2?'Balança 2 — Espora':'Balança 1 — Água Viva';
   let html='📋 <b>'+o.n+'</b>';
   if(o.p) html+=' · '+o.p;
   if(o.d) html+=' · '+o.d;
+  html+=' · <b>⚖️ '+balNome+'</b>';
   if(vol>0){
     const cor=saldo<=0?'var(--r1)':saldo<vol*0.1?'var(--a1)':'var(--g1)';
     html+='<br>📦 Volume: <b>'+vol.toLocaleString('pt-BR')+' kg</b>';
@@ -1083,7 +1107,8 @@ function addOC(){
     d: document.getElementById('oc-d').value,
     p: document.getElementById('oc-p').value.trim(),
     vol: parseFloat(document.getElementById('oc-vol').value)||0,
-    o: document.getElementById('oc-o').value.trim()
+    o: document.getElementById('oc-o').value.trim(),
+    bal: parseInt(document.getElementById('oc-bal').value)||1
   };
   // Limpar campos imediatamente
   document.getElementById('oc-n').value='';
@@ -1091,6 +1116,7 @@ function addOC(){
   document.getElementById('oc-p').value='';
   document.getElementById('oc-vol').value='';
   document.getElementById('oc-o').value='';
+  selBalancaContrato(1); // reset para Balança 1
   if(!SHEETS_URL||!navigator.onLine){
     // offline: salvar localmente e marcar para envio
     contratosCloud.push(contrato);
@@ -1163,6 +1189,10 @@ function rOC(){
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
     html+='<div style="flex:1">';
     html+='<div style="font-weight:800;font-size:14px">'+o.n+'</div>';
+    var balNum2=parseInt(o.bal)||1;
+    var balLbl2=balNum2===2?'⚖️ Balança 2 — Espora':'⚖️ Balança 1 — Água Viva';
+    var balCor2=balNum2===2?'var(--a1)':'var(--g1)';
+    html+='<div style="font-size:10px;color:'+balCor2+';font-weight:700;margin-top:1px">'+balLbl2+'</div>';
     html+='<div style="font-size:11px;color:var(--ink3);margin-top:1px">'+(o.p||'—')+' · '+(o.d||'—')+'</div>';
     if(vol>0){
       html+='<div style="font-size:11px;color:var(--ink2);margin-top:3px">📦 Total: <b>'+vol.toLocaleString('pt-BR')+'kg</b> · Entregue: <b>'+Math.round(entregues).toLocaleString('pt-BR')+'kg</b> · <b style="color:'+cor+'">Saldo: '+Math.round(saldo).toLocaleString('pt-BR')+'kg</b></div>';
@@ -1544,8 +1574,7 @@ function salvar(){
   if(t>0)pts.push(t===1?'25,5':`(${t}×25,5)`);
   const formula=pts.join('+')+' = '+pbt+'t';
   const now=new Date();
-  const balNum=parseInt(document.getElementById('f-balanca').value)||1;
-  const balNome=balNum===1?'Balança 1 — Água Viva':'Balança 2 — Espora';
+  const balNome=document.getElementById('f-balanca').value||'Balança 1 — Água Viva';
   const o={
     id:geraID(),
     dataEntrada:now.toLocaleDateString('pt-BR'),
