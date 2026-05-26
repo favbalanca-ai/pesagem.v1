@@ -15,6 +15,8 @@
 <link rel="manifest" href="manifest.json">
 <title>Pesagem</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -2102,31 +2104,37 @@ function renderBotoesContatos(o){
   if(!box||!btns) return;
   const ct=contratosCloud.find(c=>c.n===o.numOrdem);
   if(!ct){box.style.display='none';return;}
+
   const contatos=[];
-  if(ct.waClas) contatos.push({label:'📱 WA Classificador', tipo:'wa', num:ct.waClas, role:'Classificador'});
-  if(ct.waComp) contatos.push({label:'📱 WA Comprador',     tipo:'wa', num:ct.waComp, role:'Comprador'});
-  if(ct.emClas) contatos.push({label:'✉️ E-mail Classificador', tipo:'em', addr:ct.emClas, role:'Classificador'});
-  if(ct.emComp) contatos.push({label:'✉️ E-mail Comprador',     tipo:'em', addr:ct.emComp, role:'Comprador'});
+  if(ct.waClas) contatos.push({label:'📱 Classificador',  tipo:'wa', dest:ct.waClas, role:'Classificador'});
+  if(ct.waComp) contatos.push({label:'📱 Comprador',      tipo:'wa', dest:ct.waComp, role:'Comprador'});
+  if(ct.emClas) contatos.push({label:'✉️ Classificador',  tipo:'em', dest:ct.emClas, role:'Classificador'});
+  if(ct.emComp) contatos.push({label:'✉️ Comprador',      tipo:'em', dest:ct.emComp, role:'Comprador'});
   if(!contatos.length){box.style.display='none';return;}
+
   box.style.display='block';
   btns.innerHTML=contatos.map(c=>`
-    <button onclick="enviarContato('${c.tipo}','${c.tipo==='wa'?c.num:c.addr}','${c.role}')"
-      style="background:${c.tipo==='wa'?'#25D366':'#1a5c45'};border:none;color:#fff;padding:9px 13px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;flex:1;min-width:140px">
-      ${c.label}
+    <button onclick="enviarContato('${c.tipo}','${c.dest}','${c.role}')"
+      style="background:${c.tipo==='wa'?'#25D366':'#1a5c45'};border:none;color:#fff;
+             padding:9px 13px;border-radius:9px;font-size:12px;font-weight:700;
+             cursor:pointer;flex:1;min-width:140px;display:flex;flex-direction:column;
+             align-items:center;gap:2px">
+      <span>${c.label}</span>
+      <span style="font-size:10px;opacity:.85">${c.tipo==='wa'?'msg + PDF':'e-mail + PDF'}</span>
     </button>`).join('');
 }
 
-function enviarContato(tipo, destino, role){
+async function enviarContato(tipo, destino, role){
   if(!atual) return;
+
+  // ── Montar texto da mensagem ──────────────────────────────
   const emp=nomeEmpresa(atual);
-  const tol=DB.cfg.tol||7;
   const st=(atual.statusPeso||'CONFORME').replace(/^Finalizado\s*[-—]\s*/i,'');
   const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
   const taraKg=Math.round((atual.tara||0)*1000);
   const brutoKg=Math.round((atual.pesoBruto||0)*1000);
   const cargaKg=Math.round((atual.cargaLiquida||0)*1000);
   const local=(atual.municipio||'')+(atual.municipio&&atual.estado?' - ':'')+( atual.estado||'');
-
   const texto=
     `🚛 *TICKET DE PESAGEM*\n*${emp}*\n\n`+
     `📋 Contrato: ${atual.numOrdem||'—'}\n`+
@@ -2139,19 +2147,82 @@ function enviarContato(tipo, destino, role){
     `${stIcon} *Status: ${st}*\n`+
     `📅 ${atual.dataHoraFim||''}`;
 
+  // ── Gerar PDF e baixar ────────────────────────────────────
+  toast('⏳ Gerando PDF...');
+  try {
+    await gerarEBaixarPDF(atual, role, destino, tipo, texto);
+  } catch(err) {
+    console.error('PDF erro:', err);
+    // Fallback: enviar só mensagem sem PDF
+    if(tipo==='wa'){
+      window.open(`https://wa.me/${destino.replace(/\D/g,'')}?text=${encodeURIComponent(texto)}`,'_blank');
+    } else {
+      const assunto=encodeURIComponent(`Ticket — ${atual.numOrdem||''} — ${atual.placa}`);
+      window.open(`mailto:${destino}?subject=${assunto}&body=${encodeURIComponent(texto.replace(/\*/g,''))}` ,'_blank');
+    }
+  }
+}
+
+async function gerarEBaixarPDF(o, role, destino, tipo, texto){
+  // Montar conteúdo do PDF no pdf-page (igual ao gerarPDF normal)
+  gerarPDF(); // preenche #pdf-page com o ticket
+  await new Promise(r=>setTimeout(r,300)); // aguardar render
+
+  const page=document.getElementById('pdf-page');
+  const { jsPDF } = window.jspdf;
+
+  // Capturar html2canvas
+  const canvas = await html2canvas(page, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    logging: false
+  });
+
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+  const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+  const pgW = pdf.internal.pageSize.getWidth();
+  const pgH = pdf.internal.pageSize.getHeight();
+  const imgW = pgW - 20;
+  const imgH = (canvas.height * imgW) / canvas.width;
+
+  // Paginar se conteúdo for maior que uma página
+  let yPos = 10;
+  let heightLeft = imgH;
+  pdf.addImage(imgData,'JPEG', 10, yPos, imgW, imgH);
+  heightLeft -= (pgH - 20);
+  while(heightLeft > 0){
+    pdf.addPage();
+    yPos = -(pgH - 20) + (imgH - heightLeft);
+    pdf.addImage(imgData,'JPEG', 10, yPos, imgW, imgH);
+    heightLeft -= (pgH - 20);
+  }
+
+  const nomeArq=`Ticket-${o.numOrdem||'FAV'}-${o.placa}-${(o.dataEntrada||'').replace(/\//g,'-')}.pdf`;
+
   if(tipo==='wa'){
+    // Baixar PDF + abrir WhatsApp com mensagem
+    pdf.save(nomeArq);
+    toast('✅ PDF baixado! Anexe no WhatsApp que vai abrir.');
+    await new Promise(r=>setTimeout(r,1200));
     const num=destino.replace(/\D/g,'');
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(texto)}`,'_blank');
   } else {
-    // E-mail: abre cliente de e-mail com PDF via print
-    const assunto=encodeURIComponent(`Ticket de Pesagem — ${atual.numOrdem||''} — ${atual.placa}`);
+    // Baixar PDF + abrir cliente de e-mail
+    pdf.save(nomeArq);
+    toast('✅ PDF baixado! Anexe no e-mail que vai abrir.');
+    await new Promise(r=>setTimeout(r,1200));
+    const assunto=encodeURIComponent(`Ticket de Pesagem — ${o.numOrdem||''} — ${o.placa}`);
     const corpo=encodeURIComponent(
-      `Prezado(a) ${role},\n\nSegue o ticket de pesagem:\n\n`+
+      `Prezado(a) ${role},\n\nSegue o ticket de pesagem em anexo.\n\n`+
       texto.replace(/\*/g,'')+
-      `\n\nEste ticket foi gerado pelo sistema Balança Água Viva.\nPara o PDF completo com assinatura, solicite ao operador da balança.`
+      `\n\n---\nTicket gerado pelo sistema Balança ${nomeEmpresa(o)}.`
     );
     window.open(`mailto:${destino}?subject=${assunto}&body=${corpo}`,'_blank');
   }
+
+  // Fechar pdf-frame após uso
+  document.getElementById('pdf-frame').classList.remove('show');
 }
 function sendWA(){
   if(!atual)return;
