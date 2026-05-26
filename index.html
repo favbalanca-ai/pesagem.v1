@@ -594,6 +594,11 @@ body.dark .card{background:#1a2d22}
         WhatsApp
       </button>
     </div>
+    <!-- Envio para classificador e comprador -->
+    <div id="tk-contatos" style="display:none;margin-top:6px">
+      <div style="font-size:11px;color:var(--ink3);text-align:center;margin-bottom:6px;font-weight:600">📬 Enviar ticket para o contrato</div>
+      <div id="tk-btns-contatos" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+    </div>
     <button class="btn btnp" onclick="home();updHome()" style="margin-top:4px">🏠 Nova Pesagem</button>
     <!-- Botão editar (só admin) -->
     <button class="btn btns" id="btn-edit-tk" onclick="abrirEditar()" style="margin-top:4px;display:none">✏️ Editar Ticket</button>
@@ -655,6 +660,32 @@ body.dark .card{background:#1a2d22}
         <div class="f"><label>Volume Total (kg) *</label><input type="number" id="oc-vol" placeholder="0" min="0" step="1000"></div>
       </div>
       <div class="f"><label>Obs / Comprador</label><input type="text" id="oc-o" placeholder="Ex: Bunge, Cargill..."></div>
+      <!-- Contatos para envio do ticket -->
+      <div style="background:var(--g3);border-radius:10px;padding:11px 12px;margin-bottom:6px">
+        <div style="font-size:11px;font-weight:700;color:var(--g1);margin-bottom:8px">📬 Contatos para receber o ticket</div>
+        <div class="r2">
+          <div class="f">
+            <label>📱 WhatsApp do Classificador</label>
+            <input type="tel" id="oc-wa-clas" placeholder="5561999990000" autocomplete="off" style="font-family:'JetBrains Mono',monospace">
+            <div style="font-size:10px;color:var(--ink3);margin-top:2px">DDI+DDD+número, só dígitos</div>
+          </div>
+          <div class="f">
+            <label>📱 WhatsApp do Comprador</label>
+            <input type="tel" id="oc-wa-comp" placeholder="5561999990000" autocomplete="off" style="font-family:'JetBrains Mono',monospace">
+            <div style="font-size:10px;color:var(--ink3);margin-top:2px">DDI+DDD+número, só dígitos</div>
+          </div>
+        </div>
+        <div class="r2">
+          <div class="f">
+            <label>✉️ E-mail do Classificador</label>
+            <input type="email" id="oc-em-clas" placeholder="classificador@email.com" autocomplete="off">
+          </div>
+          <div class="f">
+            <label>✉️ E-mail do Comprador</label>
+            <input type="email" id="oc-em-comp" placeholder="comprador@email.com" autocomplete="off">
+          </div>
+        </div>
+      </div>
       <!-- Balança vinculada ao contrato -->
       <div class="f">
         <label>⚖️ Balança *</label>
@@ -1358,7 +1389,11 @@ function addOC(){
     p: document.getElementById('oc-p').value.trim(),
     vol: parseFloat(document.getElementById('oc-vol').value)||0,
     o: document.getElementById('oc-o').value.trim(),
-    bal: parseInt(document.getElementById('oc-bal').value)||1
+    bal: parseInt(document.getElementById('oc-bal').value)||1,
+    waClas: document.getElementById('oc-wa-clas').value.replace(/\D/g,''),
+    waComp: document.getElementById('oc-wa-comp').value.replace(/\D/g,''),
+    emClas: document.getElementById('oc-em-clas').value.trim(),
+    emComp: document.getElementById('oc-em-comp').value.trim()
   };
   // Limpar campos imediatamente
   document.getElementById('oc-n').value='';
@@ -1366,7 +1401,11 @@ function addOC(){
   document.getElementById('oc-p').value='';
   document.getElementById('oc-vol').value='';
   document.getElementById('oc-o').value='';
-  selBalancaContrato(1); // reset para Balança 1
+  document.getElementById('oc-wa-clas').value='';
+  document.getElementById('oc-wa-comp').value='';
+  document.getElementById('oc-em-clas').value='';
+  document.getElementById('oc-em-comp').value='';
+  selBalancaContrato(1);
   if(!SHEETS_URL||!navigator.onLine){
     // offline: salvar localmente e marcar para envio
     contratosCloud.push(contrato);
@@ -2048,10 +2087,71 @@ function rTicket(o){
   else document.getElementById('tk-sig-c').style.display='none';
   const btnEdit=document.getElementById('btn-edit-tk');
   if(btnEdit) btnEdit.style.display=(usr&&usr.nivel==='admin')?'block':'none';
+  // Botões de envio para classificador/comprador do contrato
+  renderBotoesContatos(o);
 }
 function vTicket(id){
   const o=cloud.find(x=>x.id===id)||DB.ordens.find(x=>x.id===id);
   if(!o)return; atual=o; rTicket(o); showPg('pg-tk','🎫 Ticket');
+}
+
+/* ══ BOTÕES DE CONTATOS DO CONTRATO NO TICKET ════════════════ */
+function renderBotoesContatos(o){
+  const box=document.getElementById('tk-contatos');
+  const btns=document.getElementById('tk-btns-contatos');
+  if(!box||!btns) return;
+  const ct=contratosCloud.find(c=>c.n===o.numOrdem);
+  if(!ct){box.style.display='none';return;}
+  const contatos=[];
+  if(ct.waClas) contatos.push({label:'📱 WA Classificador', tipo:'wa', num:ct.waClas, role:'Classificador'});
+  if(ct.waComp) contatos.push({label:'📱 WA Comprador',     tipo:'wa', num:ct.waComp, role:'Comprador'});
+  if(ct.emClas) contatos.push({label:'✉️ E-mail Classificador', tipo:'em', addr:ct.emClas, role:'Classificador'});
+  if(ct.emComp) contatos.push({label:'✉️ E-mail Comprador',     tipo:'em', addr:ct.emComp, role:'Comprador'});
+  if(!contatos.length){box.style.display='none';return;}
+  box.style.display='block';
+  btns.innerHTML=contatos.map(c=>`
+    <button onclick="enviarContato('${c.tipo}','${c.tipo==='wa'?c.num:c.addr}','${c.role}')"
+      style="background:${c.tipo==='wa'?'#25D366':'#1a5c45'};border:none;color:#fff;padding:9px 13px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;flex:1;min-width:140px">
+      ${c.label}
+    </button>`).join('');
+}
+
+function enviarContato(tipo, destino, role){
+  if(!atual) return;
+  const emp=nomeEmpresa(atual);
+  const tol=DB.cfg.tol||7;
+  const st=(atual.statusPeso||'CONFORME').replace(/^Finalizado\s*[-—]\s*/i,'');
+  const stIcon=st==='EXCEDIDO'?'🚨':st==='ATENÇÃO'?'⚠️':'✅';
+  const taraKg=Math.round((atual.tara||0)*1000);
+  const brutoKg=Math.round((atual.pesoBruto||0)*1000);
+  const cargaKg=Math.round((atual.cargaLiquida||0)*1000);
+  const local=(atual.municipio||'')+(atual.municipio&&atual.estado?' - ':'')+( atual.estado||'');
+
+  const texto=
+    `🚛 *TICKET DE PESAGEM*\n*${emp}*\n\n`+
+    `📋 Contrato: ${atual.numOrdem||'—'}\n`+
+    `🚛 Placa: ${atual.placa}${local?' | '+local:''}\n`+
+    `👤 Motorista: ${atual.motorista}\n`+
+    `🪪 CPF: ${atual.cpf||'—'}\n\n`+
+    `⚖️ Bruto: ${brutoKg.toLocaleString('pt-BR')} kg\n`+
+    `⚖️ Tara: ${taraKg.toLocaleString('pt-BR')} kg\n`+
+    `📦 Carga: ${cargaKg.toLocaleString('pt-BR')} kg\n\n`+
+    `${stIcon} *Status: ${st}*\n`+
+    `📅 ${atual.dataHoraFim||''}`;
+
+  if(tipo==='wa'){
+    const num=destino.replace(/\D/g,'');
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(texto)}`,'_blank');
+  } else {
+    // E-mail: abre cliente de e-mail com PDF via print
+    const assunto=encodeURIComponent(`Ticket de Pesagem — ${atual.numOrdem||''} — ${atual.placa}`);
+    const corpo=encodeURIComponent(
+      `Prezado(a) ${role},\n\nSegue o ticket de pesagem:\n\n`+
+      texto.replace(/\*/g,'')+
+      `\n\nEste ticket foi gerado pelo sistema Balança Água Viva.\nPara o PDF completo com assinatura, solicite ao operador da balança.`
+    );
+    window.open(`mailto:${destino}?subject=${assunto}&body=${corpo}`,'_blank');
+  }
 }
 function sendWA(){
   if(!atual)return;
