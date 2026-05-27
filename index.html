@@ -662,32 +662,7 @@ body.dark .card{background:#1a2d22}
         <div class="f"><label>Volume Total (kg) *</label><input type="number" id="oc-vol" placeholder="0" min="0" step="1000"></div>
       </div>
       <div class="f"><label>Obs / Comprador</label><input type="text" id="oc-o" placeholder="Ex: Bunge, Cargill..."></div>
-      <!-- Contatos para envio do ticket -->
-      <div style="background:var(--g3);border-radius:10px;padding:11px 12px;margin-bottom:6px">
-        <div style="font-size:11px;font-weight:700;color:var(--g1);margin-bottom:8px">📬 Contatos para receber o ticket</div>
-        <div class="r2">
-          <div class="f">
-            <label>📱 WhatsApp do Classificador</label>
-            <input type="tel" id="oc-wa-clas" placeholder="5561999990000" autocomplete="off" style="font-family:'JetBrains Mono',monospace">
-            <div style="font-size:10px;color:var(--ink3);margin-top:2px">DDI+DDD+número, só dígitos</div>
-          </div>
-          <div class="f">
-            <label>📱 WhatsApp do Comprador</label>
-            <input type="tel" id="oc-wa-comp" placeholder="5561999990000" autocomplete="off" style="font-family:'JetBrains Mono',monospace">
-            <div style="font-size:10px;color:var(--ink3);margin-top:2px">DDI+DDD+número, só dígitos</div>
-          </div>
-        </div>
-        <div class="r2">
-          <div class="f">
-            <label>✉️ E-mail do Classificador</label>
-            <input type="email" id="oc-em-clas" placeholder="classificador@email.com" autocomplete="off">
-          </div>
-          <div class="f">
-            <label>✉️ E-mail do Comprador</label>
-            <input type="email" id="oc-em-comp" placeholder="comprador@email.com" autocomplete="off">
-          </div>
-        </div>
-      </div>
+
       <!-- Balança vinculada ao contrato -->
       <div class="f">
         <label>⚖️ Balança *</label>
@@ -1392,10 +1367,10 @@ function addOC(){
     vol: parseFloat(document.getElementById('oc-vol').value)||0,
     o: document.getElementById('oc-o').value.trim(),
     bal: parseInt(document.getElementById('oc-bal').value)||1,
-    waClas: document.getElementById('oc-wa-clas').value.replace(/\D/g,''),
-    waComp: document.getElementById('oc-wa-comp').value.replace(/\D/g,''),
-    emClas: document.getElementById('oc-em-clas').value.trim(),
-    emComp: document.getElementById('oc-em-comp').value.trim()
+    waClas: '',
+    waComp: '',
+    emClas: '',
+    emComp: ''
   };
   // Limpar campos imediatamente
   document.getElementById('oc-n').value='';
@@ -1403,10 +1378,7 @@ function addOC(){
   document.getElementById('oc-p').value='';
   document.getElementById('oc-vol').value='';
   document.getElementById('oc-o').value='';
-  document.getElementById('oc-wa-clas').value='';
-  document.getElementById('oc-wa-comp').value='';
-  document.getElementById('oc-em-clas').value='';
-  document.getElementById('oc-em-comp').value='';
+
   selBalancaContrato(1);
   if(!SHEETS_URL||!navigator.onLine){
     // offline: salvar localmente e marcar para envio
