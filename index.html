@@ -2197,6 +2197,8 @@ function finalizar(){
   atual.assinatura=prevImg&&prevImg.src&&prevImg.src.length>100?prevImg.src:sigC.toDataURL('image/png');
   atual.status='Finalizado';
   atual.dataHoraFim=now.toLocaleDateString('pt-BR')+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  // Salvar assinatura no localStorage indexada pelo id (disponível em outros momentos)
+  try{ localStorage.setItem('sig_'+atual.id, atual.assinatura); }catch(e){}
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
   if(idx>=0)DB.ordens[idx]={...atual};
   saveDB(); enviar(atual,'atualizar');
@@ -2785,22 +2787,24 @@ function normOrdem(o){
     if(s.includes('T')){try{const d=new Date(s);if(!isNaN(d))return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}catch(e){}}
     return s.replace(/^(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}):\d{2}.*$/, '$1');
   };
-  // Recuperar assinatura: prioridade → base64 local → URL do Drive → "Sim" (planilha)
+  // Recuperar assinatura: prioridade → base64 local (localStorage) → URL do Drive → indicador
   let assinatura = o.assinatura;
-  if(!assinatura || assinatura==='Nao' || assinatura==='nao'){
+  if(!assinatura || assinatura==='Nao' || assinatura==='nao' || assinatura===false || assinatura===null){
     assinatura = null;
-  } else if(assinatura==='Sim' || assinatura==='sim' || (assinatura && !assinatura.startsWith('data:') && !assinatura.startsWith('http'))){
-    // Tentar recuperar base64 do localStorage pelo id
-    const local = DB.ordens.find(x=>x.id===o.id);
-    if(local && local.assinatura && local.assinatura.startsWith('data:')){
-      assinatura = local.assinatura;
-    } else if(local && local.assinaturaUrl){
-      // Usar URL do Drive como fallback (carrega a imagem diretamente)
-      assinatura = local.assinaturaUrl;
-    } else if(o.assinaturaUrl){
-      assinatura = o.assinaturaUrl;
+  } else {
+    // Se já é base64 ou URL válida, usar direto
+    if(assinatura.startsWith('data:') || assinatura.startsWith('http')){
+      // ok, usar como está
     } else {
-      assinatura = 'Sim'; // planilha confirma que existe mas não temos a imagem
+      // Veio "Sim" ou outro texto da planilha — buscar no localStorage pelo id
+      const sigLocal = localStorage.getItem('sig_'+o.id);
+      if(sigLocal && sigLocal.startsWith('data:')){
+        assinatura = sigLocal;
+      } else if(o.assinaturaUrl && (o.assinaturaUrl.startsWith('http') || o.assinaturaUrl.startsWith('data:'))){
+        assinatura = o.assinaturaUrl;
+      } else {
+        assinatura = null; // não temos a imagem neste dispositivo
+      }
     }
   }
   return{
@@ -2893,6 +2897,17 @@ function gerarPDF(){
   const taraKg=Math.round((o.tara||0)*1000);
   const brutoKg=Math.round((o.pesoBruto||0)*1000);
   const cargaKg=Math.round((o.cargaLiquida||0)*1000);
+  // Assinatura: prioridade localStorage → objeto atual → URL Drive
+  let sigSrc = null;
+  const sigLocal = localStorage.getItem('sig_'+o.id);
+  if(sigLocal && sigLocal.startsWith('data:')){
+    sigSrc = sigLocal;
+  } else if(o.assinatura && (o.assinatura.startsWith('data:') || o.assinatura.startsWith('http'))){
+    sigSrc = o.assinatura;
+  } else if(o.assinaturaUrl && (o.assinaturaUrl.startsWith('http') || o.assinaturaUrl.startsWith('data:'))){
+    sigSrc = o.assinaturaUrl;
+  }
+
   const mun=(o.municipio||'').trim();
   const uf=(o.estado||'').trim();
   const localStr=mun&&uf?`${mun} / ${uf}`:mun||uf||'';
@@ -2960,8 +2975,8 @@ function gerarPDF(){
     </div>
     <div class="pdf-section pdf-sig">
       <h3>✍️ Assinatura do Motorista</h3>
-      ${o.assinatura && o.assinatura.length > 10 && (o.assinatura.startsWith('data:') || o.assinatura.startsWith('http'))
-        ?`<img src="${o.assinatura}" alt="Assinatura" style="width:100%;max-height:120px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px" crossorigin="anonymous">`
+      ${sigSrc
+        ?`<img src="${sigSrc}" alt="Assinatura" style="width:100%;max-height:120px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px">`
         :`<div style="height:80px;border:1.5px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px">Sem assinatura registrada</div>`
       }
     </div>
