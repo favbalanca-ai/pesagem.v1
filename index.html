@@ -614,7 +614,7 @@ body.dark .card{background:#1a2d22}
       <img id="tk-sig-i" style="width:100%;border-radius:7px">
     </div>
     <div class="brow">
-      <button class="btn btns bsm" onclick="gerarPDF();setTimeout(imprimirPDF,350)">🖨️ Imprimir</button>
+      <button class="btn btns bsm" onclick="gerarPDF();imprimirPDF()">🖨️ Imprimir</button>
       <button class="btn btns bsm" onclick="gerarPDF()">📄 PDF</button>
       <button class="btn btnw bsm" id="btn-wa" onclick="sendWA()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.117 1.532 5.849L.057 23.571a.75.75 0 0 0 .921.921l5.722-1.475A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 0 1-4.962-1.358l-.355-.211-3.697.952.977-3.579-.232-.369A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
@@ -2770,11 +2770,18 @@ function normOrdem(o){
   const normDH=v=>{
     if(!v)return '';
     const s=String(v);
-    // Formato ISO → converter e formatar sem segundos
     if(s.includes('T')){try{const d=new Date(s);if(!isNaN(d))return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}catch(e){}}
-    // Formato "dd/MM/yyyy HH:mm:ss" → cortar segundos
     return s.replace(/^(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}):\d{2}.*$/, '$1');
   };
+  // Recuperar assinatura: se vier "Sim"/"Nao" da planilha, buscar imagem no localStorage
+  let assinatura = o.assinatura;
+  if(assinatura==='Sim'||assinatura==='sim'){
+    // Tentar recuperar do DB local pelo id
+    const local = DB.ordens.find(x=>x.id===o.id);
+    assinatura = (local&&local.assinatura&&local.assinatura.length>10) ? local.assinatura : 'Sim';
+  } else if(assinatura==='Nao'||assinatura==='nao'||assinatura===false){
+    assinatura = null;
+  }
   return{
     ...o,
     dataEntrada:  normD(o.dataEntrada),
@@ -2786,6 +2793,7 @@ function normOrdem(o){
     pbtMax:       parseFloat(o.pbtMax||o.limPeso)||0,
     limPeso:      parseFloat(o.pbtMax||o.limPeso)||0,
     statusPeso:   String(o.status||o.statusPeso||'').replace('Finalizado — ',''),
+    assinatura:   assinatura,
   };
 }
 
@@ -3026,29 +3034,26 @@ function pdfContrato(){
   document.getElementById('pdf-frame').classList.add('show');
 }
 function imprimirPDF(){
-  // Garantir que o conteúdo está gerado
   const src = document.getElementById('pdf-page');
+  // Se pdf-page ainda vazio, gerar primeiro e avisar para clicar de novo
   if(!src || !src.innerHTML.trim()){
     gerarPDF();
-    setTimeout(imprimirPDF, 500);
+    toast('⏳ PDF gerado — toque em Imprimir novamente');
     return;
   }
   const html = src.innerHTML;
-
-  // Copiar para os dois lados do espelho
   document.getElementById('print-page-1').innerHTML = html;
   document.getElementById('print-page-2').innerHTML = html;
-
-  // Mostrar o mirror (remove display:none para o @media print funcionar)
   const mirror = document.getElementById('print-mirror');
   mirror.style.display = 'flex';
-
-  // Pequeno delay para o browser renderizar antes de imprimir
-  setTimeout(()=>{
-    window.print();
-    // Após imprimir, esconder o mirror novamente
-    setTimeout(()=>{ mirror.style.display = 'none'; }, 500);
-  }, 200);
+  // iOS exige window.print() chamado diretamente no handler do evento do usuário
+  window.print();
+  // Limpar mirror após impressão
+  window.addEventListener('afterprint', function cb(){
+    mirror.style.display = 'none';
+    window.removeEventListener('afterprint', cb);
+  }, {once:true});
+  setTimeout(()=>{ mirror.style.display = 'none'; }, 4000);
 }
 </script>
 </body>
