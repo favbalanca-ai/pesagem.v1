@@ -858,6 +858,82 @@ body.dark .card{background:#1a2d22}
 /* ══ CONFIG ═══════════════════════════════════════════════════ */
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxvNJutHp0bVC0lZWzmYN_fm5EajV7xBZDu2MJAK_gxVvuAmGUxWx0QAx_M1PIxCRqq-Q/exec";
 const TOKEN      = "pesagem@fav2024";
+const SYNC_TAG   = "fav-sync-pendentes";
+
+/* ══ INDEXEDDB — fila compartilhada com o Service Worker ══════ */
+let _idb = null;
+async function abrirIDB() {
+  if (_idb) return _idb;
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('fav-pesagem', 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore('pendentes', { keyPath: 'id' });
+    };
+    req.onsuccess = e => { _idb = e.target.result; res(_idb); };
+    req.onerror = e => rej(e.target.error);
+  });
+}
+async function idbSalvar(item) {
+  try {
+    const db = await abrirIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pendentes', 'readwrite');
+      tx.objectStore('pendentes').put(item);
+      tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+    });
+  } catch(e) {}
+}
+async function idbLer() {
+  try {
+    const db = await abrirIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pendentes', 'readonly');
+      const req = tx.objectStore('pendentes').getAll();
+      req.onsuccess = e => res(e.target.result);
+      req.onerror = e => rej(e.target.error);
+    });
+  } catch(e) { return []; }
+}
+async function idbRemover(id) {
+  try {
+    const db = await abrirIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pendentes', 'readwrite');
+      tx.objectStore('pendentes').delete(id);
+      tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+    });
+  } catch(e) {}
+}
+async function idbLimpar() {
+  try {
+    const db = await abrirIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pendentes', 'readwrite');
+      tx.objectStore('pendentes').clear();
+      tx.oncomplete = res;
+    });
+  } catch(e) {}
+}
+
+/* ══ SOLICITAR PERMISSÃO DE NOTIFICAÇÃO ═══════════════════════ */
+async function pedirPermissaoNotificacao() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+}
+
+/* ══ REGISTRAR BACKGROUND SYNC ════════════════════════════════ */
+async function registrarBgSync() {
+  if (!('serviceWorker' in navigator) || !('SyncManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.sync.register(SYNC_TAG);
+    addLog('📲 Background Sync registrado (Android)','info');
+  } catch(e) {
+    addLog('ℹ️ Background Sync não disponível neste dispositivo (iOS)','info');
+  }
+}
 
 const USERS = [
   {email:"JOVANE",    pw:"2024", nome:"Jovane",    nivel:"admin"},
@@ -921,8 +997,33 @@ function openApp(u){
   toggleAdminUI();
   if(u.nivel==='view')  document.getElementById('bi-nova').style.display='none';
   loadDB(); loadCfg(); initSig(); initDark();
+  // Recuperar fila do IndexedDB (inclui pendentes de sessões anteriores)
+  idbLer().then(items=>{
+    if(items&&items.length){
+      items.forEach(item=>{
+        if(!pend.find(p=>p.ordem&&p.ordem.id===item.id)){
+          pend.push(item);
+        }
+      });
+      saveDB(); updS();
+      addLog(`📦 ${items.length} pendente(s) recuperado(s) do IndexedDB`,'info');
+    }
+  });
   iniciarBgSync(); // sync automático a cada 3 min
   addLog(`🔑 Sessão iniciada — ${u.nome||u.email}`,'info');
+  pedirPermissaoNotificacao();
+  // Escutar mensagens do Service Worker (background sync concluído)
+  navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', async e => {
+    if(e.data && e.data.tipo === 'sync-ok'){
+      addLog(`📲 BG Sync: ${e.data.msg}`,'ok');
+      // Remover da fila local o que o SW já enviou
+      pend = pend.filter(p => p.ordem.id !== e.data.id);
+      await idbRemover(e.data.id);
+      saveDB();
+      updHome();
+      toast(`☁️ ${e.data.msg}`);
+    }
+  });
   // Carregar planilha assim que abrir
   setTimeout(async()=>{
     await syncP();
@@ -2401,12 +2502,15 @@ async function enviar(ordem,acao){
 /* ── Adicionar à fila com timestamp e contador de tentativas ── */
 function addP(o,a){
   const idx=pend.findIndex(p=>p.ordem&&p.ordem.id===o.id);
-  if(idx>=0){
-    pend[idx]={...pend[idx],ordem:o,acao:a}; // atualizar dados mas manter ts
-  } else {
-    pend.push({ordem:o,acao:a,ts:Date.now(),tentativas:0,falhou:false});
-  }
+  const item = idx>=0
+    ? {...pend[idx], ordem:o, acao:a}
+    : {id:o.id, ordem:o, acao:a, ts:Date.now(), tentativas:0, falhou:false};
+  if(idx>=0) pend[idx]=item; else pend.push(item);
   saveDB();
+  // Salvar no IndexedDB para o Service Worker acessar
+  idbSalvar(item);
+  // Registrar Background Sync (Android) — sincroniza mesmo com app fechado
+  registrarBgSync();
 }
 
 /* ── Sync: enviar fila com retry e limite de tentativas ──────── */
@@ -2430,6 +2534,7 @@ async function syncP(){
       if(j.ok){
         // Remover da fila
         pend=pend.filter(x=>x.ordem.id!==p.ordem.id);
+        await idbRemover(p.ordem.id); // remover do IDB também
         ok++;
         addLog(`✅ Enviado — ${p.ordem.placa||p.ordem.id}`,'ok');
       } else {
