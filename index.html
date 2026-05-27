@@ -214,34 +214,31 @@ body.dark .hb{background:#1a2d22}
 body.dark .sbar{background:#1a2d22}
 body.dark .card{background:#1a2d22}
 @media print{
-  @page { size: A4 landscape; margin: 8mm; }
-  body * { visibility: hidden; }
-  #pdf-frame, #pdf-frame *, #print-mirror, #print-mirror * { visibility: visible; }
-  #pdf-frame { display: none !important; }
-  #pdf-header { display: none !important; }
+  @page { size: A4 landscape; margin: 6mm; }
+  body > *:not(#print-mirror) { display: none !important; }
   #print-mirror {
     display: flex !important;
-    position: fixed;
-    inset: 0;
+    width: 100%;
+    height: 100%;
     background: #fff;
-    gap: 0;
   }
   .print-col {
     flex: 1;
-    padding: 8mm;
+    padding: 6mm;
     overflow: hidden;
   }
   .print-divider {
-    width: 0.5mm;
-    background: #ccc;
-    margin: 8mm 0;
+    width: 0.4mm;
+    background: #bbb;
+    margin: 6mm 0;
     flex-shrink: 0;
   }
   .print-col .pdf-page {
     box-shadow: none !important;
     max-width: 100% !important;
     padding: 0 !important;
-    font-size: 11px !important;
+    font-size: 10.5px !important;
+    margin: 0 !important;
   }
 }
 #offb{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;background:#e6a817;color:#fff;text-align:center;font-size:11px;font-weight:700;padding:5px;z-index:1000;display:none}
@@ -259,7 +256,6 @@ body.dark .card{background:#1a2d22}
 
 /* CONFIG OVERLAY */
 #pg-cfg{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:60px 12px 90px}
-@media print{.bar,.top,.btns,.btnd,#btn-wa,#btn-cfg{display:none!important}body{padding:5mm}}
 </style>
 </head>
 <body>
@@ -3030,19 +3026,29 @@ function pdfContrato(){
   document.getElementById('pdf-frame').classList.add('show');
 }
 function imprimirPDF(){
-  const conteudo=document.getElementById('pdf-page');
-  if(!conteudo||!conteudo.innerHTML.trim()){
-    // Se pdf-page vazio, gerar primeiro
+  // Garantir que o conteúdo está gerado
+  const src = document.getElementById('pdf-page');
+  if(!src || !src.innerHTML.trim()){
     gerarPDF();
-    setTimeout(imprimirPDF, 400);
+    setTimeout(imprimirPDF, 500);
     return;
   }
-  // Copiar conteúdo para as duas colunas do espelho
-  const html=conteudo.innerHTML;
-  document.getElementById('print-page-1').innerHTML=html;
-  document.getElementById('print-page-2').innerHTML=html;
-  // Imprimir
-  window.print();
+  const html = src.innerHTML;
+
+  // Copiar para os dois lados do espelho
+  document.getElementById('print-page-1').innerHTML = html;
+  document.getElementById('print-page-2').innerHTML = html;
+
+  // Mostrar o mirror (remove display:none para o @media print funcionar)
+  const mirror = document.getElementById('print-mirror');
+  mirror.style.display = 'flex';
+
+  // Pequeno delay para o browser renderizar antes de imprimir
+  setTimeout(()=>{
+    window.print();
+    // Após imprimir, esconder o mirror novamente
+    setTimeout(()=>{ mirror.style.display = 'none'; }, 500);
+  }, 200);
 }
 </script>
 </body>
