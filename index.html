@@ -1925,7 +1925,15 @@ async function uploadFotosDrive(ordem){
           });
           var r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
           var j=JSON.parse(await r.text());
-          if(j.ok) ok++;
+          if(j.ok){
+            ok++;
+            // Se for assinatura, salvar a URL do Drive no objeto da OS para outros dispositivos
+            if(item.tipo==='sig' && j.url){
+              ordem.assinaturaUrl = j.url;
+              const idx=DB.ordens.findIndex(x=>x.id===ordem.id);
+              if(idx>=0){DB.ordens[idx].assinaturaUrl=j.url; saveDB();}
+            }
+          }
         }catch(e){}
         resolve();
       });
@@ -2228,8 +2236,12 @@ function rTicket(o){
   const sb=document.getElementById('tk-st');
   sb.className='st '+(st==='EXCEDIDO'?'er':st==='ATENÇÃO'?'wn':'ok');
   sb.textContent=st==='EXCEDIDO'?'🚨 EXCEDIDO':st==='ATENÇÃO'?'⚠️ ATENÇÃO':'✅ CONFORME';
-  if(o.assinatura){document.getElementById('tk-sig-c').style.display='block';document.getElementById('tk-sig-i').src=o.assinatura;}
-  else document.getElementById('tk-sig-c').style.display='none';
+  if(o.assinatura && o.assinatura.length>10 && (o.assinatura.startsWith('data:') || o.assinatura.startsWith('http'))){
+    document.getElementById('tk-sig-c').style.display='block';
+    document.getElementById('tk-sig-i').src=o.assinatura;
+  } else {
+    document.getElementById('tk-sig-c').style.display='none';
+  }
   const btnEdit=document.getElementById('btn-edit-tk');
   if(btnEdit) btnEdit.style.display=(usr&&usr.nivel==='admin')?'block':'none';
   // Botões de envio para classificador/comprador do contrato
@@ -2773,14 +2785,23 @@ function normOrdem(o){
     if(s.includes('T')){try{const d=new Date(s);if(!isNaN(d))return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}catch(e){}}
     return s.replace(/^(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}):\d{2}.*$/, '$1');
   };
-  // Recuperar assinatura: se vier "Sim"/"Nao" da planilha, buscar imagem no localStorage
+  // Recuperar assinatura: prioridade → base64 local → URL do Drive → "Sim" (planilha)
   let assinatura = o.assinatura;
-  if(assinatura==='Sim'||assinatura==='sim'){
-    // Tentar recuperar do DB local pelo id
-    const local = DB.ordens.find(x=>x.id===o.id);
-    assinatura = (local&&local.assinatura&&local.assinatura.length>10) ? local.assinatura : 'Sim';
-  } else if(assinatura==='Nao'||assinatura==='nao'||assinatura===false){
+  if(!assinatura || assinatura==='Nao' || assinatura==='nao'){
     assinatura = null;
+  } else if(assinatura==='Sim' || assinatura==='sim' || (assinatura && !assinatura.startsWith('data:') && !assinatura.startsWith('http'))){
+    // Tentar recuperar base64 do localStorage pelo id
+    const local = DB.ordens.find(x=>x.id===o.id);
+    if(local && local.assinatura && local.assinatura.startsWith('data:')){
+      assinatura = local.assinatura;
+    } else if(local && local.assinaturaUrl){
+      // Usar URL do Drive como fallback (carrega a imagem diretamente)
+      assinatura = local.assinaturaUrl;
+    } else if(o.assinaturaUrl){
+      assinatura = o.assinaturaUrl;
+    } else {
+      assinatura = 'Sim'; // planilha confirma que existe mas não temos a imagem
+    }
   }
   return{
     ...o,
@@ -2939,8 +2960,8 @@ function gerarPDF(){
     </div>
     <div class="pdf-section pdf-sig">
       <h3>✍️ Assinatura do Motorista</h3>
-      ${o.assinatura
-        ?`<img src="${o.assinatura}" alt="Assinatura" style="width:100%;max-height:120px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px">`
+      ${o.assinatura && o.assinatura.length > 10 && (o.assinatura.startsWith('data:') || o.assinatura.startsWith('http'))
+        ?`<img src="${o.assinatura}" alt="Assinatura" style="width:100%;max-height:120px;object-fit:contain;border:1px solid #e0e0e0;border-radius:6px" crossorigin="anonymous">`
         :`<div style="height:80px;border:1.5px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px">Sem assinatura registrada</div>`
       }
     </div>
