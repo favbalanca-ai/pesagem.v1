@@ -292,13 +292,19 @@ body.dark .card{background:#1a2d22}
     </div>
     <div id="sbar2" style="background:#fff3cd;border-radius:var(--r);padding:9px 13px;margin-bottom:10px;box-shadow:var(--sh);border:.5px solid #e6a817;display:none;align-items:center;gap:8px">
       <div style="font-size:12px;color:#856404;flex:1" id="pend-txt"></div>
-      <button onclick="enviarTodosLocais()" style="padding:6px 12px;border-radius:7px;border:1.5px solid #e6a817;background:transparent;color:#856404;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">Enviar todos ☁️</button>
+      <button onclick="enviarTodosLocais()" style="padding:6px 12px;border-radius:7px;border:1.5px solid #e6a817;background:transparent;color:#856404;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">Enviar ☁️</button>
+    </div>
+    <!-- Banner alerta pendente antigo -->
+    <div id="sbar3" style="background:#fce8e8;border-radius:var(--r);padding:9px 13px;margin-bottom:10px;box-shadow:var(--sh);border:.5px solid #e24b4a;display:none;align-items:center;gap:8px">
+      <div style="font-size:12px;color:#a32d2d;flex:1" id="sbar3-txt">⏰ Pesagem(s) offline há muito tempo — verifique a conexão</div>
+      <button onclick="irDiag()" style="padding:6px 12px;border-radius:7px;border:1.5px solid #e24b4a;background:transparent;color:#a32d2d;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">Ver detalhes</button>
     </div>
     <div class="hgrid">
       <div class="hb" onclick="irNova()"><div class="hi">📋</div><div class="ht">Nova Pesagem</div><div class="hs">Registrar entrada</div></div>
       <div class="hb" onclick="irAg()"><div class="hi">⏳</div><div class="ht">Aguardando</div><div class="hs" id="ag-s">Nenhum</div><div class="bcnt" id="ag-c">0</div></div>
       <div class="hb" onclick="irHist()"><div class="hi">📊</div><div class="ht">Histórico</div><div class="hs">Todos os registros</div></div>
       <div class="hb" id="btn-admin" style="display:none" onclick="irOrdens()"><div class="hi">📝</div><div class="ht">Contratos</div><div class="hs">Cadastro</div></div>
+      <div class="hb adm-only" style="display:none" onclick="irDiag()"><div class="hi">🔍</div><div class="ht">Diagnóstico</div><div class="hs" id="diag-hs">Sync OK</div></div>
     </div>
   </div>
 
@@ -753,6 +759,34 @@ body.dark .card{background:#1a2d22}
   </div>
 </div>
 
+<!-- DIAGNÓSTICO DE SINCRONIZAÇÃO -->
+<div id="pg-diag" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:90;overflow-y:auto;padding:16px 14px 90px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <button onclick="hideDiag()" style="background:var(--g3);border:none;color:var(--g1);width:34px;height:34px;border-radius:9px;font-size:20px;cursor:pointer">‹</button>
+    <div style="font-size:15px;font-weight:700">🔍 Diagnóstico de Sincronização</div>
+    <button onclick="syncM()" style="margin-left:auto;background:var(--g1);border:none;color:#fff;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🔄 Sincronizar agora</button>
+  </div>
+
+  <!-- Status geral -->
+  <div class="card">
+    <div class="ct">📡 Status atual</div>
+    <div id="diag-status" style="font-size:13px;line-height:1.8"></div>
+  </div>
+
+  <!-- Pendentes com detalhe -->
+  <div class="card">
+    <div class="ct">⏳ Fila offline (<span id="diag-pend-count">0</span>)</div>
+    <div id="diag-pend-list" style="font-size:12px"></div>
+  </div>
+
+  <!-- Log de eventos -->
+  <div class="card">
+    <div class="ct">📋 Log de sincronização</div>
+    <div id="diag-log" style="font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.8;max-height:280px;overflow-y:auto"></div>
+    <button onclick="limparLog()" style="margin-top:8px;background:none;border:1px solid var(--brd);color:var(--ink3);padding:5px 12px;border-radius:7px;font-size:11px;cursor:pointer">🗑️ Limpar log</button>
+  </div>
+</div>
+
 <!-- CONFIG OVERLAY -->
 <div id="pg-cfg">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -848,8 +882,16 @@ let sigC, sigX, sigDraw=false, sigOk=false;
 /* ══ INIT ══════════════════════════════════════════════════════ */
 window.addEventListener('load',()=>{
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r=>{r.update();}).catch(()=>{});
-  window.addEventListener('online', ()=>{document.getElementById('offb').style.display='none';syncP();});
-  window.addEventListener('offline',()=>document.getElementById('offb').style.display='block');
+  window.addEventListener('online', ()=>{
+    document.getElementById('offb').style.display='none';
+    addLog('🌐 Conexão restaurada — iniciando sync','info');
+    syncP();
+  });
+  window.addEventListener('offline',()=>{
+    document.getElementById('offb').style.display='block';
+    addLog('📵 Sem conexão — dados serão salvos localmente','aviso');
+    updS();
+  });
   if(!navigator.onLine) document.getElementById('offb').style.display='block';
   document.addEventListener('touchmove',e=>{if(document.body.getAttribute('data-sig')==='1')e.preventDefault();},{passive:false});
   checkSess(); calcPBT();
@@ -879,6 +921,8 @@ function openApp(u){
   toggleAdminUI();
   if(u.nivel==='view')  document.getElementById('bi-nova').style.display='none';
   loadDB(); loadCfg(); initSig(); initDark();
+  iniciarBgSync(); // sync automático a cada 3 min
+  addLog(`🔑 Sessão iniciada — ${u.nome||u.email}`,'info');
   // Carregar planilha assim que abrir
   setTimeout(async()=>{
     await syncP();
@@ -2271,41 +2315,174 @@ function rHist(){
 ═══════════════════════════════════════════════════════════════ */
 function updS(){
   const el=document.getElementById('stxt');if(!el)return;
-  if(pend.length>0) el.textContent=`⚠️ ${pend.length} pendente(s) offline`;
-  else if(!navigator.onLine) el.textContent='📵 Offline — dados salvos localmente';
-  else el.textContent=`☁️ Planilha: ${cloud.length} registro(s)`;
+  const ALERTA_MIN=30; // minutos para alerta de pendente antigo
+  const agora=Date.now();
+
+  // Verificar pendentes antigos (> ALERTA_MIN min)
+  const velhos=pend.filter(p=>p.ts&&(agora-p.ts)>ALERTA_MIN*60000);
+  const sb3=document.getElementById('sbar3');
+  if(sb3){
+    if(velhos.length>0){
+      sb3.style.display='flex';
+      const mins=Math.round((agora-Math.min(...velhos.map(p=>p.ts)))/60000);
+      document.getElementById('sbar3-txt').textContent=
+        `⏰ ${velhos.length} pesagem(s) offline há ${mins} min — verifique a conexão`;
+    } else {
+      sb3.style.display='none';
+    }
+  }
+
+  // Status bar principal
+  if(pend.length>0){
+    const falhos=pend.filter(p=>p.falhou);
+    if(falhos.length>0)
+      el.textContent=`🔴 ${falhos.length} pendente(s) com falha · ${pend.length-falhos.length} aguardando`;
+    else
+      el.textContent=`⚠️ ${pend.length} pendente(s) offline`;
+  } else if(!navigator.onLine){
+    el.textContent='📵 Offline — dados salvos localmente';
+  } else {
+    const ult=localStorage.getItem('syncUlt');
+    el.textContent=ult?`☁️ Sincronizado às ${ult}`:'☁️ Sincronizado';
+  }
+
+  // Banner amarelo
   const sb=document.getElementById('sbar2'),pt=document.getElementById('pend-txt');
-  if(sb&&pt){ if(pend.length>0){sb.style.display='flex';pt.textContent=`${pend.length} pesagem(s) aguardando envio (offline)`;}else sb.style.display='none'; }
+  if(sb&&pt){
+    const pendOk=pend.filter(p=>!p.falhou);
+    if(pendOk.length>0){
+      sb.style.display='flex';
+      pt.textContent=`${pendOk.length} pesagem(s) aguardando envio`;
+    } else {
+      sb.style.display='none';
+    }
+  }
 }
 
-// Enviar para planilha (offline → fila)
+/* ── Log de eventos de sync ─────────────────────────────────── */
+let syncLog=JSON.parse(localStorage.getItem('syncLog')||'[]');
+function addLog(msg,tipo){
+  const agora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  syncLog.unshift({t:agora,m:msg,tipo:tipo||'info'});
+  if(syncLog.length>100) syncLog=syncLog.slice(0,100);
+  localStorage.setItem('syncLog',JSON.stringify(syncLog));
+}
+function limparLog(){
+  syncLog=[];localStorage.removeItem('syncLog');
+  renderDiag();
+}
+
+/* ── Enviar para planilha (offline → fila com timestamp) ────── */
 async function enviar(ordem,acao){
-  if(!SHEETS_URL){return;}
-  if(!navigator.onLine){addP(ordem,acao);updS();return;}
+  if(!SHEETS_URL){addLog('SHEETS_URL não configurado','erro');return;}
+  if(!navigator.onLine){
+    addP(ordem,acao);
+    addLog(`Offline — ${ordem.placa||ordem.id} salvo na fila`,'aviso');
+    updS();return;
+  }
   try{
-    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao,ordem,token:TOKEN})});
+    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao,ordem,token:TOKEN})});
     const j=JSON.parse(await r.text());
-    if(!j.ok) addP(ordem,acao);
-  }catch(e){addP(ordem,acao);}
+    if(j.ok){
+      addLog(`✅ ${acao} — ${ordem.placa||ordem.id}`,'ok');
+      localStorage.setItem('syncUlt',new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+    } else {
+      addP(ordem,acao);
+      addLog(`❌ API recusou — ${ordem.placa||ordem.id}: ${j.erro||'erro desconhecido'}`,'erro');
+    }
+  }catch(e){
+    addP(ordem,acao);
+    addLog(`❌ Falha de rede — ${ordem.placa||ordem.id}: ${e.message}`,'erro');
+  }
   updS();
 }
-function addP(o,a){if(!pend.find(p=>p.ordem&&p.ordem.id===o.id)){pend.push({ordem:o,acao:a});saveDB();}}
 
-// Enviar pendentes offline quando voltar internet
-async function syncP(){
-  if(!SHEETS_URL||!navigator.onLine||!pend.length){updS();return;}
-  const ps=[...pend]; pend=[];saveDB();
-  let ok=0;
-  for(const p of ps){
-    try{
-      const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})});
-      const j=JSON.parse(await r.text());
-      if(j.ok) ok++; else pend.push(p);
-    }catch(e){pend.push(p);}
+/* ── Adicionar à fila com timestamp e contador de tentativas ── */
+function addP(o,a){
+  const idx=pend.findIndex(p=>p.ordem&&p.ordem.id===o.id);
+  if(idx>=0){
+    pend[idx]={...pend[idx],ordem:o,acao:a}; // atualizar dados mas manter ts
+  } else {
+    pend.push({ordem:o,acao:a,ts:Date.now(),tentativas:0,falhou:false});
   }
   saveDB();
-  if(ok>0){ toast(`☁️ ${ok} pesagem(s) enviada(s)!`); await carregarDaPlanilha(); }
+}
+
+/* ── Sync: enviar fila com retry e limite de tentativas ──────── */
+const MAX_TENTATIVAS=3;
+let _syncAtivo=false;
+async function syncP(){
+  if(!SHEETS_URL||!navigator.onLine||!pend.length){updS();return;}
+  if(_syncAtivo) return; // evitar sync simultâneo
+  _syncAtivo=true;
+  addLog(`🔄 Iniciando sync — ${pend.length} pendente(s)`,'info');
+
+  const ps=[...pend];
+  let ok=0, falhou=0;
+
+  for(const p of ps){
+    if(p.falhou) continue; // pular os que já falharam demais
+    try{
+      const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})});
+      const j=JSON.parse(await r.text());
+      if(j.ok){
+        // Remover da fila
+        pend=pend.filter(x=>x.ordem.id!==p.ordem.id);
+        ok++;
+        addLog(`✅ Enviado — ${p.ordem.placa||p.ordem.id}`,'ok');
+      } else {
+        // Incrementar tentativas
+        const item=pend.find(x=>x.ordem.id===p.ordem.id);
+        if(item){
+          item.tentativas=(item.tentativas||0)+1;
+          if(item.tentativas>=MAX_TENTATIVAS){
+            item.falhou=true;
+            addLog(`🔴 Falhou ${MAX_TENTATIVAS}x — ${p.ordem.placa||p.ordem.id}: ${j.erro||'erro API'}`,'erro');
+          } else {
+            addLog(`⚠️ Tentativa ${item.tentativas}/${MAX_TENTATIVAS} — ${p.ordem.placa||p.ordem.id}`,'aviso');
+          }
+        }
+        falhou++;
+      }
+    }catch(e){
+      const item=pend.find(x=>x.ordem.id===p.ordem.id);
+      if(item){
+        item.tentativas=(item.tentativas||0)+1;
+        if(item.tentativas>=MAX_TENTATIVAS){
+          item.falhou=true;
+          addLog(`🔴 Falhou ${MAX_TENTATIVAS}x — ${p.ordem.placa||p.ordem.id}: ${e.message}`,'erro');
+        } else {
+          addLog(`⚠️ Tentativa ${item.tentativas}/${MAX_TENTATIVAS} — ${p.ordem.placa||p.ordem.id}`,'aviso');
+        }
+      }
+      falhou++;
+    }
+  }
+
+  saveDB();
+  _syncAtivo=false;
+
+  if(ok>0){
+    localStorage.setItem('syncUlt',new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+    toast(`☁️ ${ok} pesagem(s) enviada(s)!`);
+    await carregarDaPlanilha();
+  }
+  if(falhou>0&&ok===0) toast(`❌ ${falhou} pendente(s) com problema — veja diagnóstico`);
+  addLog(`Sync concluído — ${ok} ok · ${falhou} falha(s)`,'info');
   updS();
+}
+
+/* ── Reenviar item com falha manualmente ────────────────────── */
+function reenviarFalhou(id){
+  const item=pend.find(p=>p.ordem&&p.ordem.id===id);
+  if(!item) return;
+  item.falhou=false;
+  item.tentativas=0;
+  saveDB();
+  addLog(`↩️ Reenvio manual solicitado — ${item.ordem.placa||id}`,'info');
+  syncP();
 }
 
 // Carregar TUDO da planilha — substitui cache local
@@ -2317,11 +2494,19 @@ async function carregarDaPlanilha(){
     const j=JSON.parse(txt);
     if(j.ok&&j.ordens){
       cloud=j.ordens.map(normOrdem);
+      // Mesclar com pendentes locais para não perder dados offline
+      pend.filter(p=>!p.falhou).forEach(p=>{
+        if(!cloud.find(o=>o.id===p.ordem.id)) cloud.unshift(normOrdem(p.ordem));
+      });
       DB.ordens=[...cloud];
+      addLog(`☁️ ${j.ordens.length} registro(s) carregados da planilha`,'ok');
       return true;
     }
     return false;
-  }catch(e){return false;}
+  }catch(e){
+    addLog(`❌ Erro ao carregar planilha: ${e.message}`,'erro');
+    return false;
+  }
 }
 
 async function syncM(){
@@ -2333,14 +2518,91 @@ async function syncM(){
   updHome();
   if(btn){btn.disabled=false;btn.textContent='Sincronizar';}
   if(ok) toast('☁️ '+cloud.length+' pesagem(s) · '+contratosCloud.length+' contrato(s)');
-  else if(!navigator.onLine) toast('📵 Sem internet');
-  else toast('❌ Erro ao sincronizar — tente novamente');
+  else if(!navigator.onLine) toast('📵 Sem internet — dados salvos localmente');
+  else toast('❌ Erro ao sincronizar — veja diagnóstico');
+  if(document.getElementById('pg-diag')&&document.getElementById('pg-diag').style.display!=='none') renderDiag();
 }
 
 // Carregar ao abrir histórico
 async function loadCl(){
   const ok=await carregarDaPlanilha();
   if(ok) rHist();
+}
+
+/* ── Sync periódico em background (a cada 3 min) ─────────────── */
+let _bgSyncTimer=null;
+function iniciarBgSync(){
+  if(_bgSyncTimer) clearInterval(_bgSyncTimer);
+  _bgSyncTimer=setInterval(async()=>{
+    if(navigator.onLine&&pend.length>0){
+      addLog('🕐 Sync automático em background','info');
+      await syncP();
+      updHome();
+    }
+  }, 3*60*1000); // 3 minutos
+}
+
+/* ── Tela de diagnóstico ─────────────────────────────────────── */
+function irDiag(){
+  document.getElementById('pg-diag').style.display='block';
+  renderDiag();
+}
+function hideDiag(){
+  document.getElementById('pg-diag').style.display='none';
+}
+function renderDiag(){
+  // Status
+  const st=document.getElementById('diag-status');
+  if(st){
+    const online=navigator.onLine;
+    const ult=localStorage.getItem('syncUlt')||'nunca';
+    const pendOk=pend.filter(p=>!p.falhou);
+    const pendFalhos=pend.filter(p=>p.falhou);
+    st.innerHTML=`
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div>🌐 Rede: <b style="color:${online?'var(--g1)':'var(--r1)'}">${online?'Online':'Offline'}</b></div>
+        <div>🕐 Último sync bem-sucedido: <b>${ult}</b></div>
+        <div>⏳ Aguardando envio: <b>${pendOk.length}</b></div>
+        <div style="color:${pendFalhos.length>0?'var(--r1)':'var(--ink3)'}">🔴 Com falha (${MAX_TENTATIVAS} tentativas): <b>${pendFalhos.length}</b>${pendFalhos.length>0?' — toque em "Reenviar" abaixo':''}</div>
+        <div>☁️ Registros na planilha: <b>${cloud.length}</b></div>
+      </div>`;
+  }
+
+  // Lista de pendentes
+  const cnt=document.getElementById('diag-pend-count');
+  if(cnt) cnt.textContent=pend.length;
+  const pl=document.getElementById('diag-pend-list');
+  if(pl){
+    if(!pend.length){
+      pl.innerHTML='<div style="color:var(--ink3);padding:8px 0">Nenhum pendente. ✅</div>';
+    } else {
+      pl.innerHTML=pend.map(p=>{
+        const agora=Date.now();
+        const mins=p.ts?Math.round((agora-p.ts)/60000):0;
+        const cor=p.falhou?'var(--r1)':mins>30?'var(--a1)':'var(--g1)';
+        return `<div style="padding:8px 0;border-bottom:.5px solid var(--brd);display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:700;color:${cor}">${p.ordem.placa||p.ordem.id}</div>
+            <div style="color:var(--ink3);font-size:10px">${p.acao} · ${p.ordem.numOrdem||'—'} · há ${mins}min · tentativa ${p.tentativas||0}/${MAX_TENTATIVAS}</div>
+          </div>
+          ${p.falhou?`<button onclick="reenviarFalhou('${p.ordem.id}')" style="background:var(--r1);border:none;color:#fff;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">↩️ Reenviar</button>`:''}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Log
+  const lg=document.getElementById('diag-log');
+  if(lg){
+    if(!syncLog.length){
+      lg.innerHTML='<span style="color:var(--ink3)">Sem eventos registrados.</span>';
+    } else {
+      const cores={ok:'var(--g1)',erro:'var(--r1)',aviso:'var(--a1)',info:'var(--ink3)'};
+      lg.innerHTML=syncLog.map(l=>
+        `<div style="color:${cores[l.tipo]||'var(--ink3)'}"><span style="opacity:.6">${l.t}</span> ${l.m}</div>`
+      ).join('');
+    }
+  }
 }
 
 /* ══ HOME ══════════════════════════════════════════════════════ */
@@ -2357,6 +2619,14 @@ function updHome(){
   if(ag.length>0){s.textContent=ag.length===1?'1 caminhão':`${ag.length} caminhões`;c.textContent=ag.length;c.style.display='block';}
   else{s.textContent='Nenhum';c.style.display='none';}
   updS();
+  // Atualizar atalho diagnóstico no home
+  const dhs=document.getElementById('diag-hs');
+  if(dhs){
+    const falhos=pend.filter(p=>p.falhou).length;
+    if(falhos>0) dhs.textContent=`🔴 ${falhos} com falha`;
+    else if(pend.length>0) dhs.textContent=`⏳ ${pend.length} pendente(s)`;
+    else dhs.textContent='Sync OK ✅';
+  }
 }
 
 /* ══ TOAST ══════════════════════════════════════════════════════ */
