@@ -214,12 +214,35 @@ body.dark .hb{background:#1a2d22}
 body.dark .sbar{background:#1a2d22}
 body.dark .card{background:#1a2d22}
 @media print{
+  @page { size: A4 landscape; margin: 8mm; }
   body * { visibility: hidden; }
-  #pdf-frame, #pdf-frame * { visibility: visible; }
-  #pdf-frame { position: fixed; left: 0; top: 0; width: 100%; }
+  #pdf-frame, #pdf-frame *, #print-mirror, #print-mirror * { visibility: visible; }
+  #pdf-frame { display: none !important; }
   #pdf-header { display: none !important; }
-  #pdf-content { padding: 0 !important; background: #fff !important; }
-  .pdf-page { box-shadow: none !important; max-width: 100% !important; padding: 10mm !important; }
+  #print-mirror {
+    display: flex !important;
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    gap: 0;
+  }
+  .print-col {
+    flex: 1;
+    padding: 8mm;
+    overflow: hidden;
+  }
+  .print-divider {
+    width: 0.5mm;
+    background: #ccc;
+    margin: 8mm 0;
+    flex-shrink: 0;
+  }
+  .print-col .pdf-page {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    font-size: 11px !important;
+  }
 }
 #offb{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;background:#e6a817;color:#fff;text-align:center;font-size:11px;font-weight:700;padding:5px;z-index:1000;display:none}
 #tst{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--g4);color:#fff;padding:9px 18px;border-radius:30px;font-size:12px;font-weight:600;opacity:0;transition:all .25s;z-index:999;pointer-events:none;max-width:90vw;text-align:center}
@@ -595,7 +618,7 @@ body.dark .card{background:#1a2d22}
       <img id="tk-sig-i" style="width:100%;border-radius:7px">
     </div>
     <div class="brow">
-      <button class="btn btns bsm" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn btns bsm" onclick="gerarPDF();setTimeout(imprimirPDF,350)">🖨️ Imprimir</button>
       <button class="btn btns bsm" onclick="gerarPDF()">📄 PDF</button>
       <button class="btn btnw bsm" id="btn-wa" onclick="sendWA()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.117 1.532 5.849L.057 23.571a.75.75 0 0 0 .921.921l5.722-1.475A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 0 1-4.962-1.358l-.355-.211-3.697.952.977-3.579-.232-.369A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
@@ -852,6 +875,13 @@ body.dark .card{background:#1a2d22}
   <div id="pdf-content">
     <div class="pdf-page" id="pdf-page"></div>
   </div>
+</div>
+
+<!-- Container de impressão A4 landscape — 2 cópias lado a lado -->
+<div id="print-mirror" style="display:none">
+  <div class="print-col"><div class="pdf-page" id="print-page-1"></div></div>
+  <div class="print-divider"></div>
+  <div class="print-col"><div class="pdf-page" id="print-page-2"></div></div>
 </div>
 
 <script>
@@ -2162,7 +2192,7 @@ function finalizar(){
   const prevImg=document.getElementById('sig-preview-img');
   atual.assinatura=prevImg&&prevImg.src&&prevImg.src.length>100?prevImg.src:sigC.toDataURL('image/png');
   atual.status='Finalizado';
-  atual.dataHoraFim=now.toLocaleString('pt-BR');
+  atual.dataHoraFim=now.toLocaleDateString('pt-BR')+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
   if(idx>=0)DB.ordens[idx]={...atual};
   saveDB(); enviar(atual,'atualizar');
@@ -3000,9 +3030,19 @@ function pdfContrato(){
   document.getElementById('pdf-frame').classList.add('show');
 }
 function imprimirPDF(){
-  // Garantir que o pdf-frame está visível antes de imprimir
-  document.getElementById('pdf-frame').classList.add('show');
-  setTimeout(function(){ window.print(); }, 300);
+  const conteudo=document.getElementById('pdf-page');
+  if(!conteudo||!conteudo.innerHTML.trim()){
+    // Se pdf-page vazio, gerar primeiro
+    gerarPDF();
+    setTimeout(imprimirPDF, 400);
+    return;
+  }
+  // Copiar conteúdo para as duas colunas do espelho
+  const html=conteudo.innerHTML;
+  document.getElementById('print-page-1').innerHTML=html;
+  document.getElementById('print-page-2').innerHTML=html;
+  // Imprimir
+  window.print();
 }
 </script>
 </body>
