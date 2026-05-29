@@ -336,12 +336,10 @@ async function syncSheets(sheet,data){
   const cfg=getConfig();
   const url=cfg.sheetsUrl||SHEETS_URL;
   try{
-    await fetch(url,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({sheet,data})
-    });
+    // Usa GET com parâmetro para evitar problema de CORS com Apps Script
+    const payload=JSON.stringify({sheet,data});
+    const encoded=encodeURIComponent(payload);
+    await fetch(`${url}?data=${encoded}`,{method:'GET',mode:'no-cors'});
   }catch(e){console.warn('Sheets sync error',e)}
 }
 
