@@ -13,19 +13,19 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:80px}
 .hdr{background:var(--gd);padding:16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.hdr-l{display:flex;align-items:center;gap:10px}
+.hl{display:flex;align-items:center;gap:10px}
 .hico{width:36px;height:36px;background:var(--gl);border-radius:10px;display:flex;align-items:center;justify-content:center}
 .hico i{font-size:20px;color:#fff}
 .htx h1{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:#fff}
 .htx p{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
-.hdr-r{display:flex;align-items:center;gap:8px}
-.sbtn{width:34px;height:34px;background:rgba(255,255,255,.12);border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+.hr{display:flex;align-items:center;gap:8px}
+.sbtn{width:34px;height:34px;background:rgba(255,255,255,.15);border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
 .sbtn i{font-size:18px}
 .sbtn.spin i{animation:rot 1s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 .bel{position:relative;cursor:pointer}
 .bel i{font-size:22px;color:rgba(255,255,255,.8)}
-.bel-b{position:absolute;top:-4px;right:-4px;background:#c1440e;color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;display:none}
+.belb{position:absolute;top:-4px;right:-4px;background:#c1440e;color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center}
 .bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;gap:3px;cursor:pointer;color:var(--t3);font-size:10px;border:none;background:none}
 .ni i{font-size:22px}
@@ -38,39 +38,37 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
 .mv{font-size:28px;font-weight:700;font-family:'Sora',sans-serif}
 .mv.g{color:var(--gm)}.mv.r{color:#c1440e}.mv.a{color:#d97706}
 .ms{font-size:11px;color:var(--t3);margin-top:2px}
-.bnr{border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;border:1px solid}
-.bnr.r{background:var(--rp);border-color:#fca5a5}.bnr.r i,.bnr.r .bt{color:#991b1b}
-.bnr.a{background:var(--ap);border-color:#fcd34d}.bnr.a i,.bnr.a .bt{color:#92400e}
-.bnr i{font-size:18px;flex-shrink:0;margin-top:1px}.bt{font-size:12px;line-height:1.4}
+.bnr{border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;border:1px solid}
+.bnr.r{background:var(--rp);border-color:#fca5a5}.bnr.r i,.bnr.r span{color:#991b1b}
+.bnr.a{background:var(--ap);border-color:#fcd34d}.bnr.a i,.bnr.a span{color:#92400e}
+.bnr i{font-size:18px;flex-shrink:0;margin-top:1px}
 .card{background:var(--cd);border-radius:var(--r);border:1px solid var(--bd);margin-bottom:12px;overflow:hidden}
 .stl{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--t2);margin-bottom:10px;margin-top:4px;display:flex;align-items:center;gap:6px}
 .stl i{font-size:16px;color:var(--gm)}
 .li{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .li:last-child{border-bottom:none}
-.li-l{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.lil{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
-.av-g{background:var(--gp);color:var(--gd)}.av-b{background:var(--bp);color:#1e40af}.av-a{background:var(--ap);color:#92400e}
+.avg{background:var(--gp);color:var(--gd)}.avb{background:var(--bp);color:#1e40af}.ava{background:var(--ap);color:#92400e}
 .ln{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ls{font-size:11px;color:var(--t3);margin-top:1px}
 .lac{display:flex;gap:6px;flex-shrink:0}
 .ib{width:32px;height:32px;border-radius:8px;border:1px solid var(--bd);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)}
 .ib i{font-size:16px}
-.ib.d{border-color:#fca5a5;color:#c1440e}
-.ib.z{border-color:#25d366;color:#25d366}
+.ibd{border-color:#fca5a5;color:#c1440e}
+.ibz{border-color:#25d366;color:#25d366}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
-.badge.g{background:var(--gp);color:var(--gd)}.badge.r{background:var(--rp);color:#991b1b}
-.badge.a{background:var(--ap);color:#92400e}.badge.b{background:var(--bp);color:#1e40af}
-.btn{padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn.p{background:var(--gm);color:#fff;width:100%}
-.btn.c{background:var(--bg);color:var(--t2)}
-.fab{position:fixed;bottom:90px;right:18px;width:54px;height:54px;border-radius:50%;background:var(--gm);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(45,106,79,.35);z-index:99}
+.bdg{background:var(--gp);color:var(--gd)}.bdr{background:var(--rp);color:#991b1b}.bda{background:var(--ap);color:#92400e}.bdb{background:var(--bp);color:#1e40af}
+.btn{padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btnp{background:var(--gm);color:#fff}
+.btnc{background:var(--bg);color:var(--t2)}
+.fab{position:fixed;bottom:90px;right:18px;width:54px;height:54px;border-radius:50%;background:var(--gm);color:#fff;border:none;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(45,106,79,.35);z-index:99}
 .fab i{font-size:26px}
 .fr{display:flex;gap:6px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none}
 .fr::-webkit-scrollbar{display:none}
 .fc{padding:6px 14px;border-radius:20px;font-size:12px;border:1px solid var(--bd);background:#fff;color:var(--t2);cursor:pointer;white-space:nowrap;flex-shrink:0}
 .fc.on{background:var(--gd);color:#fff;border-color:var(--gd)}
-.sw{padding:0 0 10px}
-.si{position:relative}
+.si{position:relative;margin-bottom:10px}
 .sinp{width:100%;padding:10px 14px 10px 38px;border:1px solid var(--bd);border-radius:10px;font-size:14px;background:#fff;color:var(--tx)}
 .sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:18px}
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
@@ -88,19 +86,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
 .ai{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:10px}
 .ai:last-child{border-bottom:none}
 .ad{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ad.r{background:var(--rp)}.ad.a{background:var(--ap)}
-.ad.r i{color:#c1440e}.ad.a i{color:#d97706}
+.adr{background:var(--rp)}.ada{background:var(--ap)}
+.adr i{color:#c1440e}.ada i{color:#d97706}
 .am{font-size:12px;line-height:1.5}
 .at{font-size:10px;color:var(--t3);margin-top:2px}
 .cc{background:var(--cd);border-radius:var(--r);border:1px solid var(--bd);padding:16px;margin-bottom:12px}
-.ct{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px}
-.sd{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
-.sd.g{background:#22c55e}.sd.a{background:#f59e0b}
+.ct{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px}
+.sd{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;background:#22c55e}
+.sda{background:#f59e0b}
 .emp{text-align:center;padding:32px 20px;color:var(--t3)}
 .emp i{font-size:40px;display:block;margin-bottom:10px;color:#ccc}
 .emp p{font-size:13px}
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:300;display:none;white-space:nowrap}
-.toast.on{display:block;animation:fi .2s,fo .3s 2.5s forwards}
+.tst{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:300;display:none;white-space:nowrap}
+.tst.on{display:block;animation:fi .2s,fo .3s 2.5s forwards}
 @keyframes fi{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @keyframes fo{to{opacity:0}}
 </style>
@@ -108,15 +106,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
 <body>
 
 <div class="hdr">
-  <div class="hdr-l">
+  <div class="hl">
     <div class="hico"><i class="ti ti-leaf"></i></div>
     <div class="htx"><h1>Fazenda Água Viva</h1><p id="sts">SST</p></div>
   </div>
-  <div class="hdr-r">
+  <div class="hr">
     <button class="sbtn" id="sbtn" onclick="syncAll(true)"><i class="ti ti-refresh"></i></button>
     <div class="bel" onclick="showPg('dash')">
       <i class="ti ti-bell"></i>
-      <div class="bel-b" id="belc">0</div>
+      <div class="belb" id="belc">0</div>
     </div>
   </div>
 </div>
@@ -135,13 +133,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
   <button class="ni" onclick="showPg('mais')" id="ni-mais"><i class="ti ti-dots"></i><span>Mais</span></button>
 </nav>
 
-<button class="fab" id="fab" onclick="openFab()" style="display:none"><i class="ti ti-plus"></i></button>
+<button class="fab" id="fab" onclick="openFab()"><i class="ti ti-plus"></i></button>
 
 <!-- MODAL FUNCIONÁRIO -->
-<div class="mo" id="mo-func">
+<div class="mo" id="mo-f">
   <div class="mb">
     <div class="mh"></div>
-    <div class="mt" id="mo-func-t">Novo funcionário</div>
+    <div class="mt" id="mo-f-t">Novo funcionário</div>
     <input type="hidden" id="f-id">
     <div class="fg"><label class="fl">Nome *</label><input class="fi" id="f-nome" placeholder="Nome completo"></div>
     <div class="fr2">
@@ -150,70 +148,70 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
     </div>
     <div class="fg"><label class="fl">Cargo / Função</label><input class="fi" id="f-cargo" placeholder="Ex: Tratorista"></div>
     <div class="fg"><label class="fl">Setor</label>
-      <select class="fi" id="f-setor"><option value="">Selecione...</option><option>Lavoura</option><option>Pecuária</option><option>Ordenha</option><option>Manutenção</option><option>Administrativo</option><option>Outro</option></select>
+      <select class="fi" id="f-set"><option value="">Selecione...</option><option>Lavoura</option><option>Pecuária</option><option>Ordenha</option><option>Manutenção</option><option>Administrativo</option><option>Outro</option></select>
     </div>
     <div class="fg"><label class="fl">Admissão</label><input class="fi" type="date" id="f-adm"></div>
     <div class="fg"><label class="fl">WhatsApp (com DDD)</label><input class="fi" type="tel" id="f-wa" placeholder="61999990000"></div>
-    <div class="mf"><button class="btn c" onclick="closeMo('mo-func')">Cancelar</button><button class="btn p" onclick="saveFunc()">Salvar</button></div>
+    <div class="mf"><button class="btn btnc" onclick="closeMo('mo-f')">Cancelar</button><button class="btn btnp" onclick="saveF()">Salvar</button></div>
   </div>
 </div>
 
 <!-- MODAL EXAME -->
-<div class="mo" id="mo-exam">
+<div class="mo" id="mo-e">
   <div class="mb">
     <div class="mh"></div>
     <div class="mt">Registrar exame</div>
     <input type="hidden" id="e-id">
-    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="e-func"></select></div>
-    <div class="fg"><label class="fl">Tipo</label><select class="fi" id="e-tipo"><option>Admissional</option><option>Periódico</option><option>Retorno ao trabalho</option><option>Mudança de função</option><option>Demissional</option></select></div>
+    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="e-fn"></select></div>
+    <div class="fg"><label class="fl">Tipo</label><select class="fi" id="e-tp"><option>Admissional</option><option>Periódico</option><option>Retorno ao trabalho</option><option>Mudança de função</option><option>Demissional</option></select></div>
     <div class="fr2">
-      <div class="fg"><label class="fl">Realização</label><input class="fi" type="date" id="e-data"></div>
-      <div class="fg"><label class="fl">Válido até</label><input class="fi" type="date" id="e-val"></div>
+      <div class="fg"><label class="fl">Realização</label><input class="fi" type="date" id="e-dt"></div>
+      <div class="fg"><label class="fl">Válido até</label><input class="fi" type="date" id="e-vl"></div>
     </div>
-    <div class="fg"><label class="fl">Resultado</label><select class="fi" id="e-res"><option>Apto</option><option>Apto com restrição</option><option>Inapto</option></select></div>
-    <div class="fg"><label class="fl">Médico / CRM</label><input class="fi" id="e-med" placeholder="Dr. Nome / CRM 00000"></div>
-    <div class="mf"><button class="btn c" onclick="closeMo('mo-exam')">Cancelar</button><button class="btn p" onclick="saveExam()">Salvar</button></div>
+    <div class="fg"><label class="fl">Resultado</label><select class="fi" id="e-rs"><option>Apto</option><option>Apto com restrição</option><option>Inapto</option></select></div>
+    <div class="fg"><label class="fl">Médico / CRM</label><input class="fi" id="e-md" placeholder="Dr. Nome / CRM 00000"></div>
+    <div class="mf"><button class="btn btnc" onclick="closeMo('mo-e')">Cancelar</button><button class="btn btnp" onclick="saveE()">Salvar</button></div>
   </div>
 </div>
 
 <!-- MODAL EPI -->
-<div class="mo" id="mo-epi">
+<div class="mo" id="mo-p">
   <div class="mb">
     <div class="mh"></div>
     <div class="mt">Registrar entrega de EPI</div>
     <input type="hidden" id="p-id">
-    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="p-func"></select></div>
-    <div class="fg"><label class="fl">EPI</label><select class="fi" id="p-tipo"><option>Capacete</option><option>Óculos de proteção</option><option>Luvas</option><option>Protetor auricular</option><option>Bota de segurança</option><option>Cinto de segurança</option><option>Máscara respiratória</option><option>Colete refletivo</option><option>Avental</option><option>Outro</option></select></div>
+    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="p-fn"></select></div>
+    <div class="fg"><label class="fl">EPI</label><select class="fi" id="p-tp"><option>Capacete</option><option>Óculos de proteção</option><option>Luvas</option><option>Protetor auricular</option><option>Bota de segurança</option><option>Cinto de segurança</option><option>Máscara respiratória</option><option>Colete refletivo</option><option>Avental</option><option>Outro</option></select></div>
     <div class="fr2">
       <div class="fg"><label class="fl">CA nº</label><input class="fi" id="p-ca" placeholder="CA"></div>
-      <div class="fg"><label class="fl">Quantidade</label><input class="fi" type="number" id="p-qtd" value="1" min="1"></div>
+      <div class="fg"><label class="fl">Quantidade</label><input class="fi" type="number" id="p-qt" value="1" min="1"></div>
     </div>
     <div class="fr2">
-      <div class="fg"><label class="fl">Data entrega</label><input class="fi" type="date" id="p-data"></div>
-      <div class="fg"><label class="fl">Próx. reposição</label><input class="fi" type="date" id="p-rep"></div>
+      <div class="fg"><label class="fl">Data entrega</label><input class="fi" type="date" id="p-dt"></div>
+      <div class="fg"><label class="fl">Próx. reposição</label><input class="fi" type="date" id="p-rp"></div>
     </div>
     <div style="background:var(--gp);border-radius:10px;padding:10px 12px;margin-bottom:4px;display:flex;align-items:flex-start;gap:8px">
       <i class="ti ti-brand-whatsapp" style="font-size:18px;color:var(--gm);flex-shrink:0;margin-top:1px"></i>
       <p style="font-size:12px;color:var(--gd);line-height:1.4">Ao salvar, o link de assinatura será enviado pelo WhatsApp via ZapSign.</p>
     </div>
-    <div class="mf"><button class="btn c" onclick="closeMo('mo-epi')">Cancelar</button><button class="btn p" onclick="saveEpi()">Salvar e enviar</button></div>
+    <div class="mf"><button class="btn btnc" onclick="closeMo('mo-p')">Cancelar</button><button class="btn btnp" onclick="saveP()">Salvar e enviar</button></div>
   </div>
 </div>
 
 <!-- MODAL TREINAMENTO -->
-<div class="mo" id="mo-trein">
+<div class="mo" id="mo-t">
   <div class="mb">
     <div class="mh"></div>
     <div class="mt">Registrar treinamento</div>
     <input type="hidden" id="t-id">
-    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="t-func"></select></div>
-    <div class="fg"><label class="fl">Treinamento / NR</label><select class="fi" id="t-tipo"><option>NR-6 (EPI)</option><option>NR-10 (Eletricidade)</option><option>NR-12 (Máquinas)</option><option>NR-18 (Construção)</option><option>NR-31 (Agricultura)</option><option>NR-35 (Trabalho em altura)</option><option>CIPA</option><option>Brigada de incêndio</option><option>Primeiros socorros</option><option>Outro</option></select></div>
+    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="t-fn"></select></div>
+    <div class="fg"><label class="fl">Treinamento / NR</label><select class="fi" id="t-tp"><option>NR-6 (EPI)</option><option>NR-10 (Eletricidade)</option><option>NR-12 (Máquinas)</option><option>NR-18 (Construção)</option><option>NR-31 (Agricultura)</option><option>NR-35 (Trabalho em altura)</option><option>CIPA</option><option>Brigada de incêndio</option><option>Primeiros socorros</option><option>Outro</option></select></div>
     <div class="fr2">
-      <div class="fg"><label class="fl">Realização</label><input class="fi" type="date" id="t-data"></div>
-      <div class="fg"><label class="fl">Válido até</label><input class="fi" type="date" id="t-val"></div>
+      <div class="fg"><label class="fl">Realização</label><input class="fi" type="date" id="t-dt"></div>
+      <div class="fg"><label class="fl">Válido até</label><input class="fi" type="date" id="t-vl"></div>
     </div>
     <div class="fg"><label class="fl">Carga horária</label><input class="fi" id="t-ch" placeholder="Ex: 8h"></div>
-    <div class="mf"><button class="btn c" onclick="closeMo('mo-trein')">Cancelar</button><button class="btn p" onclick="saveTrein()">Salvar</button></div>
+    <div class="mf"><button class="btn btnc" onclick="closeMo('mo-t')">Cancelar</button><button class="btn btnp" onclick="saveT()">Salvar</button></div>
   </div>
 </div>
 
@@ -225,381 +223,428 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
     <div class="fg"><label class="fl">URL Apps Script</label><input class="fi" id="cfg-url" placeholder="https://script.google.com/..."></div>
     <div class="fg"><label class="fl">API Key ZapSign</label><input class="fi" id="cfg-zk" type="password" placeholder="API Key"></div>
     <div class="fg"><label class="fl">Token template EPI (ZapSign)</label><input class="fi" id="cfg-zt" placeholder="Token do template"></div>
-    <div class="mf"><button class="btn c" onclick="closeMo('mo-cfg')">Cancelar</button><button class="btn p" onclick="saveCfg()">Salvar</button></div>
+    <div class="mf"><button class="btn btnc" onclick="closeMo('mo-cfg')">Cancelar</button><button class="btn btnp" onclick="saveCfg()">Salvar</button></div>
   </div>
 </div>
 
-<div class="toast" id="tst"></div>
+<div class="tst" id="tst"></div>
 
 <script>
-// ── CONFIG ──
-const DEFAULT_URL='https://script.google.com/macros/s/AKfycbzh17ZdROtZ_I-mYJrs1V_WIy9wNyTcB1vgkMIeEHh-xZh9tkv-HmXhpLmOjYJvbEY/exec';
-const K={F:'fav-f',E:'fav-e',P:'fav-p',T:'fav-t',C:'fav-cfg'};
+// ── CONFIGURAÇÃO ──
+const URL_BASE = 'https://script.google.com/macros/s/AKfycbzh17ZdROtZ_I-mYJrs1V_WIy9wNyTcB1vgkMIeEHh-xZh9tkv-HmXhpLmOjYJvbEY/exec';
+const K = {F:'sst-f', E:'sst-e', P:'sst-p', T:'sst-t', C:'sst-cfg'};
+const ABAS = ['Funcionários','Exames','EPI','Treinamentos'];
+const KMAP = {'Funcionários':K.F,'Exames':K.E,'EPI':K.P,'Treinamentos':K.T};
 
-// ── UTILS ──
-const ld=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
-const ldO=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')}catch{return{}}};
-const sv=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
-const tod=()=>new Date().toISOString().split('T')[0];
-const du=d=>d?Math.ceil((new Date(d)-new Date(tod()))/86400000):9999;
-const fd=d=>{if(!d||d==='-')return'-';const p=d.split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d};
-const ini=n=>n?n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase():'?';
-const avc=n=>{const c=['av-g','av-b','av-a'];return c[(n||'').charCodeAt(0)%3]};
-const sts=v=>{const d=du(v);if(d<0)return{c:'r',t:'Vencido'};if(d<=30)return{c:'a',t:`${d}d`};return{c:'g',t:'Em dia'}};
-const cfg=()=>ldO(K.C);
-const url=()=>cfg().url||DEFAULT_URL;
+// ── STORAGE LOCAL ──
+const ld  = k => { try { return JSON.parse(localStorage.getItem(k)||'[]'); } catch { return []; }};
+const ldO = k => { try { return JSON.parse(localStorage.getItem(k)||'{}'); } catch { return {}; }};
+const sv  = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const tod = () => new Date().toISOString().split('T')[0];
+const du  = d => d ? Math.ceil((new Date(d) - new Date(tod())) / 86400000) : 9999;
+const fd  = d => { if (!d||d==='-') return '-'; const p=d.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; };
+const ini = n => n ? n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+const avc = n => { const c=['avg','avb','ava']; return c[(n||'').charCodeAt(0)%3]; };
+const sts = v => { const d=du(v); if(d<0) return{c:'bdr',t:'Vencido'}; if(d<=30) return{c:'bda',t:`${d}d`}; return{c:'bdg',t:'Em dia'}; };
+const gcfg = () => ldO(K.C);
+const gurl = () => gcfg().url || URL_BASE;
 
-function tst(msg,d=2500){const t=document.getElementById('tst');t.textContent=msg;t.className='toast on';setTimeout(()=>t.className='toast',d)}
-
-function saveCfg(){
-  sv(K.C,{url:document.getElementById('cfg-url').value.trim()||DEFAULT_URL,
-    zk:document.getElementById('cfg-zk').value.trim(),
-    zt:document.getElementById('cfg-zt').value.trim()});
-  closeMo('mo-cfg');tst('Configurações salvas!');renderMais();
+function tst(msg, dur=2500) {
+  const el = document.getElementById('tst');
+  el.textContent = msg; el.className = 'tst on';
+  setTimeout(() => el.className='tst', dur);
 }
-function openCfg(){
-  const c=cfg();
-  document.getElementById('cfg-url').value=c.url||DEFAULT_URL;
-  document.getElementById('cfg-zk').value=c.zk||'';
-  document.getElementById('cfg-zt').value=c.zt||'';
+
+// ── CONFIG ──
+function saveCfg() {
+  sv(K.C, {
+    url: document.getElementById('cfg-url').value.trim() || URL_BASE,
+    zk:  document.getElementById('cfg-zk').value.trim(),
+    zt:  document.getElementById('cfg-zt').value.trim()
+  });
+  closeMo('mo-cfg'); tst('Configurações salvas!'); renderMais();
+}
+function openCfg() {
+  const c = gcfg();
+  document.getElementById('cfg-url').value = c.url || URL_BASE;
+  document.getElementById('cfg-zk').value  = c.zk  || '';
+  document.getElementById('cfg-zt').value  = c.zt  || '';
   openMo('mo-cfg');
 }
 
-// ── SYNC ──
-// PUSH: envia dados para planilha (no-cors, não precisa ler resposta)
-function push(sheet,data){
-  const payload=encodeURIComponent(JSON.stringify({sheet,data}));
-  const u=`${url()}?action=set&payload=${payload}&t=${Date.now()}`;
-  fetch(u,{mode:'no-cors'}).catch(()=>{});
+// ── COMUNICAÇÃO COM APPS SCRIPT ──
+// PUSH: envia dados → planilha (fire-and-forget, no-cors)
+function push(sheet, data) {
+  const payload = encodeURIComponent(JSON.stringify({sheet, data}));
+  const u = `${gurl()}?action=set&payload=${payload}&t=${Date.now()}`;
+  fetch(u, {mode:'no-cors'}).catch(() => {});
 }
 
-// PULL: lê dados da planilha via JSONP (contorna CORS completamente)
-function pull(sheet){
-  return new Promise(res=>{
-    const cb='_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    const to=setTimeout(()=>{cleanup();console.warn('timeout',sheet);res(null)},12000);
-    function cleanup(){clearTimeout(to);delete window[cb];s.remove()}
-    window[cb]=json=>{
+// PULL: lê dados da planilha via JSONP (único método que lê sem CORS)
+function pull(sheet) {
+  return new Promise(resolve => {
+    const cb = '_cb' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const sc = document.createElement('script');
+    const to = setTimeout(() => { cleanup(); resolve(null); }, 10000);
+    function cleanup() { clearTimeout(to); delete window[cb]; if(sc.parentNode) sc.parentNode.removeChild(sc); }
+    window[cb] = function(json) {
       cleanup();
-      if(json&&json.ok&&Array.isArray(json.data)){
-        sv({Funcionários:K.F,Exames:K.E,EPI:K.P,Treinamentos:K.T}[sheet],json.data);
-        res(json.data);
-      } else res(null);
+      if (json && json.ok && Array.isArray(json.data) && json.data.length > 0) {
+        sv(KMAP[sheet], json.data);
+        resolve(json.data);
+      } else {
+        resolve(null);
+      }
     };
-    s.src=`${url()}?action=get&sheet=${encodeURIComponent(sheet)}&cb=${cb}&t=${Date.now()}`;
-    s.onerror=()=>{cleanup();res(null)};
-    document.head.appendChild(s);
+    sc.src = `${gurl()}?action=get&sheet=${encodeURIComponent(sheet)}&cb=${cb}&t=${Date.now()}`;
+    sc.onerror = () => { cleanup(); resolve(null); };
+    document.head.appendChild(sc);
   });
 }
 
-let syncing=false;
-async function syncAll(manual=false){
-  if(syncing)return;
-  syncing=true;
-  const btn=document.getElementById('sbtn');
+// ── SYNC ──
+let syncing = false;
+async function syncAll(manual=false) {
+  if (syncing) return;
+  syncing = true;
+  const btn = document.getElementById('sbtn');
   btn.classList.add('spin');
-  document.getElementById('sts').textContent='Sincronizando...';
-  if(manual)tst('Buscando dados da planilha...');
-  try{
-    await Promise.all(['Funcionários','Exames','EPI','Treinamentos'].map(s=>pull(s)));
-    const h=new Date(),hm=`${String(h.getHours()).padStart(2,'0')}:${String(h.getMinutes()).padStart(2,'0')}`;
-    document.getElementById('sts').textContent=`Sync ${hm}`;
-    if(manual)tst('Sincronizado!');
-    renderCur();updateBel();
-  }catch(e){
-    document.getElementById('sts').textContent='SST';
-    if(manual)tst('Erro ao sincronizar');
-  }finally{syncing=false;btn.classList.remove('spin')}
+  document.getElementById('sts').textContent = 'Sincronizando...';
+  if (manual) tst('Buscando dados da planilha...');
+  try {
+    // Pull sequencial para não sobrecarregar
+    for (const aba of ABAS) {
+      await pull(aba);
+      await new Promise(r => setTimeout(r, 300));
+    }
+    const now = new Date();
+    const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    document.getElementById('sts').textContent = `Sync ${hm}`;
+    if (manual) tst('Sincronizado com sucesso!');
+    renderCur(); updateBel();
+  } catch(e) {
+    document.getElementById('sts').textContent = 'SST';
+    if (manual) tst('Erro ao sincronizar');
+  } finally {
+    syncing = false;
+    btn.classList.remove('spin');
+  }
 }
 
 // ── NAV ──
-let cur='dash',fEx='todos',fEp='todos',fTr='todos';
+let cur='dash', fE='todos', fP='todos', fT='todos';
 
-function showPg(p){
-  document.querySelectorAll('.pg').forEach(e=>e.classList.remove('on'));
-  document.querySelectorAll('.ni').forEach(e=>e.classList.remove('on'));
+function showPg(p) {
+  document.querySelectorAll('.pg').forEach(el => el.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(el => el.classList.remove('on'));
   document.getElementById('pg-'+p).classList.add('on');
-  const ni=document.getElementById('ni-'+p);if(ni)ni.classList.add('on');
-  cur=p;
-  document.getElementById('fab').style.display=['func','exam','epi','mais'].includes(p)?'flex':'none';
-  if(p==='dash'){syncAll();return}
-  if(p==='func'){pull('Funcionários').then(()=>renderFunc(''));return}
-  if(p==='exam'){pull('Exames').then(()=>renderExam());return}
-  if(p==='epi'){pull('EPI').then(()=>renderEpi());return}
-  if(p==='mais'){pull('Treinamentos').then(()=>renderMais());return}
+  const ni = document.getElementById('ni-'+p); if (ni) ni.classList.add('on');
+  cur = p;
+  const fab = document.getElementById('fab');
+  fab.style.display = ['func','exam','epi','mais'].includes(p) ? 'flex' : 'none';
+  if (p==='dash') { renderDash(); pullSilent(); return; }
+  if (p==='func') { pull('Funcionários').then(() => renderFunc('')); return; }
+  if (p==='exam') { pull('Exames').then(() => renderExam()); return; }
+  if (p==='epi')  { pull('EPI').then(() => renderEpi()); return; }
+  if (p==='mais') { pull('Treinamentos').then(() => renderMais()); return; }
 }
 
-function renderCur(){
-  if(cur==='dash')renderDash();
-  else if(cur==='func')renderFunc('');
-  else if(cur==='exam')renderExam();
-  else if(cur==='epi')renderEpi();
+async function pullSilent() {
+  for (const aba of ABAS) {
+    await pull(aba);
+    await new Promise(r => setTimeout(r, 200));
+  }
+  renderDash(); updateBel();
+}
+
+function renderCur() {
+  if (cur==='dash') renderDash();
+  else if (cur==='func') renderFunc('');
+  else if (cur==='exam') renderExam();
+  else if (cur==='epi')  renderEpi();
   else renderMais();
 }
 
 // ── MODAIS ──
-function openMo(id){
-  const fl=ld(K.F);
-  document.querySelectorAll(`#${id} select[id$="-func"],#${id} select[id$="-func"]`).forEach(sel=>{
-    if(sel.id.endsWith('-func')||sel.id.endsWith('func')){
-      sel.innerHTML=fl.length?fl.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option>Sem funcionários</option>';
-    }
-  });
-  // Mapear selects dos modais
-  ['e-func','p-func','t-func'].forEach(sid=>{
-    const el=document.getElementById(sid);
-    if(el&&document.getElementById(id).contains(el)){
-      el.innerHTML=fl.length?fl.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option>Sem funcionários</option>';
-    }
+function openMo(id) {
+  const fl = ld(K.F);
+  ['e-fn','p-fn','t-fn'].forEach(sid => {
+    const el = document.getElementById(sid);
+    if (!el || !document.getElementById(id).contains(el)) return;
+    el.innerHTML = fl.length
+      ? fl.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('')
+      : '<option value="">Cadastre funcionários primeiro</option>';
   });
   document.getElementById(id).classList.add('on');
 }
-function closeMo(id){document.getElementById(id).classList.remove('on')}
-function clr(ids){ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''})}
-function openFab(){
-  if(cur==='func')openMo('mo-func');
-  else if(cur==='exam')openMo('mo-exam');
-  else if(cur==='epi')openMo('mo-epi');
-  else openMo('mo-trein');
+function closeMo(id) { document.getElementById(id).classList.remove('on'); }
+function clr(ids) { ids.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; }); }
+function openFab() {
+  if (cur==='func') openMo('mo-f');
+  else if (cur==='exam') openMo('mo-e');
+  else if (cur==='epi')  openMo('mo-p');
+  else openMo('mo-t');
 }
 
 // ── FUNCIONÁRIOS ──
-function saveFunc(){
-  const id=document.getElementById('f-id').value;
-  const nome=document.getElementById('f-nome').value.trim();
-  if(!nome){tst('Informe o nome');return}
-  const obj={id:id||uid(),matricula:document.getElementById('f-mat').value,nome,
-    cargo:document.getElementById('f-cargo').value,setor:document.getElementById('f-setor').value,
-    admissao:document.getElementById('f-adm').value,sit:document.getElementById('f-sit').value,
-    whats:document.getElementById('f-wa').value.replace(/\D/g,'')};
-  const list=ld(K.F);const i=list.findIndex(x=>x.id===id);
-  if(i>=0)list[i]=obj;else list.push(obj);
-  sv(K.F,list);closeMo('mo-func');
+function saveF() {
+  const id   = document.getElementById('f-id').value;
+  const nome = document.getElementById('f-nome').value.trim();
+  if (!nome) { tst('Informe o nome'); return; }
+  const obj = {
+    id: id || uid(),
+    matricula: document.getElementById('f-mat').value,
+    nome,
+    cargo: document.getElementById('f-cargo').value,
+    setor: document.getElementById('f-set').value,
+    admissao: document.getElementById('f-adm').value,
+    sit: document.getElementById('f-sit').value,
+    whats: document.getElementById('f-wa').value.replace(/\D/g,'')
+  };
+  const list = ld(K.F);
+  const i = list.findIndex(x => x.id===id);
+  if (i>=0) list[i]=obj; else list.push(obj);
+  sv(K.F, list);
+  closeMo('mo-f');
   clr(['f-id','f-nome','f-mat','f-cargo','f-adm','f-wa']);
-  document.getElementById('f-setor').value='';document.getElementById('f-sit').value='Ativo';
-  document.getElementById('mo-func-t').textContent='Novo funcionário';
-  renderFunc('');push('Funcionários',list);tst('Funcionário salvo!');
+  document.getElementById('f-set').value = '';
+  document.getElementById('f-sit').value = 'Ativo';
+  document.getElementById('mo-f-t').textContent = 'Novo funcionário';
+  renderFunc('');
+  push('Funcionários', list);
+  tst('Funcionário salvo e enviado para planilha!');
 }
-function editFunc(id){
-  const f=ld(K.F).find(x=>x.id===id);if(!f)return;
-  document.getElementById('f-id').value=f.id;
-  document.getElementById('f-nome').value=f.nome||'';
-  document.getElementById('f-mat').value=f.matricula||'';
-  document.getElementById('f-cargo').value=f.cargo||'';
-  document.getElementById('f-setor').value=f.setor||'';
-  document.getElementById('f-adm').value=f.admissao||'';
-  document.getElementById('f-sit').value=f.sit||'Ativo';
-  document.getElementById('f-wa').value=f.whats||'';
-  document.getElementById('mo-func-t').textContent='Editar funcionário';
-  openMo('mo-func');
+function editF(id) {
+  const f = ld(K.F).find(x=>x.id===id); if (!f) return;
+  document.getElementById('f-id').value    = f.id;
+  document.getElementById('f-nome').value  = f.nome||'';
+  document.getElementById('f-mat').value   = f.matricula||'';
+  document.getElementById('f-cargo').value = f.cargo||'';
+  document.getElementById('f-set').value   = f.setor||'';
+  document.getElementById('f-adm').value   = f.admissao||'';
+  document.getElementById('f-sit').value   = f.sit||'Ativo';
+  document.getElementById('f-wa').value    = f.whats||'';
+  document.getElementById('mo-f-t').textContent = 'Editar funcionário';
+  openMo('mo-f');
 }
-function delFunc(id){
-  if(!confirm('Remover?'))return;
-  const list=ld(K.F).filter(x=>x.id!==id);
-  sv(K.F,list);renderFunc('');push('Funcionários',list);tst('Removido.');
+function delF(id) {
+  if (!confirm('Remover funcionário?')) return;
+  const list = ld(K.F).filter(x=>x.id!==id);
+  sv(K.F, list); renderFunc(''); push('Funcionários', list); tst('Removido.');
 }
-function renderFunc(q){
-  const list=ld(K.F).filter(f=>!q||f.nome.toLowerCase().includes(q.toLowerCase())||(f.setor||'').toLowerCase().includes(q.toLowerCase()));
-  const el=document.getElementById('pg-func');
-  let h=`<div class="sw"><div class="si"><i class="ti ti-search sico"></i><input class="sinp" placeholder="Buscar..." oninput="renderFunc(this.value)" value="${q}"></div></div>`;
-  if(!list.length){el.innerHTML=h+`<div class="emp"><i class="ti ti-users"></i><p>Nenhum funcionário.<br>Toque + para adicionar.</p></div>`;return}
-  h+=`<div class="card"><div style="padding:4px 0">`;
-  list.forEach(f=>{
-    const sb=f.sit==='Ativo'?'g':f.sit==='Férias'?'b':'a';
-    h+=`<div class="li"><div class="li-l"><div class="av ${avc(f.nome)}">${ini(f.nome)}</div><div style="min-width:0"><div class="ln">${f.nome}</div><div class="ls">${f.cargo||'—'} · ${f.setor||'—'}${f.whats?` · <i class="ti ti-brand-whatsapp" style="font-size:11px;color:#25d366"></i>`:''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${sb}">${f.sit||'Ativo'}</span><div class="lac"><button class="ib" onclick="editFunc('${f.id}')"><i class="ti ti-edit"></i></button><button class="ib d" onclick="delFunc('${f.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
+function renderFunc(q) {
+  const list = ld(K.F).filter(f => !q || f.nome.toLowerCase().includes(q.toLowerCase()) || (f.setor||'').toLowerCase().includes(q.toLowerCase()));
+  const el = document.getElementById('pg-func');
+  let h = `<div class="si"><i class="ti ti-search sico"></i><input class="sinp" placeholder="Buscar nome ou setor..." oninput="renderFunc(this.value)" value="${q}"></div>`;
+  if (!list.length) { el.innerHTML = h + `<div class="emp"><i class="ti ti-users"></i><p>Nenhum funcionário.<br>Toque + para adicionar.</p></div>`; return; }
+  h += `<div class="card"><div style="padding:4px 0">`;
+  list.forEach(f => {
+    const sb = f.sit==='Ativo'?'bdg':f.sit==='Férias'?'bdb':'bda';
+    h += `<div class="li"><div class="lil"><div class="av ${avc(f.nome)}">${ini(f.nome)}</div><div style="min-width:0"><div class="ln">${f.nome}</div><div class="ls">${f.cargo||'—'} · ${f.setor||'—'}${f.whats?` · <i class="ti ti-brand-whatsapp" style="font-size:11px;color:#25d366"></i>`:''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${sb}">${f.sit||'Ativo'}</span><div class="lac"><button class="ib" onclick="editF('${f.id}')"><i class="ti ti-edit"></i></button><button class="ib ibd" onclick="delF('${f.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
   });
-  h+=`</div></div>`;el.innerHTML=h;
+  h += `</div></div>`; el.innerHTML = h;
 }
 
 // ── EXAMES ──
-function saveExam(){
-  const id=document.getElementById('e-id').value;
-  const funcId=document.getElementById('e-func').value;
-  if(!funcId){tst('Selecione funcionário');return}
-  const obj={id:id||uid(),funcId,tipo:document.getElementById('e-tipo').value,
-    data:document.getElementById('e-data').value,val:document.getElementById('e-val').value,
-    resultado:document.getElementById('e-res').value,medico:document.getElementById('e-med').value};
-  const list=ld(K.E);const i=list.findIndex(x=>x.id===id);
-  if(i>=0)list[i]=obj;else list.push(obj);
-  sv(K.E,list);closeMo('mo-exam');clr(['e-id','e-data','e-val','e-med']);
-  renderExam();push('Exames',list);tst('Exame registrado!');
+function saveE() {
+  const id = document.getElementById('e-id').value;
+  const fn = document.getElementById('e-fn').value;
+  if (!fn) { tst('Selecione funcionário'); return; }
+  const obj = {id:id||uid(), funcId:fn, tipo:document.getElementById('e-tp').value,
+    data:document.getElementById('e-dt').value, val:document.getElementById('e-vl').value,
+    resultado:document.getElementById('e-rs').value, medico:document.getElementById('e-md').value};
+  const list = ld(K.E);
+  const i = list.findIndex(x=>x.id===id);
+  if (i>=0) list[i]=obj; else list.push(obj);
+  sv(K.E, list); closeMo('mo-e'); clr(['e-id','e-dt','e-vl','e-md']);
+  renderExam(); push('Exames', list); tst('Exame registrado!');
 }
-function delExam(id){
-  if(!confirm('Remover?'))return;
-  const list=ld(K.E).filter(x=>x.id!==id);
-  sv(K.E,list);renderExam();push('Exames',list);
+function delE(id) {
+  if (!confirm('Remover?')) return;
+  const list = ld(K.E).filter(x=>x.id!==id);
+  sv(K.E, list); renderExam(); push('Exames', list);
 }
-function setF(t,v){
-  if(t==='e')fEx=v;else if(t==='p')fEp=v;else fTr=v;
-  if(t==='e')renderExam();else if(t==='p')renderEpi();else renderMais();
+function setF(t,v) {
+  if(t==='e')fE=v; else if(t==='p')fP=v; else fT=v;
+  if(t==='e')renderExam(); else if(t==='p')renderEpi(); else renderMais();
 }
-function getName(id){const f=ld(K.F).find(x=>x.id===id);return f?f.nome:'?'}
-function renderExam(){
-  const list=ld(K.E);
-  let fl=list;
-  if(fEx==='v')fl=list.filter(e=>du(e.val)<0);
-  else if(fEx==='a')fl=list.filter(e=>{const d=du(e.val);return d>=0&&d<=30});
-  else if(fEx==='o')fl=list.filter(e=>du(e.val)>30);
-  const el=document.getElementById('pg-exam');
-  let h=`<div class="fr"><div class="fc ${fEx==='todos'?'on':''}" onclick="setF('e','todos')">Todos(${list.length})</div><div class="fc ${fEx==='v'?'on':''}" onclick="setF('e','v')">Vencidos(${list.filter(e=>du(e.val)<0).length})</div><div class="fc ${fEx==='a'?'on':''}" onclick="setF('e','a')">A vencer(${list.filter(e=>{const d=du(e.val);return d>=0&&d<=30}).length})</div><div class="fc ${fEx==='o'?'on':''}" onclick="setF('e','o')">Em dia(${list.filter(e=>du(e.val)>30).length})</div></div>`;
-  if(!fl.length){el.innerHTML=h+`<div class="emp"><i class="ti ti-stethoscope"></i><p>Nenhum exame.</p></div>`;return}
-  h+=`<div class="card"><div style="padding:4px 0">`;
-  fl.forEach(e=>{
-    const s=sts(e.val);const nm=getName(e.funcId);
-    h+=`<div class="li"><div class="li-l"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${e.tipo} · Val: ${fd(e.val)}</div><div class="ls">${e.resultado||''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><button class="ib d" onclick="delExam('${e.id}')"><i class="ti ti-trash"></i></button></div></div>`;
+const gName = id => { const f=ld(K.F).find(x=>x.id===id); return f?f.nome:'?'; };
+function renderExam() {
+  const list = ld(K.E);
+  let fl = list;
+  if (fE==='v') fl=list.filter(e=>du(e.val)<0);
+  else if (fE==='a') fl=list.filter(e=>{const d=du(e.val);return d>=0&&d<=30;});
+  else if (fE==='o') fl=list.filter(e=>du(e.val)>30);
+  const el = document.getElementById('pg-exam');
+  let h = `<div class="fr"><div class="fc ${fE==='todos'?'on':''}" onclick="setF('e','todos')">Todos (${list.length})</div><div class="fc ${fE==='v'?'on':''}" onclick="setF('e','v')">Vencidos (${list.filter(e=>du(e.val)<0).length})</div><div class="fc ${fE==='a'?'on':''}" onclick="setF('e','a')">A vencer (${list.filter(e=>{const d=du(e.val);return d>=0&&d<=30;}).length})</div><div class="fc ${fE==='o'?'on':''}" onclick="setF('e','o')">Em dia (${list.filter(e=>du(e.val)>30).length})</div></div>`;
+  if (!fl.length) { el.innerHTML=h+`<div class="emp"><i class="ti ti-stethoscope"></i><p>Nenhum exame.</p></div>`; return; }
+  h += `<div class="card"><div style="padding:4px 0">`;
+  fl.forEach(e => {
+    const s=sts(e.val); const nm=gName(e.funcId);
+    h += `<div class="li"><div class="lil"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${e.tipo} · Val: ${fd(e.val)}</div><div class="ls">${e.resultado||''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><button class="ib ibd" onclick="delE('${e.id}')"><i class="ti ti-trash"></i></button></div></div>`;
   });
-  h+=`</div></div>`;el.innerHTML=h;
+  h += `</div></div>`; el.innerHTML = h;
 }
 
 // ── EPI ──
-async function saveEpi(){
-  const id=document.getElementById('p-id').value;
-  const funcId=document.getElementById('p-func').value;
-  if(!funcId){tst('Selecione funcionário');return}
-  const func=ld(K.F).find(x=>x.id===funcId);
-  const obj={id:id||uid(),funcId,tipo:document.getElementById('p-tipo').value,
-    ca:document.getElementById('p-ca').value,qtd:document.getElementById('p-qtd').value,
-    data:document.getElementById('p-data').value,rep:document.getElementById('p-rep').value,assinado:'Pendente'};
-  const list=ld(K.P);const i=list.findIndex(x=>x.id===id);
-  if(i>=0)list[i]=obj;else list.push(obj);
-  sv(K.P,list);closeMo('mo-epi');clr(['p-id','p-ca','p-data','p-rep']);
-  document.getElementById('p-qtd').value='1';
+async function saveP() {
+  const id = document.getElementById('p-id').value;
+  const fn = document.getElementById('p-fn').value;
+  if (!fn) { tst('Selecione funcionário'); return; }
+  const func = ld(K.F).find(x=>x.id===fn);
+  const obj = {id:id||uid(), funcId:fn, tipo:document.getElementById('p-tp').value,
+    ca:document.getElementById('p-ca').value, qtd:document.getElementById('p-qt').value,
+    data:document.getElementById('p-dt').value, rep:document.getElementById('p-rp').value, assinado:'Pendente'};
+  const list = ld(K.P);
+  const i = list.findIndex(x=>x.id===id);
+  if (i>=0) list[i]=obj; else list.push(obj);
+  sv(K.P, list); closeMo('mo-p'); clr(['p-id','p-ca','p-dt','p-rp']);
+  document.getElementById('p-qt').value = '1';
   tst('EPI salvo! Enviando ZapSign...');
-  if(func)await zapSign(obj,func);
-  renderEpi();push('EPI',list);
+  if (func) await zapSign(obj, func);
+  renderEpi(); push('EPI', list);
 }
-function delEpi(id){
-  if(!confirm('Remover?'))return;
-  const list=ld(K.P).filter(x=>x.id!==id);
-  sv(K.P,list);renderEpi();push('EPI',list);
+function delP(id) {
+  if (!confirm('Remover?')) return;
+  const list = ld(K.P).filter(x=>x.id!==id);
+  sv(K.P, list); renderEpi(); push('EPI', list);
 }
-async function reenvEpi(id){
-  const epi=ld(K.P).find(x=>x.id===id);if(!epi)return;
-  const func=ld(K.F).find(x=>x.id===epi.funcId);if(!func)return;
-  tst('Reenviando...');await zapSign(epi,func);
+async function reenvP(id) {
+  const epi=ld(K.P).find(x=>x.id===id); if(!epi) return;
+  const func=ld(K.F).find(x=>x.id===epi.funcId); if(!func) return;
+  tst('Reenviando ZapSign...'); await zapSign(epi, func);
 }
-function renderEpi(){
-  const list=ld(K.P);
-  let fl=list;
-  if(fEp==='p')fl=list.filter(e=>du(e.rep)<=30);
-  else if(fEp==='o')fl=list.filter(e=>du(e.rep)>30);
-  const el=document.getElementById('pg-epi');
-  let h=`<div class="fr"><div class="fc ${fEp==='todos'?'on':''}" onclick="setF('p','todos')">Todos(${list.length})</div><div class="fc ${fEp==='p'?'on':''}" onclick="setF('p','p')">Pendente(${list.filter(e=>du(e.rep)<=30).length})</div><div class="fc ${fEp==='o'?'on':''}" onclick="setF('p','o')">Em dia(${list.filter(e=>du(e.rep)>30).length})</div></div>`;
-  if(!fl.length){el.innerHTML=h+`<div class="emp"><i class="ti ti-shield-check"></i><p>Nenhum EPI.</p></div>`;return}
-  h+=`<div class="card"><div style="padding:4px 0">`;
-  fl.forEach(e=>{
-    const s=sts(e.rep);const nm=getName(e.funcId);
+function renderEpi() {
+  const list = ld(K.P);
+  let fl = list;
+  if (fP==='p') fl=list.filter(e=>du(e.rep)<=30);
+  else if (fP==='o') fl=list.filter(e=>du(e.rep)>30);
+  const el = document.getElementById('pg-epi');
+  let h = `<div class="fr"><div class="fc ${fP==='todos'?'on':''}" onclick="setF('p','todos')">Todos (${list.length})</div><div class="fc ${fP==='p'?'on':''}" onclick="setF('p','p')">Pendente (${list.filter(e=>du(e.rep)<=30).length})</div><div class="fc ${fP==='o'?'on':''}" onclick="setF('p','o')">Em dia (${list.filter(e=>du(e.rep)>30).length})</div></div>`;
+  if (!fl.length) { el.innerHTML=h+`<div class="emp"><i class="ti ti-shield-check"></i><p>Nenhum EPI.</p></div>`; return; }
+  h += `<div class="card"><div style="padding:4px 0">`;
+  fl.forEach(e => {
+    const s=sts(e.rep); const nm=gName(e.funcId);
     const wa=(ld(K.F).find(x=>x.id===e.funcId)||{}).whats||'';
-    h+=`<div class="li"><div class="li-l"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${e.tipo}${e.ca?' · CA '+e.ca:''} · ${e.qtd||1}un</div><div class="ls">Repos.: ${fd(e.rep)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><div class="lac">${wa?`<button class="ib z" onclick="reenvEpi('${e.id}')"><i class="ti ti-brand-whatsapp"></i></button>`:''}<button class="ib d" onclick="delEpi('${e.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
+    h += `<div class="li"><div class="lil"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${e.tipo}${e.ca?' · CA '+e.ca:''} · ${e.qtd||1}un</div><div class="ls">Repos.: ${fd(e.rep)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><div class="lac">${wa?`<button class="ib ibz" onclick="reenvP('${e.id}')"><i class="ti ti-brand-whatsapp"></i></button>`:''}<button class="ib ibd" onclick="delP('${e.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
   });
-  h+=`</div></div>`;el.innerHTML=h;
+  h += `</div></div>`; el.innerHTML = h;
 }
 
 // ── TREINAMENTOS ──
-function saveTrein(){
-  const id=document.getElementById('t-id').value;
-  const funcId=document.getElementById('t-func').value;
-  if(!funcId){tst('Selecione funcionário');return}
-  const obj={id:id||uid(),funcId,tipo:document.getElementById('t-tipo').value,
-    data:document.getElementById('t-data').value,val:document.getElementById('t-val').value,
+function saveT() {
+  const id = document.getElementById('t-id').value;
+  const fn = document.getElementById('t-fn').value;
+  if (!fn) { tst('Selecione funcionário'); return; }
+  const obj = {id:id||uid(), funcId:fn, tipo:document.getElementById('t-tp').value,
+    data:document.getElementById('t-dt').value, val:document.getElementById('t-vl').value,
     ch:document.getElementById('t-ch').value};
-  const list=ld(K.T);const i=list.findIndex(x=>x.id===id);
-  if(i>=0)list[i]=obj;else list.push(obj);
-  sv(K.T,list);closeMo('mo-trein');clr(['t-id','t-data','t-val','t-ch']);
-  renderMais();push('Treinamentos',list);tst('Treinamento registrado!');
+  const list = ld(K.T);
+  const i = list.findIndex(x=>x.id===id);
+  if (i>=0) list[i]=obj; else list.push(obj);
+  sv(K.T, list); closeMo('mo-t'); clr(['t-id','t-dt','t-vl','t-ch']);
+  renderMais(); push('Treinamentos', list); tst('Treinamento registrado!');
 }
-function delTrein(id){
-  if(!confirm('Remover?'))return;
-  const list=ld(K.T).filter(x=>x.id!==id);
-  sv(K.T,list);renderMais();push('Treinamentos',list);
+function delT(id) {
+  if (!confirm('Remover?')) return;
+  const list = ld(K.T).filter(x=>x.id!==id);
+  sv(K.T, list); renderMais(); push('Treinamentos', list);
 }
 
 // ── MAIS ──
-function renderMais(){
-  const c=cfg();const list=ld(K.T);
+function renderMais() {
+  const c=gcfg(); const list=ld(K.T);
   let fl=list;
-  if(fTr==='v')fl=list.filter(t=>du(t.val)<0);
-  else if(fTr==='a')fl=list.filter(t=>{const d=du(t.val);return d>=0&&d<=30});
-  else if(fTr==='o')fl=list.filter(t=>du(t.val)>30);
-  const el=document.getElementById('pg-mais');
-  let h=`<div class="stl"><i class="ti ti-school"></i>Treinamentos / NRs</div>
-  <div class="fr"><div class="fc ${fTr==='todos'?'on':''}" onclick="setF('t','todos')">Todos(${list.length})</div><div class="fc ${fTr==='v'?'on':''}" onclick="setF('t','v')">Vencidos(${list.filter(t=>du(t.val)<0).length})</div><div class="fc ${fTr==='a'?'on':''}" onclick="setF('t','a')">A vencer(${list.filter(t=>{const d=du(t.val);return d>=0&&d<=30}).length})</div><div class="fc ${fTr==='o'?'on':''}" onclick="setF('t','o')">Em dia(${list.filter(t=>du(t.val)>30).length})</div></div>`;
-  if(!fl.length)h+=`<div class="emp"><i class="ti ti-school"></i><p>Nenhum treinamento.</p></div>`;
-  else{
-    h+=`<div class="card"><div style="padding:4px 0">`;
-    fl.forEach(t=>{
-      const s=sts(t.val);const nm=getName(t.funcId);
-      h+=`<div class="li"><div class="li-l"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${t.tipo}${t.ch?' · '+t.ch:''}</div><div class="ls">Val: ${fd(t.val)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><button class="ib d" onclick="delTrein('${t.id}')"><i class="ti ti-trash"></i></button></div></div>`;
+  if (fT==='v') fl=list.filter(t=>du(t.val)<0);
+  else if (fT==='a') fl=list.filter(t=>{const d=du(t.val);return d>=0&&d<=30;});
+  else if (fT==='o') fl=list.filter(t=>du(t.val)>30);
+  const el = document.getElementById('pg-mais');
+  let h = `<div class="stl"><i class="ti ti-school"></i>Treinamentos / NRs</div>
+  <div class="fr"><div class="fc ${fT==='todos'?'on':''}" onclick="setF('t','todos')">Todos (${list.length})</div><div class="fc ${fT==='v'?'on':''}" onclick="setF('t','v')">Vencidos (${list.filter(t=>du(t.val)<0).length})</div><div class="fc ${fT==='a'?'on':''}" onclick="setF('t','a')">A vencer (${list.filter(t=>{const d=du(t.val);return d>=0&&d<=30;}).length})</div><div class="fc ${fT==='o'?'on':''}" onclick="setF('t','o')">Em dia (${list.filter(t=>du(t.val)>30).length})</div></div>`;
+  if (!fl.length) h += `<div class="emp"><i class="ti ti-school"></i><p>Nenhum treinamento.</p></div>`;
+  else {
+    h += `<div class="card"><div style="padding:4px 0">`;
+    fl.forEach(t => {
+      const s=sts(t.val); const nm=gName(t.funcId);
+      h += `<div class="li"><div class="lil"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${t.tipo}${t.ch?' · '+t.ch:''}</div><div class="ls">Val: ${fd(t.val)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><button class="ib ibd" onclick="delT('${t.id}')"><i class="ti ti-trash"></i></button></div></div>`;
     });
-    h+=`</div></div>`;
+    h += `</div></div>`;
   }
-  h+=`<div class="stl" style="margin-top:8px"><i class="ti ti-settings"></i>Configurações</div>
+  h += `<div class="stl" style="margin-top:8px"><i class="ti ti-settings"></i>Configurações</div>
   <div class="cc"><div class="ct">Integrações</div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-table" style="font-size:16px;color:#0f9d58"></i>Google Sheets</span><span style="font-size:12px"><span class="sd g"></span>Conectado</span></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-brand-whatsapp" style="font-size:16px;color:#25d366"></i>ZapSign</span><span style="font-size:12px"><span class="sd ${c.zk&&c.zt?'g':'a'}"></span>${c.zk&&c.zt?'Configurado':'Pendente'}</span></div>
-  <button class="btn p" onclick="openCfg()" style="font-size:13px;padding:10px"><i class="ti ti-settings"></i>Editar configurações</button></div>`;
-  el.innerHTML=h;
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-table" style="font-size:16px;color:#0f9d58"></i>Google Sheets</span>
+    <span style="font-size:12px"><span class="sd"></span>Conectado</span>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-brand-whatsapp" style="font-size:16px;color:#25d366"></i>ZapSign</span>
+    <span style="font-size:12px"><span class="sd ${c.zk&&c.zt?'':'sda'}"></span>${c.zk&&c.zt?'Configurado':'Pendente'}</span>
+  </div>
+  <button class="btn btnp" onclick="openCfg()" style="font-size:13px;padding:10px"><i class="ti ti-settings"></i>Editar configurações</button></div>`;
+  el.innerHTML = h;
 }
 
 // ── DASHBOARD ──
-function renderDash(){
-  const F=ld(K.F),E=ld(K.E),P=ld(K.P),T=ld(K.T);
-  const eV=E.filter(e=>du(e.val)<0).length,eA=E.filter(e=>{const d=du(e.val);return d>=0&&d<=30}).length;
-  const pP=P.filter(e=>du(e.rep)<=30).length,tV=T.filter(t=>du(t.val)<0).length;
+function renderDash() {
+  const F=ld(K.F), E=ld(K.E), P=ld(K.P), T=ld(K.T);
+  const eV=E.filter(e=>du(e.val)<0).length, eA=E.filter(e=>{const d=du(e.val);return d>=0&&d<=30;}).length;
+  const pP=P.filter(e=>du(e.rep)<=30).length, tV=T.filter(t=>du(t.val)<0).length;
   let h='';
-  if(eV>0||tV>0)h+=`<div class="bnr r"><i class="ti ti-alert-circle"></i><div class="bt">${eV} exame(s) e ${tV} treinamento(s) vencidos.</div></div>`;
-  if(pP>0)h+=`<div class="bnr a"><i class="ti ti-clock"></i><div class="bt">${pP} EPI(s) com reposição pendente.</div></div>`;
-  h+=`<div class="mgrid">
+  if(eV>0||tV>0) h+=`<div class="bnr r"><i class="ti ti-alert-circle"></i><span>${eV} exame(s) e ${tV} treinamento(s) vencidos.</span></div>`;
+  if(pP>0) h+=`<div class="bnr a"><i class="ti ti-clock"></i><span>${pP} EPI(s) com reposição pendente.</span></div>`;
+  h += `<div class="mgrid">
     <div class="mc"><div class="ml">Funcionários</div><div class="mv g">${F.length}</div><div class="ms">cadastrados</div></div>
     <div class="mc"><div class="ml">Exames vencidos</div><div class="mv ${eV>0?'r':'g'}">${eV}</div><div class="ms">${eA} a vencer</div></div>
     <div class="mc"><div class="ml">EPI pendente</div><div class="mv ${pP>0?'a':'g'}">${pP}</div><div class="ms">até 30 dias</div></div>
     <div class="mc"><div class="ml">Treinamentos</div><div class="mv ${tV>0?'r':'g'}">${tV}</div><div class="ms">vencidos</div></div>
   </div>`;
-  const urg=[
-    ...E.filter(e=>du(e.val)<=30).map(e=>({...e,mod:'Exame',vs:e.val,d:du(e.val),nm:getName(e.funcId)})),
-    ...P.filter(e=>du(e.rep)<=30).map(e=>({...e,mod:'EPI',vs:e.rep,d:du(e.rep),nm:getName(e.funcId)})),
-    ...T.filter(t=>du(t.val)<=30).map(t=>({...t,mod:'Treinamento',vs:t.val,d:du(t.val),nm:getName(t.funcId)})),
+  const urg = [
+    ...E.filter(e=>du(e.val)<=30).map(e=>({...e,mod:'Exame',vs:e.val,d:du(e.val),nm:gName(e.funcId)})),
+    ...P.filter(e=>du(e.rep)<=30).map(e=>({...e,mod:'EPI',vs:e.rep,d:du(e.rep),nm:gName(e.funcId)})),
+    ...T.filter(t=>du(t.val)<=30).map(t=>({...t,mod:'Treinamento',vs:t.val,d:du(t.val),nm:gName(t.funcId)})),
   ].sort((a,b)=>a.d-b.d);
-  h+=`<div class="stl"><i class="ti ti-bell"></i>Alertas</div>`;
-  if(!urg.length)h+=`<div class="card"><div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin-bottom:8px;color:#40916c"></i>Tudo em ordem!</div></div>`;
-  else{
-    h+=`<div class="card"><div style="padding:4px 0">`;
-    urg.slice(0,8).forEach(u=>{
+  h += `<div class="stl"><i class="ti ti-bell"></i>Alertas</div>`;
+  if (!urg.length) {
+    h += `<div class="card"><div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin-bottom:8px;color:#40916c"></i>Tudo em ordem!</div></div>`;
+  } else {
+    h += `<div class="card"><div style="padding:4px 0">`;
+    urg.slice(0,8).forEach(u => {
       const s=sts(u.vs);
-      h+=`<div class="ai"><div class="ad ${s.c}"><i class="ti ${s.c==='r'?'ti-alert-circle':'ti-clock'}"></i></div><div><div class="am"><strong>${u.nm}</strong> — ${u.tipo||u.mod}</div><div class="at">${u.mod} · ${fd(u.vs)} · <span class="badge ${s.c}" style="padding:1px 6px;font-size:10px">${s.t}</span></div></div></div>`;
+      h += `<div class="ai"><div class="ad ${s.c==='bdr'?'adr':'ada'}"><i class="ti ${s.c==='bdr'?'ti-alert-circle':'ti-clock'}"></i></div><div><div class="am"><strong>${u.nm}</strong> — ${u.tipo||u.mod}</div><div class="at">${u.mod} · ${fd(u.vs)} · <span class="badge ${s.c}" style="padding:1px 6px;font-size:10px">${s.t}</span></div></div></div>`;
     });
-    h+=`</div></div>`;
+    h += `</div></div>`;
   }
-  document.getElementById('pg-dash').innerHTML=h;
+  document.getElementById('pg-dash').innerHTML = h;
 }
 
-function updateBel(){
-  const c=ld(K.E).filter(e=>du(e.val)<=30).length+ld(K.P).filter(e=>du(e.rep)<=30).length+ld(K.T).filter(t=>du(t.val)<=30).length;
-  const el=document.getElementById('belc');
-  el.textContent=c>9?'9+':c;el.style.display=c?'flex':'none';
+function updateBel() {
+  const c = ld(K.E).filter(e=>du(e.val)<=30).length + ld(K.P).filter(e=>du(e.rep)<=30).length + ld(K.T).filter(t=>du(t.val)<=30).length;
+  const el = document.getElementById('belc');
+  el.textContent = c>9?'9+':c; el.style.display = c?'flex':'none';
 }
 
 // ── ZAPSIGN ──
-async function zapSign(epi,func){
-  const c=cfg();
-  if(!c.zk||!c.zt){tst('Configure ZapSign nas configurações.');return}
-  if(!func.whats){tst('Funcionário sem WhatsApp.');return}
-  try{
-    const r=await fetch('https://api.zapsign.com.br/api/v1/docs/create-from-template/',{
-      method:'POST',
-      headers:{'Authorization':`Bearer ${c.zk}`,'Content-Type':'application/json'},
-      body:JSON.stringify({sandbox:false,template_id:c.zt,
-        signers:[{name:func.nome,email:'',phone_country:'55',phone_number:func.whats,send_automatic_whatsapp:true,auth_mode:'whatsapp'}],
-        data:[{de:'funcionario',para:func.nome},{de:'cargo',para:func.cargo||''},{de:'epi',para:epi.tipo},{de:'ca',para:epi.ca||''},{de:'quantidade',para:String(epi.qtd||1)},{de:'data_entrega',para:fd(epi.data)}]})
+async function zapSign(epi, func) {
+  const c = gcfg();
+  if (!c.zk||!c.zt) { tst('Configure ZapSign nas configurações.'); return; }
+  if (!func.whats)   { tst('Funcionário sem WhatsApp.'); return; }
+  try {
+    const r = await fetch('https://api.zapsign.com.br/api/v1/docs/create-from-template/', {
+      method: 'POST',
+      headers: {'Authorization':`Bearer ${c.zk}`,'Content-Type':'application/json'},
+      body: JSON.stringify({
+        sandbox: false, template_id: c.zt,
+        signers: [{name:func.nome, email:'', phone_country:'55', phone_number:func.whats, send_automatic_whatsapp:true, auth_mode:'whatsapp'}],
+        data: [{de:'funcionario',para:func.nome},{de:'cargo',para:func.cargo||''},{de:'epi',para:epi.tipo},{de:'ca',para:epi.ca||''},{de:'quantidade',para:String(epi.qtd||1)},{de:'data_entrega',para:fd(epi.data)}]
+      })
     });
-    tst(r.ok?'ZapSign: link enviado!':'Erro no ZapSign.');
-  }catch{tst('Erro ao conectar ao ZapSign.')}
+    tst(r.ok ? 'ZapSign: link enviado no WhatsApp!' : 'Erro no ZapSign.');
+  } catch { tst('Erro ao conectar ao ZapSign.'); }
 }
 
 // ── INIT ──
-document.getElementById('fab').style.display='none';
+renderDash();
 syncAll();
 </script>
 </body>
