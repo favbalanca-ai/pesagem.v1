@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a3a2a">
+<title>SST — Fazenda Água Viva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root {
+  --green-dark: #1a3a2a;
+  --green-mid: #2d6a4f;
+  --green-light: #40916c;
+  --green-pale: #d8f3dc;
+  --amber: #f4a261;
+  --amber-pale: #fff3e0;
+  --red: #c1440e;
+  --red-pale: #fdecea;
+  --blue: #2196f3;
+  --blue-pale: #e3f2fd;
+  --text: #1a1a1a;
+  --text-2: #555;
+  --text-3: #999;
+  --bg: #f5f7f5;
+  --card: #fff;
+  --border: #e0e8e2;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+
+/* HEADER */
+.header {
+  background: var(--green-dark);
+  padding: 16px 16px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-logo { width: 36px; height: 36px; background: var(--green-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.header-logo i { font-size: 20px; color: #fff; }
+.header-title { color: #fff; }
+.header-title h1 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600; line-height: 1.2; }
+.header-title p { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+.header-bell { position: relative; }
+.header-bell i { font-size: 22px; color: rgba(255,255,255,0.8); }
+.bell-badge { position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; font-size: 10px; font-weight: 600; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; border-top: 1px solid var(--border);
+  display: flex; z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 4px 8px; gap: 3px; cursor: pointer; color: var(--text-3); font-size: 10px; border: none; background: none; }
+.nav-item i { font-size: 22px; }
+.nav-item.active { color: var(--green-mid); }
+.nav-item.active i { font-weight: bold; }
+
+/* PAGES */
+.page { display: none; padding: 14px 14px 0; }
+.page.active { display: block; }
+
+/* METRICS */
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.metric { background: var(--card); border-radius: var(--radius); padding: 14px; border: 1px solid var(--border); }
+.metric.full { grid-column: 1/-1; }
+.metric-label { font-size: 11px; color: var(--text-3); margin-bottom: 6px; font-weight: 500; }
+.metric-val { font-size: 28px; font-weight: 600; font-family: 'Sora', sans-serif; }
+.metric-val.green { color: var(--green-mid); }
+.metric-val.red { color: var(--red); }
+.metric-val.amber { color: #e07b39; }
+.metric-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+/* ALERT BANNER */
+.alert-banner { background: var(--red-pale); border: 1px solid #f5c6bc; border-radius: var(--radius-sm); padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+.alert-banner i { font-size: 18px; color: var(--red); flex-shrink: 0; margin-top: 1px; }
+.alert-banner-text { font-size: 12px; color: var(--red); line-height: 1.4; }
+.alert-banner.amber { background: var(--amber-pale); border-color: #fcd5b4; }
+.alert-banner.amber i, .alert-banner.amber .alert-banner-text { color: #c16a20; }
+
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
+.card-header { padding: 14px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600; }
+.card-body { padding: 0 16px 14px; }
+
+/* SECTION TITLE */
+.section-title { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 10px; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.section-title i { font-size: 16px; color: var(--green-mid); }
+
+/* LIST ITEMS */
+.list-item { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.list-item:last-child { border-bottom: none; }
+.list-item-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.av-green { background: var(--green-pale); color: var(--green-dark); }
+.av-blue { background: var(--blue-pale); color: #1565c0; }
+.av-amber { background: var(--amber-pale); color: #c16a20; }
+.list-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.list-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); }
+.icon-btn i { font-size: 16px; }
+.icon-btn.danger { border-color: #fbc4b8; color: var(--red); }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge.green { background: var(--green-pale); color: var(--green-dark); }
+.badge.red { background: var(--red-pale); color: var(--red); }
+.badge.amber { background: var(--amber-pale); color: #c16a20; }
+.badge.blue { background: var(--blue-pale); color: #1565c0; }
+
+/* BUTTONS */
+.btn { padding: 12px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn.primary { background: var(--green-mid); color: #fff; width: 100%; }
+.btn.primary i { font-size: 18px; }
+.btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+.btn.export { background: #0f9d58; color: #fff; width: 100%; font-size: 13px; padding: 11px; }
+.fab { position: fixed; bottom: 90px; right: 18px; width: 54px; height: 54px; border-radius: 50%; background: var(--green-mid); color: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 16px rgba(45,106,79,0.35); z-index: 99; }
+.fab i { font-size: 26px; }
+
+/* FILTERS */
+.filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 0 14px 12px; scrollbar-width: none; }
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); background: #fff; color: var(--text-2); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.filter-chip.active { background: var(--green-dark); color: #fff; border-color: var(--green-dark); }
+
+/* SEARCH */
+.search-wrap { padding: 0 14px 10px; }
+.search-input { width: 100%; padding: 10px 14px 10px 38px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: #fff; color: var(--text); position: relative; }
+.search-wrap-inner { position: relative; }
+.search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 18px; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-end; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 22px 22px 0 0; width: 100%; max-height: 92vh; overflow-y: auto; padding: 20px 18px 32px; }
+.modal-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 18px; }
+.modal-title { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 18px; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 5px; display: block; }
+.form-input { width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; color: var(--text); background: #fff; appearance: none; }
+.form-input:focus { outline: none; border-color: var(--green-mid); }
+.form-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+.modal-footer .btn { flex: 1; }
+.btn.cancel { background: var(--bg); color: var(--text-2); }
+
+/* ALERT LIST */
+.alert-item { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; }
+.alert-item:last-child { border-bottom: none; }
+.alert-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.alert-dot.red { background: var(--red-pale); }
+.alert-dot.amber { background: var(--amber-pale); }
+.alert-dot i { font-size: 17px; }
+.alert-dot.red i { color: var(--red); }
+.alert-dot.amber i { color: #c16a20; }
+.alert-msg { font-size: 12px; line-height: 1.5; }
+.alert-type { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+/* EXPORT SECTION */
+.export-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+.export-title { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.export-desc { font-size: 12px; color: var(--text-3); margin-bottom: 14px; line-height: 1.5; }
+.export-steps { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px; }
+.export-step { font-size: 12px; color: var(--text-2); padding: 4px 0; display: flex; gap: 8px; }
+.export-step-num { font-weight: 600; color: var(--green-mid); }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 32px 20px; color: var(--text-3); }
+.empty i { font-size: 40px; display: block; margin-bottom: 10px; color: #ccc; }
+.empty p { font-size: 13px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 300; display: none; white-space: nowrap; }
+.toast.show { display: block; animation: fadein .2s, fadeout .3s 2s forwards; }
+@keyframes fadein { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes fadeout { to { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo"><i class="ti ti-leaf"></i></div>
+    <div class="header-title">
+      <h1>Fazenda Água Viva</h1>
+      <p>Saúde e Segurança do Trabalho</p>
+    </div>
+  </div>
+  <div class="header-bell" onclick="showPage('alertas')">
+    <i class="ti ti-bell"></i>
+    <div class="bell-badge" id="bell-count">0</div>
+  </div>
+</div>
+
+<!-- PAGES -->
+<div id="page-dashboard" class="page active"></div>
+<div id="page-funcionarios" class="page"></div>
+<div id="page-exames" class="page"></div>
+<div id="page-epi" class="page"></div>
+<div id="page-mais" class="page"></div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+    <i class="ti ti-layout-dashboard"></i><span>Início</span>
+  </button>
+  <button class="nav-item" onclick="showPage('funcionarios')" id="nav-funcionarios">
+    <i class="ti ti-users"></i><span>Equipe</span>
+  </button>
+  <button class="nav-item" onclick="showPage('exames')" id="nav-exames">
+    <i class="ti ti-stethoscope"></i><span>Exames</span>
+  </button>
+  <button class="nav-item" onclick="showPage('epi')" id="nav-epi">
+    <i class="ti ti-shield-check"></i><span>EPI</span>
+  </button>
+  <button class="nav-item" onclick="showPage('mais')" id="nav-mais">
+    <i class="ti ti-dots"></i><span>Mais</span>
+  </button>
+</nav>
+
+<!-- FAB -->
+<button class="fab" id="fab-btn" onclick="openFab()">
+  <i class="ti ti-plus"></i>
+</button>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-func">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-func-title">Novo funcionário</div>
+    <input type="hidden" id="func-id">
+    <div class="form-group"><label class="form-label">Nome completo *</label><input class="form-input" id="func-nome" placeholder="Nome do funcionário"></div>
+    <div class="form-row2">
+      <div class="form-group"><label class="form-label">Matrícula</label><input class="form-input" id="func-mat" placeholder="001"></div>
+      <div class="form-group"><label class="form-label">Situação</label>
+        <select class="form-input" id="func-sit"><option>Ativo</option><option>Afastado</option><option>Férias</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Cargo / Função</label><input class="form-input" id="func-cargo" placeholder="Ex: Tratorista, Ordenhador..."></div>
+    <div class="form-group"><label class="form-label">Setor</label>
+      <select class="form-input" id="func-setor">
+        <option value="">Selecione...</option>
+        <option>Lavoura</option><option>Pecuária</option><option>Ordenha</option>
+        <option>Manutenção</option><option>Administrativo</option><option>Outro</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Data de admissão</label><input class="form-input" type="date" id="func-admissao"></div>
+    <div class="modal-footer">
+      <button class="btn cancel" onclick="closeModal('modal-func')">Cancelar</button>
+      <button class="btn primary" onclick="saveFuncionario()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-exame">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar exame médico</div>
+    <input type="hidden" id="exame-id">
+    <div class="form-group"><label class="form-label">Funcionário *</label><select class="form-input" id="exame-func"></select></div>
+    <div class="form-group"><label class="form-label">Tipo de exame</label>
+      <select class="form-input" id="exame-tipo">
+        <option>Admissional</option><option>Periódico</option><option>Retorno ao trabalho</option>
+        <option>Mudança de função</option><option>Demissional</option>
+      </select>
+    </div>
+    <div class="form-row2">
+      <div class="form-group"><label class="form-label">Data de realização</label><input class="form-input" type="date" id="exame-data"></div>
+      <div class="form-group"><label class="form-label">Válido até</label><input class="form-input" type="date" id="exame-val"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Resultado</label>
+      <select class="form-input" id="exame-resultado"><option>Apto</option><option>Apto com restrição</option><option>Inapto</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Médico / CRM</label><input class="form-input" id="exame-medico" placeholder="Dr. Nome / CRM 00000"></div>
+    <div class="modal-footer">
+      <button class="btn cancel" onclick="closeModal('modal-exame')">Cancelar</button>
+      <button class="btn primary" onclick="saveExame()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-epi">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar entrega de EPI</div>
+    <input type="hidden" id="epi-id">
+    <div class="form-group"><label class="form-label">Funcionário *</label><select class="form-input" id="epi-func"></select></div>
+    <div class="form-group"><label class="form-label">EPI</label>
+      <select class="form-input" id="epi-tipo">
+        <option>Capacete</option><option>Óculos de proteção</option><option>Luvas</option>
+        <option>Protetor auricular</option><option>Bota de segurança</option>
+        <option>Cinto de segurança</option><option>Máscara respiratória</option>
+        <option>Colete refletivo</option><option>Avental</option><option>Outro</option>
+      </select>
+    </div>
+    <div class="form-row2">
+      <div class="form-group"><label class="form-label">CA nº</label><input class="form-input" id="epi-ca" placeholder="CA"></div>
+      <div class="form-group"><label class="form-label">Quantidade</label><input class="form-input" type="number" id="epi-qtd" value="1" min="1"></div>
+    </div>
+    <div class="form-row2">
+      <div class="form-group"><label class="form-label">Data de entrega</label><input class="form-input" type="date" id="epi-data"></div>
+      <div class="form-group"><label class="form-label">Próx. reposição</label><input class="form-input" type="date" id="epi-rep"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn cancel" onclick="closeModal('modal-epi')">Cancelar</button>
+      <button class="btn primary" onclick="saveEpi()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-trein">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar treinamento</div>
+    <input type="hidden" id="trein-id">
+    <div class="form-group"><label class="form-label">Funcionário *</label><select class="form-input" id="trein-func"></select></div>
+    <div class="form-group"><label class="form-label">Treinamento / NR</label>
+      <select class="form-input" id="trein-tipo">
+        <option>NR-6 (EPI)</option><option>NR-10 (Eletricidade)</option><option>NR-12 (Máquinas)</option>
+        <option>NR-18 (Construção)</option><option>NR-31 (Agricultura)</option>
+        <option>NR-35 (Trabalho em altura)</option><option>CIPA</option>
+        <option>Brigada de incêndio</option><option>Primeiros socorros</option><option>Outro</option>
+      </select>
+    </div>
+    <div class="form-row2">
+      <div class="form-group"><label class="form-label">Data de realização</label><input class="form-input" type="date" id="trein-data"></div>
+      <div class="form-group"><label class="form-label">Válido até</label><input class="form-input" type="date" id="trein-val"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Carga horária</label><input class="form-input" id="trein-ch" placeholder="Ex: 8h"></div>
+    <div class="modal-footer">
+      <button class="btn cancel" onclick="closeModal('modal-trein')">Cancelar</button>
+      <button class="btn primary" onclick="saveTrein()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STORAGE ──
+const K = { f:'fav-func', e:'fav-exame', p:'fav-epi', t:'fav-trein' };
+const load = k => { try { return JSON.parse(localStorage.getItem(k)||'[]'); } catch { return []; } };
+const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const today = () => new Date().toISOString().split('T')[0];
+const daysUntil = d => d ? Math.ceil((new Date(d) - new Date(today())) / 86400000) : 9999;
+const fmtD = d => { if(!d) return '-'; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y}`; };
+const initials = n => n ? n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+const avColor = n => { const c=['av-green','av-blue','av-amber']; return c[(n||'').charCodeAt(0)%3]; };
+
+function statusOf(val, tipo='exame') {
+  const d = daysUntil(val);
+  if(d < 0) return { cls:'red', txt:'Vencido' };
+  if(d <= 30) return { cls:'amber', txt:`${d}d` };
+  return { cls:'green', txt:'Em dia' };
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show';
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── NAVIGATION ──
+let currentPage = 'dashboard';
+let exameFilter = 'todos', epiFilter = 'todos', treinFilter = 'todos';
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const navEl = document.getElementById('nav-'+p);
+  if(navEl) navEl.classList.add('active');
+  currentPage = p;
+  const fabPages = ['funcionarios','exames','epi','mais'];
+  document.getElementById('fab-btn').style.display = fabPages.includes(p) ? 'flex' : 'none';
+  if(p==='dashboard') renderDashboard();
+  if(p==='funcionarios') renderFuncionarios('');
+  if(p==='exames') renderExames();
+  if(p==='epi') renderEpi();
+  if(p==='mais') renderMais();
+  updateBell();
+}
+
+function openFab() {
+  if(currentPage==='funcionarios') openModal('modal-func');
+  else if(currentPage==='exames') openModal('modal-exame');
+  else if(currentPage==='epi') openModal('modal-epi');
+  else if(currentPage==='mais') openModal('modal-trein');
+}
+
+// ── MODALS ──
+function openModal(id) {
+  const funcs = load(K.f);
+  document.querySelectorAll(`#${id} select[id$="-func"]`).forEach(sel => {
+    sel.innerHTML = funcs.length
+      ? funcs.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('')
+      : '<option value="">— Cadastre funcionários primeiro —</option>';
+  });
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── FUNCIONÁRIOS ──
+function saveFuncionario() {
+  const id = document.getElementById('func-id').value;
+  const nome = document.getElementById('func-nome').value.trim();
+  if(!nome) { toast('Informe o nome'); return; }
+  const obj = { id: id||uid(), nome, mat: document.getElementById('func-mat').value,
+    cargo: document.getElementById('func-cargo').value, setor: document.getElementById('func-setor').value,
+    admissao: document.getElementById('func-admissao').value, sit: document.getElementById('func-sit').value };
+  const list = load(K.f); const i = list.findIndex(x=>x.id===id);
+  if(i>=0) list[i]=obj; else list.push(obj);
+  save(K.f, list); closeModal('modal-func');
+  clearForm(['func-id','func-nome','func-mat','func-cargo','func-admissao']);
+  document.getElementById('func-setor').value=''; document.getElementById('func-sit').value='Ativo';
+  document.getElementById('modal-func-title').textContent='Novo funcionário';
+  renderFuncionarios(''); toast('Funcionário salvo!');
+}
+function editFuncionario(id) {
+  const f = load(K.f).find(x=>x.id===id); if(!f) return;
+  document.getElementById('func-id').value=f.id; document.getElementById('func-nome').value=f.nome;
+  document.getElementById('func-mat').value=f.mat||''; document.getElementById('func-cargo').value=f.cargo||'';
+  document.getElementById('func-setor').value=f.setor||''; document.getElementById('func-admissao').value=f.admissao||'';
+  document.getElementById('func-sit').value=f.sit||'Ativo';
+  document.getElementById('modal-func-title').textContent='Editar funcionário';
+  openModal('modal-func');
+}
+function deleteFuncionario(id) {
+  if(!confirm('Remover funcionário?')) return;
+  save(K.f, load(K.f).filter(x=>x.id!==id)); renderFuncionarios(''); toast('Removido.');
+}
+
+function renderFuncionarios(q) {
+  const list = load(K.f).filter(f => !q || f.nome.toLowerCase().includes(q.toLowerCase()) || (f.setor||'').toLowerCase().includes(q.toLowerCase()));
+  const el = document.getElementById('page-funcionarios');
+  let html = `<div class="search-wrap"><div class="search-wrap-inner"><i class="ti ti-search search-icon"></i><input class="search-input" placeholder="Buscar por nome ou setor..." oninput="renderFuncionarios(this.value)" value="${q}"></div></div>`;
+  if(!list.length) {
+    el.innerHTML = html + `<div class="empty"><i class="ti ti-users"></i><p>Nenhum funcionário cadastrado.<br>Toque em + para adicionar.</p></div>`;
+    return;
+  }
+  html += `<div class="card"><div style="padding:4px 0">`;
+  list.forEach(f => {
+    const sitBadge = f.sit==='Ativo'?'green':f.sit==='Férias'?'blue':'amber';
+    html += `<div class="list-item">
+      <div class="list-item-left">
+        <div class="avatar ${avColor(f.nome)}">${initials(f.nome)}</div>
+        <div style="min-width:0">
+          <div class="list-name">${f.nome}</div>
+          <div class="list-sub">${f.cargo||'—'} · ${f.setor||'—'}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="badge ${sitBadge}">${f.sit||'Ativo'}</span>
+        <div class="list-actions">
+          <button class="icon-btn" onclick="editFuncionario('${f.id}')"><i class="ti ti-edit"></i></button>
+          <button class="icon-btn danger" onclick="deleteFuncionario('${f.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  el.innerHTML = html;
+}
+
+// ── EXAMES ──
+function saveExame() {
+  const id = document.getElementById('exame-id').value;
+  const funcId = document.getElementById('exame-func').value;
+  if(!funcId) { toast('Selecione um funcionário'); return; }
+  const obj = { id:id||uid(), funcId, tipo:document.getElementById('exame-tipo').value,
+    data:document.getElementById('exame-data').value, val:document.getElementById('exame-val').value,
+    resultado:document.getElementById('exame-resultado').value, medico:document.getElementById('exame-medico').value };
+  const list = load(K.e); const i = list.findIndex(x=>x.id===id);
+  if(i>=0) list[i]=obj; else list.push(obj);
+  save(K.e, list); closeModal('modal-exame');
+  clearForm(['exame-id','exame-data','exame-val','exame-medico']);
+  renderExames(); toast('Exame registrado!');
+}
+function deleteExame(id) { if(!confirm('Remover?'))return; save(K.e,load(K.e).filter(x=>x.id!==id)); renderExames(); }
+
+function renderExames() {
+  const funcs = load(K.f); const list = load(K.e);
+  const getName = id => { const f=funcs.find(x=>x.id===id); return f?f.nome:'?'; };
+  let filtered = list;
+  if(exameFilter==='vencido') filtered = list.filter(e=>daysUntil(e.val)<0);
+  else if(exameFilter==='alerta') filtered = list.filter(e=>{const d=daysUntil(e.val);return d>=0&&d<=30;});
+  else if(exameFilter==='ok') filtered = list.filter(e=>daysUntil(e.val)>30);
+  const el = document.getElementById('page-exames');
+  let html = `<div class="filter-row">
+    <div class="filter-chip ${exameFilter==='todos'?'active':''}" onclick="setFilter('exame','todos',this)">Todos (${list.length})</div>
+    <div class="filter-chip ${exameFilter==='vencido'?'active':''}" onclick="setFilter('exame','vencido',this)">Vencidos (${list.filter(e=>daysUntil(e.val)<0).length})</div>
+    <div class="filter-chip ${exameFilter==='alerta'?'active':''}" onclick="setFilter('exame','alerta',this)">A vencer (${list.filter(e=>{const d=daysUntil(e.val);return d>=0&&d<=30;}).length})</div>
+    <div class="filter-chip ${exameFilter==='ok'?'active':''}" onclick="setFilter('exame','ok',this)">Em dia (${list.filter(e=>daysUntil(e.val)>30).length})</div>
+  </div>`;
+  if(!filtered.length) { el.innerHTML = html + `<div class="empty"><i class="ti ti-stethoscope"></i><p>Nenhum exame encontrado.</p></div>`; return; }
+  html += `<div class="card"><div style="padding:4px 0">`;
+  filtered.forEach(e => {
+    const s = statusOf(e.val);
+    html += `<div class="list-item">
+      <div class="list-item-left">
+        <div class="avatar ${avColor(getName(e.funcId))}">${initials(getName(e.funcId))}</div>
+        <div style="min-width:0">
+          <div class="list-name">${getName(e.funcId)}</div>
+          <div class="list-sub">${e.tipo} · Val: ${fmtD(e.val)}</div>
+          <div class="list-sub">${e.resultado}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="badge ${s.cls}">${s.txt}</span>
+        <button class="icon-btn danger" onclick="deleteExame('${e.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  el.innerHTML = html;
+}
+
+// ── EPI ──
+function saveEpi() {
+  const id = document.getElementById('epi-id').value;
+  const funcId = document.getElementById('epi-func').value;
+  if(!funcId) { toast('Selecione um funcionário'); return; }
+  const obj = { id:id||uid(), funcId, tipo:document.getElementById('epi-tipo').value,
+    ca:document.getElementById('epi-ca').value, qtd:document.getElementById('epi-qtd').value,
+    data:document.getElementById('epi-data').value, rep:document.getElementById('epi-rep').value };
+  const list = load(K.p); const i = list.findIndex(x=>x.id===id);
+  if(i>=0) list[i]=obj; else list.push(obj);
+  save(K.p, list); closeModal('modal-epi');
+  clearForm(['epi-id','epi-ca','epi-data','epi-rep']); document.getElementById('epi-qtd').value='1';
+  renderEpi(); toast('EPI registrado!');
+}
+function deleteEpi(id) { if(!confirm('Remover?'))return; save(K.p,load(K.p).filter(x=>x.id!==id)); renderEpi(); }
+
+function renderEpi() {
+  const funcs = load(K.f); const list = load(K.p);
+  const getName = id => { const f=funcs.find(x=>x.id===id); return f?f.nome:'?'; };
+  let filtered = list;
+  if(epiFilter==='pendente') filtered = list.filter(e=>daysUntil(e.rep)<=30);
+  else if(epiFilter==='ok') filtered = list.filter(e=>daysUntil(e.rep)>30);
+  const el = document.getElementById('page-epi');
+  let html = `<div class="filter-row">
+    <div class="filter-chip ${epiFilter==='todos'?'active':''}" onclick="setFilter('epi','todos',this)">Todos (${list.length})</div>
+    <div class="filter-chip ${epiFilter==='pendente'?'active':''}" onclick="setFilter('epi','pendente',this)">Pendente (${list.filter(e=>daysUntil(e.rep)<=30).length})</div>
+    <div class="filter-chip ${epiFilter==='ok'?'active':''}" onclick="setFilter('epi','ok',this)">Em dia (${list.filter(e=>daysUntil(e.rep)>30).length})</div>
+  </div>`;
+  if(!filtered.length) { el.innerHTML = html + `<div class="empty"><i class="ti ti-shield-check"></i><p>Nenhum EPI encontrado.</p></div>`; return; }
+  html += `<div class="card"><div style="padding:4px 0">`;
+  filtered.forEach(e => {
+    const s = statusOf(e.rep);
+    html += `<div class="list-item">
+      <div class="list-item-left">
+        <div class="avatar ${avColor(getName(e.funcId))}">${initials(getName(e.funcId))}</div>
+        <div style="min-width:0">
+          <div class="list-name">${getName(e.funcId)}</div>
+          <div class="list-sub">${e.tipo}${e.ca?' · CA '+e.ca:''} · Qtd: ${e.qtd||1}</div>
+          <div class="list-sub">Reposição: ${fmtD(e.rep)}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="badge ${s.cls}">${s.txt}</span>
+        <button class="icon-btn danger" onclick="deleteEpi('${e.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  el.innerHTML = html;
+}
+
+// ── TREINAMENTOS ──
+function saveTrein() {
+  const id = document.getElementById('trein-id').value;
+  const funcId = document.getElementById('trein-func').value;
+  if(!funcId) { toast('Selecione um funcionário'); return; }
+  const obj = { id:id||uid(), funcId, tipo:document.getElementById('trein-tipo').value,
+    data:document.getElementById('trein-data').value, val:document.getElementById('trein-val').value,
+    ch:document.getElementById('trein-ch').value };
+  const list = load(K.t); const i = list.findIndex(x=>x.id===id);
+  if(i>=0) list[i]=obj; else list.push(obj);
+  save(K.t, list); closeModal('modal-trein');
+  clearForm(['trein-id','trein-data','trein-val','trein-ch']);
+  renderMais(); toast('Treinamento registrado!');
+}
+function deleteTrein(id) { if(!confirm('Remover?'))return; save(K.t,load(K.t).filter(x=>x.id!==id)); renderMais(); }
+
+// ── MAIS (Treinamentos + Relatórios) ──
+function renderMais() {
+  const funcs = load(K.f); const treins = load(K.t);
+  const getName = id => { const f=funcs.find(x=>x.id===id); return f?f.nome:'?'; };
+  const el = document.getElementById('page-mais');
+  let html = `<div class="section-title"><i class="ti ti-school"></i>Treinamentos / NRs</div>`;
+  html += `<div class="filter-row" style="padding:0 0 12px">
+    <div class="filter-chip ${treinFilter==='todos'?'active':''}" onclick="setFilter('trein','todos',this)">Todos (${treins.length})</div>
+    <div class="filter-chip ${treinFilter==='vencido'?'active':''}" onclick="setFilter('trein','vencido',this)">Vencidos (${treins.filter(t=>daysUntil(t.val)<0).length})</div>
+    <div class="filter-chip ${treinFilter==='alerta'?'active':''}" onclick="setFilter('trein','alerta',this)">A vencer (${treins.filter(t=>{const d=daysUntil(t.val);return d>=0&&d<=30;}).length})</div>
+    <div class="filter-chip ${treinFilter==='ok'?'active':''}" onclick="setFilter('trein','ok',this)">Em dia (${treins.filter(t=>daysUntil(t.val)>30).length})</div>
+  </div>`;
+  let filtered = treins;
+  if(treinFilter==='vencido') filtered = treins.filter(t=>daysUntil(t.val)<0);
+  else if(treinFilter==='alerta') filtered = treins.filter(t=>{const d=daysUntil(t.val);return d>=0&&d<=30;});
+  else if(treinFilter==='ok') filtered = treins.filter(t=>daysUntil(t.val)>30);
+  if(!filtered.length) {
+    html += `<div class="empty"><i class="ti ti-school"></i><p>Nenhum treinamento encontrado.</p></div>`;
+  } else {
+    html += `<div class="card"><div style="padding:4px 0">`;
+    filtered.forEach(t => {
+      const s = statusOf(t.val);
+      html += `<div class="list-item">
+        <div class="list-item-left">
+          <div class="avatar ${avColor(getName(t.funcId))}">${initials(getName(t.funcId))}</div>
+          <div style="min-width:0">
+            <div class="list-name">${getName(t.funcId)}</div>
+            <div class="list-sub">${t.tipo}${t.ch?' · '+t.ch:''}</div>
+            <div class="list-sub">Validade: ${fmtD(t.val)}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge ${s.cls}">${s.txt}</span>
+          <button class="icon-btn danger" onclick="deleteTrein('${t.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+  // EXPORT
+  html += `<div class="section-title" style="margin-top:8px"><i class="ti ti-table-export"></i>Exportar para Google Sheets</div>`;
+  html += `<div class="export-card">
+    <div class="export-title">Como exportar seus dados</div>
+    <div class="export-desc">O app gera um arquivo CSV que você importa no Google Sheets em segundos.</div>
+    <div class="export-steps">
+      <div class="export-step"><span class="export-step-num">1.</span>Toque no botão abaixo para baixar o CSV</div>
+      <div class="export-step"><span class="export-step-num">2.</span>Abra o Google Sheets no seu celular ou PC</div>
+      <div class="export-step"><span class="export-step-num">3.</span>Arquivo → Importar → selecione o CSV</div>
+      <div class="export-step"><span class="export-step-num">4.</span>Escolha "Substituir planilha" e confirme</div>
+    </div>
+    <button class="btn export" onclick="exportFuncionarios()"><i class="ti ti-download"></i>Baixar funcionários (CSV)</button>
+  </div>
+  <div class="export-card">
+    <button class="btn export" onclick="exportExames()" style="margin-bottom:10px"><i class="ti ti-download"></i>Baixar exames (CSV)</button>
+    <button class="btn export" onclick="exportEpi()" style="margin-bottom:10px"><i class="ti ti-download"></i>Baixar EPIs (CSV)</button>
+    <button class="btn export" onclick="exportTrein()"><i class="ti ti-download"></i>Baixar treinamentos (CSV)</button>
+  </div>`;
+  el.innerHTML = html;
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const funcs = load(K.f); const exames = load(K.e); const epis = load(K.p); const treins = load(K.t);
+  const getName = id => { const f=funcs.find(x=>x.id===id); return f?f.nome:'?'; };
+  const exVenc = exames.filter(e=>daysUntil(e.val)<0).length;
+  const exAlert = exames.filter(e=>{const d=daysUntil(e.val);return d>=0&&d<=30;}).length;
+  const epiPend = epis.filter(e=>daysUntil(e.rep)<=30).length;
+  const trVenc = treins.filter(t=>daysUntil(t.val)<0).length;
+  let html = '';
+  if(exVenc>0||trVenc>0) html += `<div class="alert-banner"><i class="ti ti-alert-circle"></i><div class="alert-banner-text">${exVenc} exame(s) vencido(s) e ${trVenc} treinamento(s) vencido(s) precisam de atenção.</div></div>`;
+  if(epiPend>0) html += `<div class="alert-banner amber"><i class="ti ti-clock"></i><div class="alert-banner-text">${epiPend} EPI(s) com reposição pendente ou próxima.</div></div>`;
+  html += `<div class="metrics-grid">
+    <div class="metric"><div class="metric-label">Funcionários</div><div class="metric-val green">${funcs.length}</div><div class="metric-sub">cadastrados</div></div>
+    <div class="metric"><div class="metric-label">Exames vencidos</div><div class="metric-val ${exVenc>0?'red':'green'}">${exVenc}</div><div class="metric-sub">${exAlert} a vencer em 30d</div></div>
+    <div class="metric"><div class="metric-label">EPI pendente</div><div class="metric-val ${epiPend>0?'amber':'green'}">${epiPend}</div><div class="metric-sub">reposição até 30d</div></div>
+    <div class="metric"><div class="metric-label">Treinamentos</div><div class="metric-val ${trVenc>0?'red':'green'}">${trVenc}</div><div class="metric-sub">vencidos</div></div>
+  </div>`;
+  const urgentes = [
+    ...exames.filter(e=>daysUntil(e.val)<=30).map(e=>({...e,modulo:'Exame',valStr:e.val,d:daysUntil(e.val),nome:getName(e.funcId)})),
+    ...epis.filter(e=>daysUntil(e.rep)<=30).map(e=>({...e,modulo:'EPI',valStr:e.rep,d:daysUntil(e.rep),nome:getName(e.funcId)})),
+    ...treins.filter(t=>daysUntil(t.val)<=30).map(t=>({...t,modulo:'Treinamento',valStr:t.val,d:daysUntil(t.val),nome:getName(t.funcId)})),
+  ].sort((a,b)=>a.d-b.d);
+  html += `<div class="section-title"><i class="ti ti-bell"></i>Alertas recentes</div>`;
+  if(!urgentes.length) {
+    html += `<div class="card"><div style="padding:24px;text-align:center;color:#999;font-size:13px"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin-bottom:8px;color:#40916c"></i>Tudo em ordem!</div></div>`;
+  } else {
+    html += `<div class="card"><div style="padding:4px 0">`;
+    urgentes.slice(0,6).forEach(u => {
+      const s = statusOf(u.valStr);
+      html += `<div class="alert-item">
+        <div class="alert-dot ${s.cls}"><i class="ti ${s.cls==='red'?'ti-alert-circle':'ti-clock'}"></i></div>
+        <div>
+          <div class="alert-msg"><strong>${u.nome}</strong> — ${u.tipo||u.modulo}</div>
+          <div class="alert-type">${u.modulo} · ${fmtD(u.valStr)} · <span class="badge ${s.cls}" style="padding:1px 6px;font-size:10px">${s.txt}</span></div>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+  document.getElementById('page-dashboard').innerHTML = html;
+}
+
+// ── ALERTS BELL ──
+function updateBell() {
+  const exames = load(K.e); const epis = load(K.p); const treins = load(K.t);
+  const count = exames.filter(e=>daysUntil(e.val)<=30).length + epis.filter(e=>daysUntil(e.rep)<=30).length + treins.filter(t=>daysUntil(t.val)<=30).length;
+  document.getElementById('bell-count').textContent = count > 9 ? '9+' : count;
+  document.getElementById('bell-count').style.display = count ? 'flex' : 'none';
+}
+
+// ── FILTERS ──
+function setFilter(tipo, val, btn) {
+  if(tipo==='exame') { exameFilter=val; renderExames(); }
+  else if(tipo==='epi') { epiFilter=val; renderEpi(); }
+  else if(tipo==='trein') { treinFilter=val; renderMais(); }
+}
+
+// ── HELPERS ──
+function clearForm(ids) { ids.forEach(id => { document.getElementById(id).value=''; }); }
+
+// ── EXPORT CSV ──
+function csvDownload(filename, rows) {
+  const bom = '\uFEFF';
+  const csv = bom + rows.map(r => r.map(c => `"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = filename; a.click();
+  toast('CSV baixado!');
+}
+
+function exportFuncionarios() {
+  const list = load(K.f);
+  const rows = [['Matrícula','Nome','Cargo','Setor','Admissão','Situação']];
+  list.forEach(f => rows.push([f.mat, f.nome, f.cargo, f.setor, fmtD(f.admissao), f.sit]));
+  csvDownload('FAV_funcionarios.csv', rows);
+}
+function exportExames() {
+  const funcs = load(K.f); const list = load(K.e);
+  const getName = id => { const f=funcs.find(x=>x.id===id); return f?f.nome:'?'; };
+  const rows = [['Funcionário','Tipo','Data Realização','Validade','Resultado','Médico/CRM','Status']];
+  list.forEach(e => {
+    const s = statusOf(e.val);
+    rows.push([getName(e.funcId), e.tipo, fmtD(e.data), fmtD(e.val), e.resultado, e.medico, s.txt]);
+  });
+  csvDownload('FAV_exames.csv', rows);
+}
+function exportEpi() {
+  const funcs = load(K.f); const list = load(K.p);
+  const getName = id => { const f=funcs.find(x=>x.id===id); return f?f.nome:'?'; };
+  const rows = [['Funcionário','EPI','CA','Qtd','Data Entrega','Próx. Reposição','Status']];
+  list.forEach(e => {
+    const s = statusOf(e.rep);
+    rows.push([getName(e.funcId), e.tipo, e.ca, e.qtd, fmtD(e.data), fmtD(e.rep), s.txt]);
+  });
+  csvDownload('FAV_epi.csv', rows);
+}
+function exportTrein() {
+  const funcs = load(K.f); const list = load(K.t);
+  const getName = id => { const f=funcs.find(x=>x.id===id); return f?f.nome:'?'; };
+  const rows = [['Funcionário','Treinamento','C.H.','Data Realização','Validade','Status']];
+  list.forEach(t => {
+    const s = statusOf(t.val);
+    rows.push([getName(t.funcId), t.tipo, t.ch, fmtD(t.data), fmtD(t.val), s.txt]);
+  });
+  csvDownload('FAV_treinamentos.csv', rows);
+}
+
+// ── INIT ──
+document.getElementById('fab-btn').style.display = 'none';
+renderDashboard();
+updateBell();
+</script>
+</body>
+</html>

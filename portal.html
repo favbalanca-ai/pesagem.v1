@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fazenda Água Viva">
+<meta name="theme-color" content="#1a3a2a">
+<title>Fazenda Água Viva — Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root {
+  --green-dark: #1a3a2a;
+  --green-mid: #2d6a4f;
+  --green-light: #40916c;
+  --green-pale: #d8f3dc;
+  --amber-pale: #fef3c7;
+  --blue-pale: #dbeafe;
+  --red-pale: #fee2e2;
+  --text: #1a1a1a;
+  --text-2: #4b5563;
+  --text-3: #9ca3af;
+  --bg: #f0f4f0;
+  --card: #fff;
+  --border: #e0e8e2;
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.header {
+  background: var(--green-dark);
+  padding: 48px 20px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.header-bg {
+  position: absolute; top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: rgba(64,145,108,0.18);
+  border-radius: 50%;
+}
+.header-bg2 {
+  position: absolute; bottom: -60px; left: -30px;
+  width: 140px; height: 140px;
+  background: rgba(64,145,108,0.1);
+  border-radius: 50%;
+}
+.header-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; position: relative; }
+.logo-box {
+  width: 48px; height: 48px; background: var(--green-light);
+  border-radius: 14px; display: flex; align-items: center; justify-content: center;
+}
+.logo-box i { font-size: 26px; color: #fff; }
+.logo-text h1 { font-family: 'Sora', sans-serif; font-size: 17px; font-weight: 700; color: #fff; }
+.logo-text p { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+.header-date { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 4px; position: relative; }
+.header-greeting { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; color: #fff; position: relative; }
+
+.body { padding: 20px 16px 40px; }
+
+.section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-3);
+  letter-spacing: 0.6px; text-transform: uppercase;
+  margin-bottom: 12px; margin-top: 4px;
+}
+
+.app-card {
+  background: var(--card); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 16px;
+  margin-bottom: 12px; display: flex; align-items: center;
+  gap: 14px; cursor: pointer; text-decoration: none;
+  transition: border-color 0.15s;
+}
+.app-card:active { background: #f9fafb; }
+.app-icon {
+  width: 56px; height: 56px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.app-icon i { font-size: 28px; }
+.app-icon.green { background: var(--green-pale); }
+.app-icon.green i { color: var(--green-dark); }
+.app-icon.blue { background: var(--blue-pale); }
+.app-icon.blue i { color: #1e40af; }
+.app-info { flex: 1; min-width: 0; }
+.app-name { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+.app-desc { font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.4; }
+.app-tag { display: inline-flex; align-items: center; gap: 4px; margin-top: 7px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.app-tag.green { background: var(--green-pale); color: var(--green-dark); }
+.app-tag.red { background: var(--red-pale); color: #991b1b; }
+.app-tag i { font-size: 11px; }
+.app-arrow { color: #d1d5db; font-size: 20px; flex-shrink: 0; }
+
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.summary-card {
+  background: var(--card); border-radius: 12px; border: 1px solid var(--border);
+  padding: 14px; text-align: center;
+}
+.summary-val { font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700; }
+.summary-val.green { color: var(--green-mid); }
+.summary-val.red { color: #c1440e; }
+.summary-val.amber { color: #d97706; }
+.summary-lbl { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.3; }
+
+.footer { text-align: center; margin-top: 28px; }
+.footer p { font-size: 11px; color: var(--text-3); }
+.footer a { color: var(--green-mid); text-decoration: none; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-bg"></div>
+  <div class="header-bg2"></div>
+  <div class="header-logo">
+    <div class="logo-box"><i class="ti ti-leaf"></i></div>
+    <div class="logo-text">
+      <h1>Fazenda Água Viva</h1>
+      <p>Portal de gestão</p>
+    </div>
+  </div>
+  <div class="header-date" id="header-date"></div>
+  <div class="header-greeting" id="header-greeting">Bem-vindo</div>
+</div>
+
+<div class="body">
+
+  <div class="section-label">Aplicativos</div>
+
+  <a class="app-card" href="index.html">
+    <div class="app-icon green"><i class="ti ti-weight"></i></div>
+    <div class="app-info">
+      <div class="app-name">Pesagem</div>
+      <div class="app-desc">Controle de peso do gado e registros de pesagem</div>
+      <span class="app-tag green"><i class="ti ti-circle-check"></i>Ativo</span>
+    </div>
+    <i class="ti ti-chevron-right app-arrow"></i>
+  </a>
+
+  <a class="app-card" href="fazenda_agua_viva_sst.html">
+    <div class="app-icon blue"><i class="ti ti-shield-check"></i></div>
+    <div class="app-info">
+      <div class="app-name">SST</div>
+      <div class="app-desc">Saúde, segurança, exames médicos e EPIs dos funcionários</div>
+      <span class="app-tag" id="sst-tag"><i class="ti ti-circle-check"></i>Ativo</span>
+    </div>
+    <i class="ti ti-chevron-right app-arrow"></i>
+  </a>
+
+  <div class="divider"></div>
+
+  <div class="section-label">Resumo SST</div>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-val green" id="s-func">—</div>
+      <div class="summary-lbl">Funcionários</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val" id="s-exame">—</div>
+      <div class="summary-lbl">Exames vencidos</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val" id="s-epi">—</div>
+      <div class="summary-lbl">EPI pendente</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-val" id="s-trein">—</div>
+      <div class="summary-lbl">Trein. vencidos</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>favbalanca-ai.github.io/pesagem.v1 &nbsp;·&nbsp; <a href="portal.html">Portal</a></p>
+  </div>
+
+</div>
+
+<script>
+// Data e saudação
+const now = new Date();
+const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+document.getElementById('header-date').textContent = `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]}`;
+const h = now.getHours();
+const saud = h < 12 ? 'Bom dia!' : h < 18 ? 'Boa tarde!' : 'Boa noite!';
+document.getElementById('header-greeting').textContent = saud;
+
+// Lê dados SST do localStorage (mesmas chaves do app SST)
+function load(k) { try { return JSON.parse(localStorage.getItem(k)||'[]'); } catch { return []; } }
+const today = new Date().toISOString().split('T')[0];
+const daysUntil = d => d ? Math.ceil((new Date(d) - new Date(today)) / 86400000) : 9999;
+
+const funcs  = load('fav-func');
+const exames = load('fav-exame');
+const epis   = load('fav-epi');
+const treins = load('fav-trein');
+
+const exVenc  = exames.filter(e => daysUntil(e.val) < 0).length;
+const epiPend = epis.filter(e => daysUntil(e.rep) <= 30).length;
+const trVenc  = treins.filter(t => daysUntil(t.val) < 0).length;
+const alertas = exVenc + epiPend + trVenc;
+
+// Preenche resumo
+document.getElementById('s-func').textContent  = funcs.length;
+const elEx = document.getElementById('s-exame');
+elEx.textContent = exVenc;
+elEx.className = 'summary-val ' + (exVenc > 0 ? 'red' : 'green');
+const elEpi = document.getElementById('s-epi');
+elEpi.textContent = epiPend;
+elEpi.className = 'summary-val ' + (epiPend > 0 ? 'amber' : 'green');
+const elTr = document.getElementById('s-trein');
+elTr.textContent = trVenc;
+elTr.className = 'summary-val ' + (trVenc > 0 ? 'red' : 'green');
+
+// Badge SST
+const tag = document.getElementById('sst-tag');
+if (alertas > 0) {
+  tag.className = 'app-tag red';
+  tag.innerHTML = `<i class="ti ti-alert-circle"></i>${alertas} alerta${alertas > 1 ? 's' : ''}`;
+} else {
+  tag.className = 'app-tag green';
+  tag.innerHTML = `<i class="ti ti-circle-check"></i>Em dia`;
+}
+</script>
+</body>
+</html>
