@@ -342,7 +342,7 @@ function showPg(p) {
   const ni = document.getElementById('ni-'+p); if (ni) ni.classList.add('on');
   cur = p;
   const fab = document.getElementById('fab');
-  fab.style.display = ['func','exam','epi','mais'].includes(p) ? 'flex' : 'none';
+  fab.style.display = ['exam','epi','mais'].includes(p) ? 'flex' : 'none';
   if (p==='dash') { renderDash(); pullSilent(); return; }
   if (p==='func') { pull('Funcionários').then(() => renderFunc('')); return; }
   if (p==='exam') { pull('Exames').then(() => renderExam()); return; }
@@ -381,10 +381,9 @@ function openMo(id) {
 function closeMo(id) { document.getElementById(id).classList.remove('on'); }
 function clr(ids) { ids.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; }); }
 function openFab() {
-  if (cur==='func') openMo('mo-f');
-  else if (cur==='exam') openMo('mo-e');
+  if (cur==='exam') openMo('mo-e');
   else if (cur==='epi')  openMo('mo-p');
-  else openMo('mo-t');
+  else if (cur==='mais') openMo('mo-t');
 }
 
 // ── FUNCIONÁRIOS ──
@@ -433,17 +432,28 @@ function delF(id) {
   const list = ld(K.F).filter(x=>x.id!==id);
   sv(K.F, list); renderFunc(''); push('Funcionários', list); tst('Removido.');
 }
+let funcUnidade = 'Todas';
 function renderFunc(q) {
-  const list = ld(K.F).filter(f => !q || f.nome.toLowerCase().includes(q.toLowerCase()) || (f.setor||'').toLowerCase().includes(q.toLowerCase()));
+  const all = ld(K.F);
+  // Lista de unidades únicas
+  const unidades = ['Todas', ...new Set(all.map(f=>f.unidade||'').filter(u=>u))].sort();
+  // Filtra por unidade e busca
+  const list = all.filter(f => {
+    const matchU = funcUnidade==='Todas' || (f.unidade||'')=== funcUnidade;
+    const matchQ = !q || f.nome.toLowerCase().includes(q.toLowerCase()) || (f.setor||'').toLowerCase().includes(q.toLowerCase()) || (f.cargo||'').toLowerCase().includes(q.toLowerCase());
+    return matchU && matchQ;
+  });
   const el = document.getElementById('pg-func');
-  let h = `<div class="si"><i class="ti ti-search sico"></i><input class="sinp" placeholder="Buscar nome ou setor..." oninput="renderFunc(this.value)" value="${q}"></div>`;
-  if (!list.length) { el.innerHTML = h + `<div class="emp"><i class="ti ti-users"></i><p>Nenhum funcionário.<br>Toque + para adicionar.</p></div>`; return; }
+  let h = `<div class="si"><i class="ti ti-search sico"></i><input class="sinp" placeholder="Buscar nome, cargo ou setor..." oninput="renderFunc(this.value)" value="${q||''}"></div>`;
+  // Filtro por unidade
+  h += `<div class="fr">` + unidades.map(u => `<div class="fc ${funcUnidade===u?'on':''}" onclick="funcUnidade='${u}';renderFunc('')">${u}</div>`).join('') + `</div>`;
+  if (!list.length) { el.innerHTML = h + `<div class="emp"><i class="ti ti-users"></i><p>Nenhum funcionário encontrado.</p></div>`; return; }
   h += `<div class="card"><div style="padding:4px 0">`;
   list.forEach(f => {
-    const sb = f.sit==='Ativo'?'bdg':f.sit==='Férias'?'bdb':'bda';
-    h += `<div class="li"><div class="lil"><div class="av ${avc(f.nome)}">${ini(f.nome)}</div><div style="min-width:0"><div class="ln">${f.nome}</div><div class="ls">${f.cargo||'—'} · ${f.setor||'—'}${f.whats?` · <i class="ti ti-brand-whatsapp" style="font-size:11px;color:#25d366"></i>`:''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${sb}">${f.sit||'Ativo'}</span><div class="lac"><button class="ib" onclick="editF('${f.id}')"><i class="ti ti-edit"></i></button><button class="ib ibd" onclick="delF('${f.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
+    h += `<div class="li"><div class="lil"><div class="av ${avc(f.nome)}">${ini(f.nome)}</div><div style="min-width:0"><div class="ln">${f.nome}</div><div class="ls">${f.cargo||'—'} · ${f.setor||'—'}</div><div class="ls" style="display:flex;align-items:center;gap:6px"><span style="background:#f0f4f0;padding:1px 7px;border-radius:10px;font-size:10px">${f.unidade||'—'}</span>${f.whats?`<i class="ti ti-brand-whatsapp" style="font-size:12px;color:#25d366"></i>`:''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge bdg">Ativo</span></div></div>`;
   });
-  h += `</div></div>`; el.innerHTML = h;
+  h += `</div></div><div style="text-align:center;padding:8px;font-size:11px;color:var(--t3)">${list.length} funcionário(s) · Dados da planilha mestre</div>`;
+  el.innerHTML = h;
 }
 
 // ── EXAMES ──
