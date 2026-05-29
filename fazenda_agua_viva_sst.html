@@ -285,7 +285,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <script>
 const K={f:'fav-func',e:'fav-exame',p:'fav-epi',t:'fav-trein',cfg:'fav-config'};
-const SHEETS_URL='https://script.google.com/macros/s/AKfycbz9ZWJSx9zIQksxWFhpf_MORrRvUG8yi6eK3VR9B4cmSGK8shP3b9z8sGAo1jGZWmgV/exec';
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbzh17ZdROtZ_I-mYJrs1V_WIy9wNyTcB1vgkMIeEHh-xZh9tkv-HmXhpLmOjYJvbEY/exec';
 
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
 const loadObj=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')}catch{return{}}};
@@ -336,10 +336,29 @@ async function syncSheets(sheet,data){
   const cfg=getConfig();
   const url=cfg.sheetsUrl||SHEETS_URL;
   try{
-    // Usa GET com parâmetro para evitar problema de CORS com Apps Script
-    const payload=JSON.stringify({sheet,data});
-    const encoded=encodeURIComponent(payload);
-    await fetch(`${url}?data=${encoded}`,{method:'GET',mode:'no-cors'});
+    // Usa iframe oculto para POST sem CORS — único método confiável com Apps Script
+    const form=document.createElement('form');
+    form.method='POST';
+    form.action=url;
+    form.target='sync-frame';
+    form.style.display='none';
+    const input=document.createElement('input');
+    input.type='hidden';
+    input.name='payload';
+    input.value=JSON.stringify({sheet,data});
+    form.appendChild(input);
+    let frame=document.getElementById('sync-frame');
+    if(!frame){
+      frame=document.createElement('iframe');
+      frame.name='sync-frame';
+      frame.id='sync-frame';
+      frame.style.display='none';
+      document.body.appendChild(frame);
+    }
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(()=>form.remove(),3000);
+    console.log('Sync enviado:',sheet,data.length,'registros');
   }catch(e){console.warn('Sheets sync error',e)}
 }
 
