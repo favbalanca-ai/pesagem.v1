@@ -336,29 +336,25 @@ async function syncSheets(sheet,data){
   const cfg=getConfig();
   const url=cfg.sheetsUrl||SHEETS_URL;
   try{
-    // Usa iframe oculto para POST sem CORS — único método confiável com Apps Script
-    const form=document.createElement('form');
-    form.method='POST';
-    form.action=url;
-    form.target='sync-frame';
-    form.style.display='none';
-    const input=document.createElement('input');
-    input.type='hidden';
-    input.name='payload';
-    input.value=JSON.stringify({sheet,data});
-    form.appendChild(input);
-    let frame=document.getElementById('sync-frame');
-    if(!frame){
-      frame=document.createElement('iframe');
-      frame.name='sync-frame';
-      frame.id='sync-frame';
-      frame.style.display='none';
-      document.body.appendChild(frame);
-    }
-    document.body.appendChild(form);
-    form.submit();
-    setTimeout(()=>form.remove(),3000);
-    console.log('Sync enviado:',sheet,data.length,'registros');
+    const payload=JSON.stringify({sheet,data});
+    // Tenta fetch POST com JSON (funciona quando Apps Script aceita CORS)
+    try{
+      await fetch(url,{
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:payload
+      });
+    }catch(e1){console.warn('fetch POST falhou',e1);}
+    // Também envia via GET com parâmetro como backup
+    try{
+      const enc=encodeURIComponent(payload);
+      if(enc.length<2000){
+        const img=new Image();
+        img.src=url+'?data='+enc+'&t='+Date.now();
+      }
+    }catch(e2){console.warn('GET backup falhou',e2);}
+    console.log('[Sync]',sheet,data.length,'registros enviados');
   }catch(e){console.warn('Sheets sync error',e)}
 }
 
