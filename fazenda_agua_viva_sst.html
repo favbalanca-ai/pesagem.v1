@@ -339,20 +339,42 @@ function pushSheet(sheet,data){
   fetch(fullUrl,{method:'GET',mode:'no-cors'}).catch(()=>{});
 }
 
-// Busca dados da planilha → local
+// Busca dados da planilha → local (via JSONP para contornar CORS)
 async function pullSheet(sheet){
   const url=getSheetsUrl();
-  const fullUrl=`${url}?action=get&sheet=${encodeURIComponent(sheet)}&t=${Date.now()}`;
-  try{
-    const resp=await fetch(fullUrl,{method:'GET'});
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    const json=await resp.json();
-    if(json.status==='ok'&&Array.isArray(json.data)){
-      save(KEY_MAP[sheet],json.data);
-      return json.data;
-    }
-  }catch(e){console.warn('[Pull]',sheet,e.message)}
-  return null;
+  return new Promise((resolve)=>{
+    const cbName='_cb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    const timeout=setTimeout(()=>{
+      delete window[cbName];
+      script.remove();
+      console.warn('[Pull] timeout:',sheet);
+      resolve(null);
+    },10000);
+    window[cbName]=function(json){
+      clearTimeout(timeout);
+      delete window[cbName];
+      script.remove();
+      if(json&&json.status==='ok'&&Array.isArray(json.data)){
+        save(KEY_MAP[sheet],json.data);
+        console.log('[Pull] ok:',sheet,json.data.length,'registros');
+        resolve(json.data);
+      } else {
+        console.warn('[Pull] resposta inválida:',sheet,json);
+        resolve(null);
+      }
+    };
+    const src=`${url}?action=get&sheet=${encodeURIComponent(sheet)}&callback=${cbName}&t=${Date.now()}`;
+    script.src=src;
+    script.onerror=()=>{
+      clearTimeout(timeout);
+      delete window[cbName];
+      script.remove();
+      console.warn('[Pull] erro script:',sheet);
+      resolve(null);
+    };
+    document.head.appendChild(script);
+  });
 }
 
 // Sincronização completa (pull de todas as abas)
