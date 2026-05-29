@@ -2,714 +2,604 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a3a2a">
 <title>SST — Fazenda Água Viva</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
-:root{--gd:#1a3a2a;--gm:#2d6a4f;--gl:#40916c;--gp:#d8f3dc;--ap:#fef3c7;--bp:#dbeafe;--rp:#fee2e2;--text:#1a1a1a;--t2:#4b5563;--t3:#9ca3af;--bg:#f0f4f0;--card:#fff;--bdr:#e0e8e2;--r:14px}
+:root{--gd:#1a3a2a;--gm:#2d6a4f;--gl:#40916c;--gp:#d8f3dc;--ap:#fef3c7;--bp:#dbeafe;--rp:#fee2e2;--tx:#1a1a1a;--t2:#4b5563;--t3:#9ca3af;--bg:#f0f4f0;--cd:#fff;--bd:#e0e8e2;--r:14px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px}
-.header{background:var(--gd);padding:16px 16px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.header-left{display:flex;align-items:center;gap:10px}
-.hlogo{width:36px;height:36px;background:var(--gl);border-radius:10px;display:flex;align-items:center;justify-content:center}
-.hlogo i{font-size:20px;color:#fff}
-.htitle h1{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:#fff}
-.htitle p{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
-.header-right{display:flex;align-items:center;gap:10px}
-.sync-btn{background:rgba(255,255,255,.12);border:none;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
-.sync-btn i{font-size:18px}
-.sync-btn.spinning i{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.hbell{position:relative;cursor:pointer}
-.hbell i{font-size:22px;color:rgba(255,255,255,.8)}
-.bell-b{position:absolute;top:-4px;right:-4px;background:#c1440e;color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bdr);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;gap:3px;cursor:pointer;color:var(--t3);font-size:10px;border:none;background:none}
-.nav-item i{font-size:22px}
-.nav-item.active{color:var(--gm)}
-.page{display:none;padding:14px 14px 0}
-.page.active{display:block}
-.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.metric{background:var(--card);border-radius:var(--r);padding:14px;border:1px solid var(--bdr)}
-.metric-label{font-size:11px;color:var(--t3);margin-bottom:6px;font-weight:500}
-.metric-val{font-size:28px;font-weight:700;font-family:'Sora',sans-serif}
-.metric-val.green{color:var(--gm)}.metric-val.red{color:#c1440e}.metric-val.amber{color:#d97706}
-.metric-sub{font-size:11px;color:var(--t3);margin-top:2px}
-.alert-banner{border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;border:1px solid}
-.alert-banner.red{background:var(--rp);border-color:#fca5a5}
-.alert-banner.amber{background:var(--ap);border-color:#fcd34d}
-.alert-banner i{font-size:18px;flex-shrink:0;margin-top:1px}
-.alert-banner.red i,.alert-banner.red .abt{color:#991b1b}
-.alert-banner.amber i,.alert-banner.amber .abt{color:#92400e}
-.abt{font-size:12px;line-height:1.4}
-.card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);margin-bottom:12px;overflow:hidden}
-.sec-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--t2);margin-bottom:10px;margin-top:4px;display:flex;align-items:center;gap:6px}
-.sec-title i{font-size:16px;color:var(--gm)}
-.list-item{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.list-item:last-child{border-bottom:none}
-.li-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:80px}
+.hdr{background:var(--gd);padding:16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.hico{width:36px;height:36px;background:var(--gl);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.hico i{font-size:20px;color:#fff}
+.htx h1{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:#fff}
+.htx p{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.sbtn{width:34px;height:34px;background:rgba(255,255,255,.12);border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+.sbtn i{font-size:18px}
+.sbtn.spin i{animation:rot 1s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.bel{position:relative;cursor:pointer}
+.bel i{font-size:22px;color:rgba(255,255,255,.8)}
+.bel-b{position:absolute;top:-4px;right:-4px;background:#c1440e;color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;display:none}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bd);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;gap:3px;cursor:pointer;color:var(--t3);font-size:10px;border:none;background:none}
+.ni i{font-size:22px}
+.ni.on{color:var(--gm)}
+.pg{display:none;padding:14px 14px 0}
+.pg.on{display:block}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.mc{background:var(--cd);border-radius:var(--r);padding:14px;border:1px solid var(--bd)}
+.ml{font-size:11px;color:var(--t3);margin-bottom:6px;font-weight:500}
+.mv{font-size:28px;font-weight:700;font-family:'Sora',sans-serif}
+.mv.g{color:var(--gm)}.mv.r{color:#c1440e}.mv.a{color:#d97706}
+.ms{font-size:11px;color:var(--t3);margin-top:2px}
+.bnr{border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;border:1px solid}
+.bnr.r{background:var(--rp);border-color:#fca5a5}.bnr.r i,.bnr.r .bt{color:#991b1b}
+.bnr.a{background:var(--ap);border-color:#fcd34d}.bnr.a i,.bnr.a .bt{color:#92400e}
+.bnr i{font-size:18px;flex-shrink:0;margin-top:1px}.bt{font-size:12px;line-height:1.4}
+.card{background:var(--cd);border-radius:var(--r);border:1px solid var(--bd);margin-bottom:12px;overflow:hidden}
+.stl{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--t2);margin-bottom:10px;margin-top:4px;display:flex;align-items:center;gap:6px}
+.stl i{font-size:16px;color:var(--gm)}
+.li{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.li:last-child{border-bottom:none}
+.li-l{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
 .av-g{background:var(--gp);color:var(--gd)}.av-b{background:var(--bp);color:#1e40af}.av-a{background:var(--ap);color:#92400e}
-.li-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.li-sub{font-size:11px;color:var(--t3);margin-top:1px}
-.li-actions{display:flex;gap:6px;flex-shrink:0}
-.icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--bdr);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)}
-.icon-btn i{font-size:16px}
-.icon-btn.danger{border-color:#fca5a5;color:#c1440e}
-.icon-btn.zap{border-color:#25d366;color:#25d366}
+.ln{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ls{font-size:11px;color:var(--t3);margin-top:1px}
+.lac{display:flex;gap:6px;flex-shrink:0}
+.ib{width:32px;height:32px;border-radius:8px;border:1px solid var(--bd);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2)}
+.ib i{font-size:16px}
+.ib.d{border-color:#fca5a5;color:#c1440e}
+.ib.z{border-color:#25d366;color:#25d366}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
-.badge.green{background:var(--gp);color:var(--gd)}.badge.red{background:var(--rp);color:#991b1b}.badge.amber{background:var(--ap);color:#92400e}.badge.blue{background:var(--bp);color:#1e40af}
+.badge.g{background:var(--gp);color:var(--gd)}.badge.r{background:var(--rp);color:#991b1b}
+.badge.a{background:var(--ap);color:#92400e}.badge.b{background:var(--bp);color:#1e40af}
 .btn{padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn.primary{background:var(--gm);color:#fff;width:100%}
-.btn.cancel{background:var(--bg);color:var(--t2)}
+.btn.p{background:var(--gm);color:#fff;width:100%}
+.btn.c{background:var(--bg);color:var(--t2)}
 .fab{position:fixed;bottom:90px;right:18px;width:54px;height:54px;border-radius:50%;background:var(--gm);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(45,106,79,.35);z-index:99}
 .fab i{font-size:26px}
-.filter-row{display:flex;gap:6px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none}
-.filter-row::-webkit-scrollbar{display:none}
-.filter-chip{padding:6px 14px;border-radius:20px;font-size:12px;border:1px solid var(--bdr);background:#fff;color:var(--t2);cursor:pointer;white-space:nowrap;flex-shrink:0}
-.filter-chip.active{background:var(--gd);color:#fff;border-color:var(--gd)}
-.search-wrap{padding:0 0 10px}
-.search-inner{position:relative}
-.search-input{width:100%;padding:10px 14px 10px 38px;border:1px solid var(--bdr);border-radius:10px;font-size:14px;background:#fff;color:var(--text)}
-.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:18px}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
-.modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:22px 22px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding:20px 18px 32px}
-.modal-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 18px}
-.modal-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;margin-bottom:18px}
-.form-group{margin-bottom:14px}
-.form-label{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px;display:block}
-.form-input{width:100%;padding:11px 13px;border:1px solid var(--bdr);border-radius:10px;font-size:14px;color:var(--text);background:#fff;appearance:none}
-.form-input:focus{outline:none;border-color:var(--gm)}
-.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.modal-footer{display:flex;gap:10px;margin-top:20px}
-.modal-footer .btn{flex:1}
-.alert-item{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;gap:10px}
-.alert-item:last-child{border-bottom:none}
-.alert-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.alert-dot.red{background:var(--rp)}.alert-dot.amber{background:var(--ap)}
-.alert-dot.red i{color:#c1440e}.alert-dot.amber i{color:#d97706}
-.alert-msg{font-size:12px;line-height:1.5}
-.alert-type{font-size:10px;color:var(--t3);margin-top:2px}
-.config-card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);padding:16px;margin-bottom:12px}
-.config-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px}
-.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
-.status-dot.green{background:#22c55e}.status-dot.red{background:#ef4444}.status-dot.amber{background:#f59e0b}
-.empty{text-align:center;padding:32px 20px;color:var(--t3)}
-.empty i{font-size:40px;display:block;margin-bottom:10px;color:#ccc}
-.empty p{font-size:13px}
-.loading{text-align:center;padding:24px;color:var(--t3);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px}
-.loading i{font-size:28px;animation:spin 1s linear infinite;color:var(--gm)}
+.fr{display:flex;gap:6px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none}
+.fr::-webkit-scrollbar{display:none}
+.fc{padding:6px 14px;border-radius:20px;font-size:12px;border:1px solid var(--bd);background:#fff;color:var(--t2);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.fc.on{background:var(--gd);color:#fff;border-color:var(--gd)}
+.sw{padding:0 0 10px}
+.si{position:relative}
+.sinp{width:100%;padding:10px 14px 10px 38px;border:1px solid var(--bd);border-radius:10px;font-size:14px;background:#fff;color:var(--tx)}
+.sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:18px}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
+.mo.on{display:flex}
+.mb{background:#fff;border-radius:22px 22px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding:20px 18px 32px}
+.mh{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 18px}
+.mt{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;margin-bottom:18px}
+.fg{margin-bottom:14px}
+.fl{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px;display:block}
+.fi{width:100%;padding:11px 13px;border:1px solid var(--bd);border-radius:10px;font-size:14px;color:var(--tx);background:#fff;appearance:none}
+.fi:focus{outline:none;border-color:var(--gm)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mf{display:flex;gap:10px;margin-top:20px}
+.mf .btn{flex:1}
+.ai{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:10px}
+.ai:last-child{border-bottom:none}
+.ad{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ad.r{background:var(--rp)}.ad.a{background:var(--ap)}
+.ad.r i{color:#c1440e}.ad.a i{color:#d97706}
+.am{font-size:12px;line-height:1.5}
+.at{font-size:10px;color:var(--t3);margin-top:2px}
+.cc{background:var(--cd);border-radius:var(--r);border:1px solid var(--bd);padding:16px;margin-bottom:12px}
+.ct{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px}
+.sd{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+.sd.g{background:#22c55e}.sd.a{background:#f59e0b}
+.emp{text-align:center;padding:32px 20px;color:var(--t3)}
+.emp i{font-size:40px;display:block;margin-bottom:10px;color:#ccc}
+.emp p{font-size:13px}
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:300;display:none;white-space:nowrap}
-.toast.show{display:block;animation:fin .2s,fout .3s 2.5s forwards}
-@keyframes fin{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-@keyframes fout{to{opacity:0}}
-.sync-bar{background:var(--gp);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px;color:var(--gd)}
-.sync-bar i{font-size:15px}
+.toast.on{display:block;animation:fi .2s,fo .3s 2.5s forwards}
+@keyframes fi{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes fo{to{opacity:0}}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-left">
-    <div class="hlogo"><i class="ti ti-leaf"></i></div>
-    <div class="htitle"><h1>Fazenda Água Viva</h1><p id="sync-status">SST</p></div>
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="hico"><i class="ti ti-leaf"></i></div>
+    <div class="htx"><h1>Fazenda Água Viva</h1><p id="sts">SST</p></div>
   </div>
-  <div class="header-right">
-    <button class="sync-btn" id="sync-btn" onclick="syncAll(true)" title="Sincronizar agora">
-      <i class="ti ti-refresh"></i>
-    </button>
-    <div class="hbell" onclick="showPage('alertas')">
+  <div class="hdr-r">
+    <button class="sbtn" id="sbtn" onclick="syncAll(true)"><i class="ti ti-refresh"></i></button>
+    <div class="bel" onclick="showPg('dash')">
       <i class="ti ti-bell"></i>
-      <div class="bell-b" id="bell-count" style="display:none">0</div>
+      <div class="bel-b" id="belc">0</div>
     </div>
   </div>
 </div>
 
-<div id="page-dashboard" class="page active"></div>
-<div id="page-funcionarios" class="page"></div>
-<div id="page-exames" class="page"></div>
-<div id="page-epi" class="page"></div>
-<div id="page-mais" class="page"></div>
+<div id="pg-dash" class="pg on"></div>
+<div id="pg-func" class="pg"></div>
+<div id="pg-exam" class="pg"></div>
+<div id="pg-epi"  class="pg"></div>
+<div id="pg-mais" class="pg"></div>
 
-<nav class="bottom-nav">
-  <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><i class="ti ti-layout-dashboard"></i><span>Início</span></button>
-  <button class="nav-item" onclick="showPage('funcionarios')" id="nav-funcionarios"><i class="ti ti-users"></i><span>Equipe</span></button>
-  <button class="nav-item" onclick="showPage('exames')" id="nav-exames"><i class="ti ti-stethoscope"></i><span>Exames</span></button>
-  <button class="nav-item" onclick="showPage('epi')" id="nav-epi"><i class="ti ti-shield-check"></i><span>EPI</span></button>
-  <button class="nav-item" onclick="showPage('mais')" id="nav-mais"><i class="ti ti-dots"></i><span>Mais</span></button>
+<nav class="bnav">
+  <button class="ni on" onclick="showPg('dash')" id="ni-dash"><i class="ti ti-layout-dashboard"></i><span>Início</span></button>
+  <button class="ni" onclick="showPg('func')" id="ni-func"><i class="ti ti-users"></i><span>Equipe</span></button>
+  <button class="ni" onclick="showPg('exam')" id="ni-exam"><i class="ti ti-stethoscope"></i><span>Exames</span></button>
+  <button class="ni" onclick="showPg('epi')"  id="ni-epi"><i class="ti ti-shield-check"></i><span>EPI</span></button>
+  <button class="ni" onclick="showPg('mais')" id="ni-mais"><i class="ti ti-dots"></i><span>Mais</span></button>
 </nav>
 
-<button class="fab" id="fab-btn" onclick="openFab()" style="display:none"><i class="ti ti-plus"></i></button>
+<button class="fab" id="fab" onclick="openFab()" style="display:none"><i class="ti ti-plus"></i></button>
 
 <!-- MODAL FUNCIONÁRIO -->
-<div class="modal-overlay" id="modal-func">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="mfunc-title">Novo funcionário</div>
-    <input type="hidden" id="func-id">
-    <div class="form-group"><label class="form-label">Nome completo *</label><input class="form-input" id="func-nome" placeholder="Nome do funcionário"></div>
-    <div class="form-row2">
-      <div class="form-group"><label class="form-label">Matrícula</label><input class="form-input" id="func-mat" placeholder="001"></div>
-      <div class="form-group"><label class="form-label">Situação</label>
-        <select class="form-input" id="func-sit"><option>Ativo</option><option>Afastado</option><option>Férias</option></select>
-      </div>
+<div class="mo" id="mo-func">
+  <div class="mb">
+    <div class="mh"></div>
+    <div class="mt" id="mo-func-t">Novo funcionário</div>
+    <input type="hidden" id="f-id">
+    <div class="fg"><label class="fl">Nome *</label><input class="fi" id="f-nome" placeholder="Nome completo"></div>
+    <div class="fr2">
+      <div class="fg"><label class="fl">Matrícula</label><input class="fi" id="f-mat" placeholder="001"></div>
+      <div class="fg"><label class="fl">Situação</label><select class="fi" id="f-sit"><option>Ativo</option><option>Afastado</option><option>Férias</option></select></div>
     </div>
-    <div class="form-group"><label class="form-label">Cargo / Função</label><input class="form-input" id="func-cargo" placeholder="Ex: Tratorista, Ordenhador..."></div>
-    <div class="form-group"><label class="form-label">Setor</label>
-      <select class="form-input" id="func-setor">
-        <option value="">Selecione...</option>
-        <option>Lavoura</option><option>Pecuária</option><option>Ordenha</option>
-        <option>Manutenção</option><option>Administrativo</option><option>Outro</option>
-      </select>
+    <div class="fg"><label class="fl">Cargo / Função</label><input class="fi" id="f-cargo" placeholder="Ex: Tratorista"></div>
+    <div class="fg"><label class="fl">Setor</label>
+      <select class="fi" id="f-setor"><option value="">Selecione...</option><option>Lavoura</option><option>Pecuária</option><option>Ordenha</option><option>Manutenção</option><option>Administrativo</option><option>Outro</option></select>
     </div>
-    <div class="form-group"><label class="form-label">Data de admissão</label><input class="form-input" type="date" id="func-admissao"></div>
-    <div class="form-group"><label class="form-label">WhatsApp (com DDD)</label><input class="form-input" type="tel" id="func-whats" placeholder="61999990000"></div>
-    <div class="modal-footer">
-      <button class="btn cancel" onclick="closeModal('modal-func')">Cancelar</button>
-      <button class="btn primary" onclick="saveFuncionario()">Salvar</button>
-    </div>
+    <div class="fg"><label class="fl">Admissão</label><input class="fi" type="date" id="f-adm"></div>
+    <div class="fg"><label class="fl">WhatsApp (com DDD)</label><input class="fi" type="tel" id="f-wa" placeholder="61999990000"></div>
+    <div class="mf"><button class="btn c" onclick="closeMo('mo-func')">Cancelar</button><button class="btn p" onclick="saveFunc()">Salvar</button></div>
   </div>
 </div>
 
 <!-- MODAL EXAME -->
-<div class="modal-overlay" id="modal-exame">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Registrar exame médico</div>
-    <input type="hidden" id="exame-id">
-    <div class="form-group"><label class="form-label">Funcionário *</label><select class="form-input" id="exame-func"></select></div>
-    <div class="form-group"><label class="form-label">Tipo de exame</label>
-      <select class="form-input" id="exame-tipo">
-        <option>Admissional</option><option>Periódico</option><option>Retorno ao trabalho</option>
-        <option>Mudança de função</option><option>Demissional</option>
-      </select>
+<div class="mo" id="mo-exam">
+  <div class="mb">
+    <div class="mh"></div>
+    <div class="mt">Registrar exame</div>
+    <input type="hidden" id="e-id">
+    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="e-func"></select></div>
+    <div class="fg"><label class="fl">Tipo</label><select class="fi" id="e-tipo"><option>Admissional</option><option>Periódico</option><option>Retorno ao trabalho</option><option>Mudança de função</option><option>Demissional</option></select></div>
+    <div class="fr2">
+      <div class="fg"><label class="fl">Realização</label><input class="fi" type="date" id="e-data"></div>
+      <div class="fg"><label class="fl">Válido até</label><input class="fi" type="date" id="e-val"></div>
     </div>
-    <div class="form-row2">
-      <div class="form-group"><label class="form-label">Data de realização</label><input class="form-input" type="date" id="exame-data"></div>
-      <div class="form-group"><label class="form-label">Válido até</label><input class="form-input" type="date" id="exame-val"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Resultado</label>
-      <select class="form-input" id="exame-resultado"><option>Apto</option><option>Apto com restrição</option><option>Inapto</option></select>
-    </div>
-    <div class="form-group"><label class="form-label">Médico / CRM</label><input class="form-input" id="exame-medico" placeholder="Dr. Nome / CRM 00000"></div>
-    <div class="modal-footer">
-      <button class="btn cancel" onclick="closeModal('modal-exame')">Cancelar</button>
-      <button class="btn primary" onclick="saveExame()">Salvar</button>
-    </div>
+    <div class="fg"><label class="fl">Resultado</label><select class="fi" id="e-res"><option>Apto</option><option>Apto com restrição</option><option>Inapto</option></select></div>
+    <div class="fg"><label class="fl">Médico / CRM</label><input class="fi" id="e-med" placeholder="Dr. Nome / CRM 00000"></div>
+    <div class="mf"><button class="btn c" onclick="closeMo('mo-exam')">Cancelar</button><button class="btn p" onclick="saveExam()">Salvar</button></div>
   </div>
 </div>
 
 <!-- MODAL EPI -->
-<div class="modal-overlay" id="modal-epi">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Registrar entrega de EPI</div>
-    <input type="hidden" id="epi-id">
-    <div class="form-group"><label class="form-label">Funcionário *</label><select class="form-input" id="epi-func"></select></div>
-    <div class="form-group"><label class="form-label">EPI</label>
-      <select class="form-input" id="epi-tipo">
-        <option>Capacete</option><option>Óculos de proteção</option><option>Luvas</option>
-        <option>Protetor auricular</option><option>Bota de segurança</option>
-        <option>Cinto de segurança</option><option>Máscara respiratória</option>
-        <option>Colete refletivo</option><option>Avental</option><option>Outro</option>
-      </select>
+<div class="mo" id="mo-epi">
+  <div class="mb">
+    <div class="mh"></div>
+    <div class="mt">Registrar entrega de EPI</div>
+    <input type="hidden" id="p-id">
+    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="p-func"></select></div>
+    <div class="fg"><label class="fl">EPI</label><select class="fi" id="p-tipo"><option>Capacete</option><option>Óculos de proteção</option><option>Luvas</option><option>Protetor auricular</option><option>Bota de segurança</option><option>Cinto de segurança</option><option>Máscara respiratória</option><option>Colete refletivo</option><option>Avental</option><option>Outro</option></select></div>
+    <div class="fr2">
+      <div class="fg"><label class="fl">CA nº</label><input class="fi" id="p-ca" placeholder="CA"></div>
+      <div class="fg"><label class="fl">Quantidade</label><input class="fi" type="number" id="p-qtd" value="1" min="1"></div>
     </div>
-    <div class="form-row2">
-      <div class="form-group"><label class="form-label">CA nº</label><input class="form-input" id="epi-ca" placeholder="CA"></div>
-      <div class="form-group"><label class="form-label">Quantidade</label><input class="form-input" type="number" id="epi-qtd" value="1" min="1"></div>
-    </div>
-    <div class="form-row2">
-      <div class="form-group"><label class="form-label">Data de entrega</label><input class="form-input" type="date" id="epi-data"></div>
-      <div class="form-group"><label class="form-label">Próx. reposição</label><input class="form-input" type="date" id="epi-rep"></div>
+    <div class="fr2">
+      <div class="fg"><label class="fl">Data entrega</label><input class="fi" type="date" id="p-data"></div>
+      <div class="fg"><label class="fl">Próx. reposição</label><input class="fi" type="date" id="p-rep"></div>
     </div>
     <div style="background:var(--gp);border-radius:10px;padding:10px 12px;margin-bottom:4px;display:flex;align-items:flex-start;gap:8px">
       <i class="ti ti-brand-whatsapp" style="font-size:18px;color:var(--gm);flex-shrink:0;margin-top:1px"></i>
       <p style="font-size:12px;color:var(--gd);line-height:1.4">Ao salvar, o link de assinatura será enviado pelo WhatsApp via ZapSign.</p>
     </div>
-    <div class="modal-footer">
-      <button class="btn cancel" onclick="closeModal('modal-epi')">Cancelar</button>
-      <button class="btn primary" onclick="saveEpi()">Salvar e enviar</button>
-    </div>
+    <div class="mf"><button class="btn c" onclick="closeMo('mo-epi')">Cancelar</button><button class="btn p" onclick="saveEpi()">Salvar e enviar</button></div>
   </div>
 </div>
 
 <!-- MODAL TREINAMENTO -->
-<div class="modal-overlay" id="modal-trein">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Registrar treinamento</div>
-    <input type="hidden" id="trein-id">
-    <div class="form-group"><label class="form-label">Funcionário *</label><select class="form-input" id="trein-func"></select></div>
-    <div class="form-group"><label class="form-label">Treinamento / NR</label>
-      <select class="form-input" id="trein-tipo">
-        <option>NR-6 (EPI)</option><option>NR-10 (Eletricidade)</option><option>NR-12 (Máquinas)</option>
-        <option>NR-18 (Construção)</option><option>NR-31 (Agricultura)</option>
-        <option>NR-35 (Trabalho em altura)</option><option>CIPA</option>
-        <option>Brigada de incêndio</option><option>Primeiros socorros</option><option>Outro</option>
-      </select>
+<div class="mo" id="mo-trein">
+  <div class="mb">
+    <div class="mh"></div>
+    <div class="mt">Registrar treinamento</div>
+    <input type="hidden" id="t-id">
+    <div class="fg"><label class="fl">Funcionário *</label><select class="fi" id="t-func"></select></div>
+    <div class="fg"><label class="fl">Treinamento / NR</label><select class="fi" id="t-tipo"><option>NR-6 (EPI)</option><option>NR-10 (Eletricidade)</option><option>NR-12 (Máquinas)</option><option>NR-18 (Construção)</option><option>NR-31 (Agricultura)</option><option>NR-35 (Trabalho em altura)</option><option>CIPA</option><option>Brigada de incêndio</option><option>Primeiros socorros</option><option>Outro</option></select></div>
+    <div class="fr2">
+      <div class="fg"><label class="fl">Realização</label><input class="fi" type="date" id="t-data"></div>
+      <div class="fg"><label class="fl">Válido até</label><input class="fi" type="date" id="t-val"></div>
     </div>
-    <div class="form-row2">
-      <div class="form-group"><label class="form-label">Data de realização</label><input class="form-input" type="date" id="trein-data"></div>
-      <div class="form-group"><label class="form-label">Válido até</label><input class="form-input" type="date" id="trein-val"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Carga horária</label><input class="form-input" id="trein-ch" placeholder="Ex: 8h"></div>
-    <div class="modal-footer">
-      <button class="btn cancel" onclick="closeModal('modal-trein')">Cancelar</button>
-      <button class="btn primary" onclick="saveTrein()">Salvar</button>
-    </div>
+    <div class="fg"><label class="fl">Carga horária</label><input class="fi" id="t-ch" placeholder="Ex: 8h"></div>
+    <div class="mf"><button class="btn c" onclick="closeMo('mo-trein')">Cancelar</button><button class="btn p" onclick="saveTrein()">Salvar</button></div>
   </div>
 </div>
 
 <!-- MODAL CONFIG -->
-<div class="modal-overlay" id="modal-config">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Configurações</div>
-    <div class="form-group">
-      <label class="form-label">API Key ZapSign</label>
-      <input class="form-input" id="cfg-zapkey" placeholder="Sua API Key do ZapSign" type="password">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Token do template EPI (ZapSign)</label>
-      <input class="form-input" id="cfg-zaptoken" placeholder="Token do template de EPI">
-    </div>
-    <div class="form-group">
-      <label class="form-label">URL Apps Script (Google Sheets)</label>
-      <input class="form-input" id="cfg-sheets" placeholder="https://script.google.com/...">
-    </div>
-    <div class="modal-footer">
-      <button class="btn cancel" onclick="closeModal('modal-config')">Cancelar</button>
-      <button class="btn primary" onclick="saveConfig()">Salvar</button>
-    </div>
+<div class="mo" id="mo-cfg">
+  <div class="mb">
+    <div class="mh"></div>
+    <div class="mt">Configurações</div>
+    <div class="fg"><label class="fl">URL Apps Script</label><input class="fi" id="cfg-url" placeholder="https://script.google.com/..."></div>
+    <div class="fg"><label class="fl">API Key ZapSign</label><input class="fi" id="cfg-zk" type="password" placeholder="API Key"></div>
+    <div class="fg"><label class="fl">Token template EPI (ZapSign)</label><input class="fi" id="cfg-zt" placeholder="Token do template"></div>
+    <div class="mf"><button class="btn c" onclick="closeMo('mo-cfg')">Cancelar</button><button class="btn p" onclick="saveCfg()">Salvar</button></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="tst"></div>
 
 <script>
-// ── CONSTANTES ──
-const SHEETS_URL='https://script.google.com/macros/s/AKfycbzh17ZdROtZ_I-mYJrs1V_WIy9wNyTcB1vgkMIeEHh-xZh9tkv-HmXhpLmOjYJvbEY/exec';
-const K={f:'fav-func',e:'fav-exame',p:'fav-epi',t:'fav-trein',cfg:'fav-config',last:'fav-lastsync'};
-const SHEETS=['Funcionários','Exames','EPI','Treinamentos'];
-const KEY_MAP={
-  'Funcionários':K.f,'Exames':K.e,'EPI':K.p,'Treinamentos':K.t
-};
-
-// ── STORAGE ──
-const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
-const loadObj=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')}catch{return{}}};
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
-const today=()=>new Date().toISOString().split('T')[0];
-const daysUntil=d=>d?Math.ceil((new Date(d)-new Date(today()))/86400000):9999;
-const fmtD=d=>{if(!d||d==='-')return'-';const p=d.includes('-')?d.split('-'):[d];if(p.length===3)return`${p[2]}/${p[1]}/${p[0]}`;return d};
-const initials=n=>n?n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase():'?';
-const avColor=n=>{const c=['av-g','av-b','av-a'];return c[(n||'').charCodeAt(0)%3]};
-function statusOf(val){const d=daysUntil(val);if(d<0)return{cls:'red',txt:'Vencido'};if(d<=30)return{cls:'amber',txt:`${d}d`};return{cls:'green',txt:'Em dia'}}
-
-// ── TOAST ──
-function toast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(()=>t.className='toast',dur)}
-
 // ── CONFIG ──
-function getConfig(){return loadObj(K.cfg)}
-function saveConfig(){
-  const cfg={zapKey:document.getElementById('cfg-zapkey').value.trim(),zapToken:document.getElementById('cfg-zaptoken').value.trim(),sheetsUrl:document.getElementById('cfg-sheets').value.trim()||SHEETS_URL};
-  save(K.cfg,cfg);closeModal('modal-config');toast('Configurações salvas!');renderMais();
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycbzh17ZdROtZ_I-mYJrs1V_WIy9wNyTcB1vgkMIeEHh-xZh9tkv-HmXhpLmOjYJvbEY/exec';
+const K={F:'fav-f',E:'fav-e',P:'fav-p',T:'fav-t',C:'fav-cfg'};
+
+// ── UTILS ──
+const ld=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
+const ldO=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')}catch{return{}}};
+const sv=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+const tod=()=>new Date().toISOString().split('T')[0];
+const du=d=>d?Math.ceil((new Date(d)-new Date(tod()))/86400000):9999;
+const fd=d=>{if(!d||d==='-')return'-';const p=d.split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d};
+const ini=n=>n?n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase():'?';
+const avc=n=>{const c=['av-g','av-b','av-a'];return c[(n||'').charCodeAt(0)%3]};
+const sts=v=>{const d=du(v);if(d<0)return{c:'r',t:'Vencido'};if(d<=30)return{c:'a',t:`${d}d`};return{c:'g',t:'Em dia'}};
+const cfg=()=>ldO(K.C);
+const url=()=>cfg().url||DEFAULT_URL;
+
+function tst(msg,d=2500){const t=document.getElementById('tst');t.textContent=msg;t.className='toast on';setTimeout(()=>t.className='toast',d)}
+
+function saveCfg(){
+  sv(K.C,{url:document.getElementById('cfg-url').value.trim()||DEFAULT_URL,
+    zk:document.getElementById('cfg-zk').value.trim(),
+    zt:document.getElementById('cfg-zt').value.trim()});
+  closeMo('mo-cfg');tst('Configurações salvas!');renderMais();
 }
-function openConfig(){
-  const cfg=getConfig();
-  document.getElementById('cfg-zapkey').value=cfg.zapKey||'';
-  document.getElementById('cfg-zaptoken').value=cfg.zapToken||'';
-  document.getElementById('cfg-sheets').value=cfg.sheetsUrl||SHEETS_URL;
-  openModal('modal-config');
+function openCfg(){
+  const c=cfg();
+  document.getElementById('cfg-url').value=c.url||DEFAULT_URL;
+  document.getElementById('cfg-zk').value=c.zk||'';
+  document.getElementById('cfg-zt').value=c.zt||'';
+  openMo('mo-cfg');
 }
 
-// ── SYNC BIDIRECIONAL ──
-function getSheetsUrl(){const cfg=getConfig();return cfg.sheetsUrl||SHEETS_URL}
-
-// Envia dados locais → planilha
-function pushSheet(sheet,data){
-  const url=getSheetsUrl();
+// ── SYNC ──
+// PUSH: envia dados para planilha (no-cors, não precisa ler resposta)
+function push(sheet,data){
   const payload=encodeURIComponent(JSON.stringify({sheet,data}));
-  const fullUrl=`${url}?action=set&payload=${payload}&t=${Date.now()}`;
-  fetch(fullUrl,{method:'GET',mode:'no-cors'}).catch(()=>{});
+  const u=`${url()}?action=set&payload=${payload}&t=${Date.now()}`;
+  fetch(u,{mode:'no-cors'}).catch(()=>{});
 }
 
-// Busca dados da planilha → local (via JSONP para contornar CORS)
-async function pullSheet(sheet){
-  const url=getSheetsUrl();
-  return new Promise((resolve)=>{
-    const cbName='_cb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-    const script=document.createElement('script');
-    const timeout=setTimeout(()=>{
-      delete window[cbName];
-      script.remove();
-      console.warn('[Pull] timeout:',sheet);
-      resolve(null);
-    },10000);
-    window[cbName]=function(json){
-      clearTimeout(timeout);
-      delete window[cbName];
-      script.remove();
-      if(json&&json.status==='ok'&&Array.isArray(json.data)){
-        save(KEY_MAP[sheet],json.data);
-        console.log('[Pull] ok:',sheet,json.data.length,'registros');
-        resolve(json.data);
-      } else {
-        console.warn('[Pull] resposta inválida:',sheet,json);
-        resolve(null);
-      }
+// PULL: lê dados da planilha via JSONP (contorna CORS completamente)
+function pull(sheet){
+  return new Promise(res=>{
+    const cb='_'+Date.now().toString(36)+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    const to=setTimeout(()=>{cleanup();console.warn('timeout',sheet);res(null)},12000);
+    function cleanup(){clearTimeout(to);delete window[cb];s.remove()}
+    window[cb]=json=>{
+      cleanup();
+      if(json&&json.ok&&Array.isArray(json.data)){
+        sv({Funcionários:K.F,Exames:K.E,EPI:K.P,Treinamentos:K.T}[sheet],json.data);
+        res(json.data);
+      } else res(null);
     };
-    const src=`${url}?action=get&sheet=${encodeURIComponent(sheet)}&callback=${cbName}&t=${Date.now()}`;
-    script.src=src;
-    script.onerror=()=>{
-      clearTimeout(timeout);
-      delete window[cbName];
-      script.remove();
-      console.warn('[Pull] erro script:',sheet);
-      resolve(null);
-    };
-    document.head.appendChild(script);
+    s.src=`${url()}?action=get&sheet=${encodeURIComponent(sheet)}&cb=${cb}&t=${Date.now()}`;
+    s.onerror=()=>{cleanup();res(null)};
+    document.head.appendChild(s);
   });
 }
 
-// Sincronização completa (pull de todas as abas)
 let syncing=false;
 async function syncAll(manual=false){
   if(syncing)return;
   syncing=true;
-  const btn=document.getElementById('sync-btn');
-  btn.classList.add('spinning');
-  document.getElementById('sync-status').textContent='Sincronizando...';
-  if(manual)toast('Buscando dados...');
+  const btn=document.getElementById('sbtn');
+  btn.classList.add('spin');
+  document.getElementById('sts').textContent='Sincronizando...';
+  if(manual)tst('Buscando dados da planilha...');
   try{
-    await Promise.all(SHEETS.map(s=>pullSheet(s)));
-    const now=new Date();
-    const hm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    save(K.last,hm);
-    document.getElementById('sync-status').textContent=`Sync ${hm}`;
-    if(manual)toast('Sincronizado!');
-    // Atualiza a tela atual
-    renderCurrentPage();
-    updateBell();
+    await Promise.all(['Funcionários','Exames','EPI','Treinamentos'].map(s=>pull(s)));
+    const h=new Date(),hm=`${String(h.getHours()).padStart(2,'0')}:${String(h.getMinutes()).padStart(2,'0')}`;
+    document.getElementById('sts').textContent=`Sync ${hm}`;
+    if(manual)tst('Sincronizado!');
+    renderCur();updateBel();
   }catch(e){
-    document.getElementById('sync-status').textContent='SST';
-    if(manual)toast('Erro ao sincronizar');
-  }finally{
-    syncing=false;
-    btn.classList.remove('spinning');
-  }
-}
-
-function renderCurrentPage(){
-  if(currentPage==='dashboard')renderDashboard();
-  else if(currentPage==='funcionarios')renderFuncionarios('');
-  else if(currentPage==='exames')renderExames();
-  else if(currentPage==='epi')renderEpi();
-  else if(currentPage==='mais')renderMais();
+    document.getElementById('sts').textContent='SST';
+    if(manual)tst('Erro ao sincronizar');
+  }finally{syncing=false;btn.classList.remove('spin')}
 }
 
 // ── NAV ──
-let currentPage='dashboard';
-let exameFilter='todos',epiFilter='todos',treinFilter='todos';
+let cur='dash',fEx='todos',fEp='todos',fTr='todos';
 
-function showPage(p){
-  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  const nav=document.getElementById('nav-'+p);
-  if(nav)nav.classList.add('active');
-  currentPage=p;
-  const fabPages=['funcionarios','exames','epi','mais'];
-  document.getElementById('fab-btn').style.display=fabPages.includes(p)?'flex':'none';
-  // Puxa dados da planilha ao trocar de tela
-  if(p==='dashboard'){syncAll();return}
-  if(p==='funcionarios'){pullSheet('Funcionários').then(()=>renderFuncionarios(''));return}
-  if(p==='exames'){pullSheet('Exames').then(()=>renderExames());return}
-  if(p==='epi'){pullSheet('EPI').then(()=>renderEpi());return}
-  if(p==='mais'){pullSheet('Treinamentos').then(()=>renderMais());return}
+function showPg(p){
+  document.querySelectorAll('.pg').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(e=>e.classList.remove('on'));
+  document.getElementById('pg-'+p).classList.add('on');
+  const ni=document.getElementById('ni-'+p);if(ni)ni.classList.add('on');
+  cur=p;
+  document.getElementById('fab').style.display=['func','exam','epi','mais'].includes(p)?'flex':'none';
+  if(p==='dash'){syncAll();return}
+  if(p==='func'){pull('Funcionários').then(()=>renderFunc(''));return}
+  if(p==='exam'){pull('Exames').then(()=>renderExam());return}
+  if(p==='epi'){pull('EPI').then(()=>renderEpi());return}
+  if(p==='mais'){pull('Treinamentos').then(()=>renderMais());return}
 }
 
-// ── MODALS ──
-function openModal(id){
-  const funcs=load(K.f);
-  document.querySelectorAll(`#${id} select[id$="-func"]`).forEach(sel=>{
-    sel.innerHTML=funcs.length?funcs.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option value="">— Cadastre funcionários primeiro —</option>';
+function renderCur(){
+  if(cur==='dash')renderDash();
+  else if(cur==='func')renderFunc('');
+  else if(cur==='exam')renderExam();
+  else if(cur==='epi')renderEpi();
+  else renderMais();
+}
+
+// ── MODAIS ──
+function openMo(id){
+  const fl=ld(K.F);
+  document.querySelectorAll(`#${id} select[id$="-func"],#${id} select[id$="-func"]`).forEach(sel=>{
+    if(sel.id.endsWith('-func')||sel.id.endsWith('func')){
+      sel.innerHTML=fl.length?fl.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option>Sem funcionários</option>';
+    }
   });
-  document.getElementById(id).classList.add('open');
+  // Mapear selects dos modais
+  ['e-func','p-func','t-func'].forEach(sid=>{
+    const el=document.getElementById(sid);
+    if(el&&document.getElementById(id).contains(el)){
+      el.innerHTML=fl.length?fl.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'<option>Sem funcionários</option>';
+    }
+  });
+  document.getElementById(id).classList.add('on');
 }
-function closeModal(id){document.getElementById(id).classList.remove('open')}
-function clearFields(ids){ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''})}
+function closeMo(id){document.getElementById(id).classList.remove('on')}
+function clr(ids){ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''})}
+function openFab(){
+  if(cur==='func')openMo('mo-func');
+  else if(cur==='exam')openMo('mo-exam');
+  else if(cur==='epi')openMo('mo-epi');
+  else openMo('mo-trein');
+}
 
 // ── FUNCIONÁRIOS ──
-async function saveFuncionario(){
-  const id=document.getElementById('func-id').value;
-  const nome=document.getElementById('func-nome').value.trim();
-  if(!nome){toast('Informe o nome');return}
-  const obj={id:id||uid(),matricula:document.getElementById('func-mat').value,nome,
-    cargo:document.getElementById('func-cargo').value,setor:document.getElementById('func-setor').value,
-    admissao:document.getElementById('func-admissao').value,sit:document.getElementById('func-sit').value,
-    whats:document.getElementById('func-whats').value.replace(/\D/g,'')};
-  const list=load(K.f);const i=list.findIndex(x=>x.id===id);
+function saveFunc(){
+  const id=document.getElementById('f-id').value;
+  const nome=document.getElementById('f-nome').value.trim();
+  if(!nome){tst('Informe o nome');return}
+  const obj={id:id||uid(),matricula:document.getElementById('f-mat').value,nome,
+    cargo:document.getElementById('f-cargo').value,setor:document.getElementById('f-setor').value,
+    admissao:document.getElementById('f-adm').value,sit:document.getElementById('f-sit').value,
+    whats:document.getElementById('f-wa').value.replace(/\D/g,'')};
+  const list=ld(K.F);const i=list.findIndex(x=>x.id===id);
   if(i>=0)list[i]=obj;else list.push(obj);
-  save(K.f,list);
-  closeModal('modal-func');
-  clearFields(['func-id','func-nome','func-mat','func-cargo','func-admissao','func-whats']);
-  document.getElementById('func-setor').value='';document.getElementById('func-sit').value='Ativo';
-  document.getElementById('mfunc-title').textContent='Novo funcionário';
-  renderFuncionarios('');
-  pushSheet('Funcionários',list);
-  toast('Funcionário salvo!');
+  sv(K.F,list);closeMo('mo-func');
+  clr(['f-id','f-nome','f-mat','f-cargo','f-adm','f-wa']);
+  document.getElementById('f-setor').value='';document.getElementById('f-sit').value='Ativo';
+  document.getElementById('mo-func-t').textContent='Novo funcionário';
+  renderFunc('');push('Funcionários',list);tst('Funcionário salvo!');
 }
-function editFuncionario(id){
-  const f=load(K.f).find(x=>x.id===id);if(!f)return;
-  document.getElementById('func-id').value=f.id;
-  document.getElementById('func-nome').value=f.nome||'';
-  document.getElementById('func-mat').value=f.matricula||'';
-  document.getElementById('func-cargo').value=f.cargo||'';
-  document.getElementById('func-setor').value=f.setor||'';
-  document.getElementById('func-admissao').value=f.admissao||'';
-  document.getElementById('func-sit').value=f.sit||'Ativo';
-  document.getElementById('func-whats').value=f.whats||'';
-  document.getElementById('mfunc-title').textContent='Editar funcionário';
-  openModal('modal-func');
+function editFunc(id){
+  const f=ld(K.F).find(x=>x.id===id);if(!f)return;
+  document.getElementById('f-id').value=f.id;
+  document.getElementById('f-nome').value=f.nome||'';
+  document.getElementById('f-mat').value=f.matricula||'';
+  document.getElementById('f-cargo').value=f.cargo||'';
+  document.getElementById('f-setor').value=f.setor||'';
+  document.getElementById('f-adm').value=f.admissao||'';
+  document.getElementById('f-sit').value=f.sit||'Ativo';
+  document.getElementById('f-wa').value=f.whats||'';
+  document.getElementById('mo-func-t').textContent='Editar funcionário';
+  openMo('mo-func');
 }
-async function deleteFuncionario(id){
-  if(!confirm('Remover funcionário?'))return;
-  const list=load(K.f).filter(x=>x.id!==id);
-  save(K.f,list);renderFuncionarios('');
-  pushSheet('Funcionários',list);toast('Removido.');
+function delFunc(id){
+  if(!confirm('Remover?'))return;
+  const list=ld(K.F).filter(x=>x.id!==id);
+  sv(K.F,list);renderFunc('');push('Funcionários',list);tst('Removido.');
 }
-function renderFuncionarios(q){
-  const list=load(K.f).filter(f=>!q||f.nome.toLowerCase().includes(q.toLowerCase())||(f.setor||'').toLowerCase().includes(q.toLowerCase()));
-  const el=document.getElementById('page-funcionarios');
-  let html=`<div class="search-wrap"><div class="search-inner"><i class="ti ti-search search-icon"></i><input class="search-input" placeholder="Buscar nome ou setor..." oninput="renderFuncionarios(this.value)" value="${q}"></div></div>`;
-  if(!list.length){el.innerHTML=html+`<div class="empty"><i class="ti ti-users"></i><p>Nenhum funcionário.<br>Toque em + para adicionar.</p></div>`;return}
-  html+=`<div class="card"><div style="padding:4px 0">`;
+function renderFunc(q){
+  const list=ld(K.F).filter(f=>!q||f.nome.toLowerCase().includes(q.toLowerCase())||(f.setor||'').toLowerCase().includes(q.toLowerCase()));
+  const el=document.getElementById('pg-func');
+  let h=`<div class="sw"><div class="si"><i class="ti ti-search sico"></i><input class="sinp" placeholder="Buscar..." oninput="renderFunc(this.value)" value="${q}"></div></div>`;
+  if(!list.length){el.innerHTML=h+`<div class="emp"><i class="ti ti-users"></i><p>Nenhum funcionário.<br>Toque + para adicionar.</p></div>`;return}
+  h+=`<div class="card"><div style="padding:4px 0">`;
   list.forEach(f=>{
-    const sb=f.sit==='Ativo'?'green':f.sit==='Férias'?'blue':'amber';
-    html+=`<div class="list-item"><div class="li-left"><div class="avatar ${avColor(f.nome)}">${initials(f.nome)}</div><div style="min-width:0"><div class="li-name">${f.nome}</div><div class="li-sub">${f.cargo||'—'} · ${f.setor||'—'}${f.whats?` · <i class="ti ti-brand-whatsapp" style="font-size:11px;color:#25d366"></i>`:''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${sb}">${f.sit||'Ativo'}</span><div class="li-actions"><button class="icon-btn" onclick="editFuncionario('${f.id}')"><i class="ti ti-edit"></i></button><button class="icon-btn danger" onclick="deleteFuncionario('${f.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
+    const sb=f.sit==='Ativo'?'g':f.sit==='Férias'?'b':'a';
+    h+=`<div class="li"><div class="li-l"><div class="av ${avc(f.nome)}">${ini(f.nome)}</div><div style="min-width:0"><div class="ln">${f.nome}</div><div class="ls">${f.cargo||'—'} · ${f.setor||'—'}${f.whats?` · <i class="ti ti-brand-whatsapp" style="font-size:11px;color:#25d366"></i>`:''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${sb}">${f.sit||'Ativo'}</span><div class="lac"><button class="ib" onclick="editFunc('${f.id}')"><i class="ti ti-edit"></i></button><button class="ib d" onclick="delFunc('${f.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
   });
-  html+=`</div></div>`;
-  el.innerHTML=html;
+  h+=`</div></div>`;el.innerHTML=h;
 }
 
 // ── EXAMES ──
-async function saveExame(){
-  const id=document.getElementById('exame-id').value;
-  const funcId=document.getElementById('exame-func').value;
-  if(!funcId){toast('Selecione um funcionário');return}
-  const obj={id:id||uid(),funcId,tipo:document.getElementById('exame-tipo').value,
-    data:document.getElementById('exame-data').value,val:document.getElementById('exame-val').value,
-    resultado:document.getElementById('exame-resultado').value,medico:document.getElementById('exame-medico').value};
-  const list=load(K.e);const i=list.findIndex(x=>x.id===id);
+function saveExam(){
+  const id=document.getElementById('e-id').value;
+  const funcId=document.getElementById('e-func').value;
+  if(!funcId){tst('Selecione funcionário');return}
+  const obj={id:id||uid(),funcId,tipo:document.getElementById('e-tipo').value,
+    data:document.getElementById('e-data').value,val:document.getElementById('e-val').value,
+    resultado:document.getElementById('e-res').value,medico:document.getElementById('e-med').value};
+  const list=ld(K.E);const i=list.findIndex(x=>x.id===id);
   if(i>=0)list[i]=obj;else list.push(obj);
-  save(K.e,list);closeModal('modal-exame');
-  clearFields(['exame-id','exame-data','exame-val','exame-medico']);
-  renderExames();pushSheet('Exames',list);toast('Exame registrado!');
+  sv(K.E,list);closeMo('mo-exam');clr(['e-id','e-data','e-val','e-med']);
+  renderExam();push('Exames',list);tst('Exame registrado!');
 }
-async function deleteExame(id){
+function delExam(id){
   if(!confirm('Remover?'))return;
-  const list=load(K.e).filter(x=>x.id!==id);
-  save(K.e,list);renderExames();pushSheet('Exames',list);
+  const list=ld(K.E).filter(x=>x.id!==id);
+  sv(K.E,list);renderExam();push('Exames',list);
 }
-function setFilter(tipo,val){
-  if(tipo==='exame')exameFilter=val;
-  else if(tipo==='epi')epiFilter=val;
-  else treinFilter=val;
-  if(tipo==='exame')renderExames();
-  else if(tipo==='epi')renderEpi();
-  else renderMais();
+function setF(t,v){
+  if(t==='e')fEx=v;else if(t==='p')fEp=v;else fTr=v;
+  if(t==='e')renderExam();else if(t==='p')renderEpi();else renderMais();
 }
-function renderExames(){
-  const funcs=load(K.f);const list=load(K.e);
-  const getName=id=>{const f=funcs.find(x=>x.id===id);return f?f.nome:'?'};
-  let filtered=list;
-  if(exameFilter==='vencido')filtered=list.filter(e=>daysUntil(e.val)<0);
-  else if(exameFilter==='alerta')filtered=list.filter(e=>{const d=daysUntil(e.val);return d>=0&&d<=30});
-  else if(exameFilter==='ok')filtered=list.filter(e=>daysUntil(e.val)>30);
-  const el=document.getElementById('page-exames');
-  let html=`<div class="filter-row"><div class="filter-chip ${exameFilter==='todos'?'active':''}" onclick="setFilter('exame','todos')">Todos (${list.length})</div><div class="filter-chip ${exameFilter==='vencido'?'active':''}" onclick="setFilter('exame','vencido')">Vencidos (${list.filter(e=>daysUntil(e.val)<0).length})</div><div class="filter-chip ${exameFilter==='alerta'?'active':''}" onclick="setFilter('exame','alerta')">A vencer (${list.filter(e=>{const d=daysUntil(e.val);return d>=0&&d<=30}).length})</div><div class="filter-chip ${exameFilter==='ok'?'active':''}" onclick="setFilter('exame','ok')">Em dia (${list.filter(e=>daysUntil(e.val)>30).length})</div></div>`;
-  if(!filtered.length){el.innerHTML=html+`<div class="empty"><i class="ti ti-stethoscope"></i><p>Nenhum exame encontrado.</p></div>`;return}
-  html+=`<div class="card"><div style="padding:4px 0">`;
-  filtered.forEach(e=>{
-    const s=statusOf(e.val);const nome=getName(e.funcId);
-    html+=`<div class="list-item"><div class="li-left"><div class="avatar ${avColor(nome)}">${initials(nome)}</div><div style="min-width:0"><div class="li-name">${nome}</div><div class="li-sub">${e.tipo} · Val: ${fmtD(e.val)}</div><div class="li-sub">${e.resultado||''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.cls}">${s.txt}</span><button class="icon-btn danger" onclick="deleteExame('${e.id}')"><i class="ti ti-trash"></i></button></div></div>`;
+function getName(id){const f=ld(K.F).find(x=>x.id===id);return f?f.nome:'?'}
+function renderExam(){
+  const list=ld(K.E);
+  let fl=list;
+  if(fEx==='v')fl=list.filter(e=>du(e.val)<0);
+  else if(fEx==='a')fl=list.filter(e=>{const d=du(e.val);return d>=0&&d<=30});
+  else if(fEx==='o')fl=list.filter(e=>du(e.val)>30);
+  const el=document.getElementById('pg-exam');
+  let h=`<div class="fr"><div class="fc ${fEx==='todos'?'on':''}" onclick="setF('e','todos')">Todos(${list.length})</div><div class="fc ${fEx==='v'?'on':''}" onclick="setF('e','v')">Vencidos(${list.filter(e=>du(e.val)<0).length})</div><div class="fc ${fEx==='a'?'on':''}" onclick="setF('e','a')">A vencer(${list.filter(e=>{const d=du(e.val);return d>=0&&d<=30}).length})</div><div class="fc ${fEx==='o'?'on':''}" onclick="setF('e','o')">Em dia(${list.filter(e=>du(e.val)>30).length})</div></div>`;
+  if(!fl.length){el.innerHTML=h+`<div class="emp"><i class="ti ti-stethoscope"></i><p>Nenhum exame.</p></div>`;return}
+  h+=`<div class="card"><div style="padding:4px 0">`;
+  fl.forEach(e=>{
+    const s=sts(e.val);const nm=getName(e.funcId);
+    h+=`<div class="li"><div class="li-l"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${e.tipo} · Val: ${fd(e.val)}</div><div class="ls">${e.resultado||''}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><button class="ib d" onclick="delExam('${e.id}')"><i class="ti ti-trash"></i></button></div></div>`;
   });
-  html+=`</div></div>`;el.innerHTML=html;
+  h+=`</div></div>`;el.innerHTML=h;
 }
 
 // ── EPI ──
 async function saveEpi(){
-  const id=document.getElementById('epi-id').value;
-  const funcId=document.getElementById('epi-func').value;
-  if(!funcId){toast('Selecione um funcionário');return}
-  const funcs=load(K.f);const func=funcs.find(x=>x.id===funcId);
-  const obj={id:id||uid(),funcId,tipo:document.getElementById('epi-tipo').value,
-    ca:document.getElementById('epi-ca').value,qtd:document.getElementById('epi-qtd').value,
-    data:document.getElementById('epi-data').value,rep:document.getElementById('epi-rep').value,assinado:'Pendente'};
-  const list=load(K.p);const i=list.findIndex(x=>x.id===id);
+  const id=document.getElementById('p-id').value;
+  const funcId=document.getElementById('p-func').value;
+  if(!funcId){tst('Selecione funcionário');return}
+  const func=ld(K.F).find(x=>x.id===funcId);
+  const obj={id:id||uid(),funcId,tipo:document.getElementById('p-tipo').value,
+    ca:document.getElementById('p-ca').value,qtd:document.getElementById('p-qtd').value,
+    data:document.getElementById('p-data').value,rep:document.getElementById('p-rep').value,assinado:'Pendente'};
+  const list=ld(K.P);const i=list.findIndex(x=>x.id===id);
   if(i>=0)list[i]=obj;else list.push(obj);
-  save(K.p,list);closeModal('modal-epi');
-  clearFields(['epi-id','epi-ca','epi-data','epi-rep']);document.getElementById('epi-qtd').value='1';
-  toast('EPI salvo! Enviando ZapSign...');
-  if(func)await enviarZapSign(obj,func);
-  renderEpi();pushSheet('EPI',list);
+  sv(K.P,list);closeMo('mo-epi');clr(['p-id','p-ca','p-data','p-rep']);
+  document.getElementById('p-qtd').value='1';
+  tst('EPI salvo! Enviando ZapSign...');
+  if(func)await zapSign(obj,func);
+  renderEpi();push('EPI',list);
 }
-async function deleteEpi(id){
+function delEpi(id){
   if(!confirm('Remover?'))return;
-  const list=load(K.p).filter(x=>x.id!==id);
-  save(K.p,list);renderEpi();pushSheet('EPI',list);
+  const list=ld(K.P).filter(x=>x.id!==id);
+  sv(K.P,list);renderEpi();push('EPI',list);
 }
-async function reenviarEpi(epiId){
-  const epi=load(K.p).find(x=>x.id===epiId);if(!epi)return;
-  const func=load(K.f).find(x=>x.id===epi.funcId);if(!func)return;
-  toast('Reenviando ZapSign...');await enviarZapSign(epi,func);
+async function reenvEpi(id){
+  const epi=ld(K.P).find(x=>x.id===id);if(!epi)return;
+  const func=ld(K.F).find(x=>x.id===epi.funcId);if(!func)return;
+  tst('Reenviando...');await zapSign(epi,func);
 }
 function renderEpi(){
-  const funcs=load(K.f);const list=load(K.p);
-  const getName=id=>{const f=funcs.find(x=>x.id===id);return f?f.nome:'?'};
-  const getWhats=id=>{const f=funcs.find(x=>x.id===id);return f?f.whats:''};
-  let filtered=list;
-  if(epiFilter==='pendente')filtered=list.filter(e=>daysUntil(e.rep)<=30);
-  else if(epiFilter==='ok')filtered=list.filter(e=>daysUntil(e.rep)>30);
-  const el=document.getElementById('page-epi');
-  let html=`<div class="filter-row"><div class="filter-chip ${epiFilter==='todos'?'active':''}" onclick="setFilter('epi','todos')">Todos (${list.length})</div><div class="filter-chip ${epiFilter==='pendente'?'active':''}" onclick="setFilter('epi','pendente')">Pendente (${list.filter(e=>daysUntil(e.rep)<=30).length})</div><div class="filter-chip ${epiFilter==='ok'?'active':''}" onclick="setFilter('epi','ok')">Em dia (${list.filter(e=>daysUntil(e.rep)>30).length})</div></div>`;
-  if(!filtered.length){el.innerHTML=html+`<div class="empty"><i class="ti ti-shield-check"></i><p>Nenhum EPI encontrado.</p></div>`;return}
-  html+=`<div class="card"><div style="padding:4px 0">`;
-  filtered.forEach(e=>{
-    const s=statusOf(e.rep);const nome=getName(e.funcId);const whats=getWhats(e.funcId);
-    html+=`<div class="list-item"><div class="li-left"><div class="avatar ${avColor(nome)}">${initials(nome)}</div><div style="min-width:0"><div class="li-name">${nome}</div><div class="li-sub">${e.tipo}${e.ca?' · CA '+e.ca:''} · Qtd: ${e.qtd||1}</div><div class="li-sub">Reposição: ${fmtD(e.rep)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.cls}">${s.txt}</span><div class="li-actions">${whats?`<button class="icon-btn zap" onclick="reenviarEpi('${e.id}')"><i class="ti ti-brand-whatsapp"></i></button>`:''}<button class="icon-btn danger" onclick="deleteEpi('${e.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
+  const list=ld(K.P);
+  let fl=list;
+  if(fEp==='p')fl=list.filter(e=>du(e.rep)<=30);
+  else if(fEp==='o')fl=list.filter(e=>du(e.rep)>30);
+  const el=document.getElementById('pg-epi');
+  let h=`<div class="fr"><div class="fc ${fEp==='todos'?'on':''}" onclick="setF('p','todos')">Todos(${list.length})</div><div class="fc ${fEp==='p'?'on':''}" onclick="setF('p','p')">Pendente(${list.filter(e=>du(e.rep)<=30).length})</div><div class="fc ${fEp==='o'?'on':''}" onclick="setF('p','o')">Em dia(${list.filter(e=>du(e.rep)>30).length})</div></div>`;
+  if(!fl.length){el.innerHTML=h+`<div class="emp"><i class="ti ti-shield-check"></i><p>Nenhum EPI.</p></div>`;return}
+  h+=`<div class="card"><div style="padding:4px 0">`;
+  fl.forEach(e=>{
+    const s=sts(e.rep);const nm=getName(e.funcId);
+    const wa=(ld(K.F).find(x=>x.id===e.funcId)||{}).whats||'';
+    h+=`<div class="li"><div class="li-l"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${e.tipo}${e.ca?' · CA '+e.ca:''} · ${e.qtd||1}un</div><div class="ls">Repos.: ${fd(e.rep)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><div class="lac">${wa?`<button class="ib z" onclick="reenvEpi('${e.id}')"><i class="ti ti-brand-whatsapp"></i></button>`:''}<button class="ib d" onclick="delEpi('${e.id}')"><i class="ti ti-trash"></i></button></div></div></div>`;
   });
-  html+=`</div></div>`;el.innerHTML=html;
+  h+=`</div></div>`;el.innerHTML=h;
 }
 
 // ── TREINAMENTOS ──
-async function saveTrein(){
-  const id=document.getElementById('trein-id').value;
-  const funcId=document.getElementById('trein-func').value;
-  if(!funcId){toast('Selecione um funcionário');return}
-  const obj={id:id||uid(),funcId,tipo:document.getElementById('trein-tipo').value,
-    data:document.getElementById('trein-data').value,val:document.getElementById('trein-val').value,
-    ch:document.getElementById('trein-ch').value};
-  const list=load(K.t);const i=list.findIndex(x=>x.id===id);
+function saveTrein(){
+  const id=document.getElementById('t-id').value;
+  const funcId=document.getElementById('t-func').value;
+  if(!funcId){tst('Selecione funcionário');return}
+  const obj={id:id||uid(),funcId,tipo:document.getElementById('t-tipo').value,
+    data:document.getElementById('t-data').value,val:document.getElementById('t-val').value,
+    ch:document.getElementById('t-ch').value};
+  const list=ld(K.T);const i=list.findIndex(x=>x.id===id);
   if(i>=0)list[i]=obj;else list.push(obj);
-  save(K.t,list);closeModal('modal-trein');
-  clearFields(['trein-id','trein-data','trein-val','trein-ch']);
-  renderMais();pushSheet('Treinamentos',list);toast('Treinamento registrado!');
+  sv(K.T,list);closeMo('mo-trein');clr(['t-id','t-data','t-val','t-ch']);
+  renderMais();push('Treinamentos',list);tst('Treinamento registrado!');
 }
-async function deleteTrein(id){
+function delTrein(id){
   if(!confirm('Remover?'))return;
-  const list=load(K.t).filter(x=>x.id!==id);
-  save(K.t,list);renderMais();pushSheet('Treinamentos',list);
+  const list=ld(K.T).filter(x=>x.id!==id);
+  sv(K.T,list);renderMais();push('Treinamentos',list);
 }
 
 // ── MAIS ──
 function renderMais(){
-  const cfg=getConfig();const treins=load(K.t);const funcs=load(K.f);
-  const getName=id=>{const f=funcs.find(x=>x.id===id);return f?f.nome:'?'};
-  let filtered=treins;
-  if(treinFilter==='vencido')filtered=treins.filter(t=>daysUntil(t.val)<0);
-  else if(treinFilter==='alerta')filtered=treins.filter(t=>{const d=daysUntil(t.val);return d>=0&&d<=30});
-  else if(treinFilter==='ok')filtered=treins.filter(t=>daysUntil(t.val)>30);
-  const zapOk=!!cfg.zapKey&&!!cfg.zapToken;
-  const el=document.getElementById('page-mais');
-  let html=`<div class="sec-title"><i class="ti ti-school"></i>Treinamentos / NRs</div>
-  <div class="filter-row"><div class="filter-chip ${treinFilter==='todos'?'active':''}" onclick="setFilter('trein','todos')">Todos (${treins.length})</div><div class="filter-chip ${treinFilter==='vencido'?'active':''}" onclick="setFilter('trein','vencido')">Vencidos (${treins.filter(t=>daysUntil(t.val)<0).length})</div><div class="filter-chip ${treinFilter==='alerta'?'active':''}" onclick="setFilter('trein','alerta')">A vencer (${treins.filter(t=>{const d=daysUntil(t.val);return d>=0&&d<=30}).length})</div><div class="filter-chip ${treinFilter==='ok'?'active':''}" onclick="setFilter('trein','ok')">Em dia (${treins.filter(t=>daysUntil(t.val)>30).length})</div></div>`;
-  if(!filtered.length){html+=`<div class="empty"><i class="ti ti-school"></i><p>Nenhum treinamento.</p></div>`;}
+  const c=cfg();const list=ld(K.T);
+  let fl=list;
+  if(fTr==='v')fl=list.filter(t=>du(t.val)<0);
+  else if(fTr==='a')fl=list.filter(t=>{const d=du(t.val);return d>=0&&d<=30});
+  else if(fTr==='o')fl=list.filter(t=>du(t.val)>30);
+  const el=document.getElementById('pg-mais');
+  let h=`<div class="stl"><i class="ti ti-school"></i>Treinamentos / NRs</div>
+  <div class="fr"><div class="fc ${fTr==='todos'?'on':''}" onclick="setF('t','todos')">Todos(${list.length})</div><div class="fc ${fTr==='v'?'on':''}" onclick="setF('t','v')">Vencidos(${list.filter(t=>du(t.val)<0).length})</div><div class="fc ${fTr==='a'?'on':''}" onclick="setF('t','a')">A vencer(${list.filter(t=>{const d=du(t.val);return d>=0&&d<=30}).length})</div><div class="fc ${fTr==='o'?'on':''}" onclick="setF('t','o')">Em dia(${list.filter(t=>du(t.val)>30).length})</div></div>`;
+  if(!fl.length)h+=`<div class="emp"><i class="ti ti-school"></i><p>Nenhum treinamento.</p></div>`;
   else{
-    html+=`<div class="card"><div style="padding:4px 0">`;
-    filtered.forEach(t=>{
-      const s=statusOf(t.val);const nome=getName(t.funcId);
-      html+=`<div class="list-item"><div class="li-left"><div class="avatar ${avColor(nome)}">${initials(nome)}</div><div style="min-width:0"><div class="li-name">${nome}</div><div class="li-sub">${t.tipo}${t.ch?' · '+t.ch:''}</div><div class="li-sub">Val: ${fmtD(t.val)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.cls}">${s.txt}</span><button class="icon-btn danger" onclick="deleteTrein('${t.id}')"><i class="ti ti-trash"></i></button></div></div>`;
+    h+=`<div class="card"><div style="padding:4px 0">`;
+    fl.forEach(t=>{
+      const s=sts(t.val);const nm=getName(t.funcId);
+      h+=`<div class="li"><div class="li-l"><div class="av ${avc(nm)}">${ini(nm)}</div><div style="min-width:0"><div class="ln">${nm}</div><div class="ls">${t.tipo}${t.ch?' · '+t.ch:''}</div><div class="ls">Val: ${fd(t.val)}</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge ${s.c}">${s.t}</span><button class="ib d" onclick="delTrein('${t.id}')"><i class="ti ti-trash"></i></button></div></div>`;
     });
-    html+=`</div></div>`;
+    h+=`</div></div>`;
   }
-  html+=`<div class="sec-title" style="margin-top:8px"><i class="ti ti-settings"></i>Configurações</div>
-  <div class="config-card">
-    <div class="config-title">Integrações</div>
-    <div style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-table" style="font-size:16px;color:#0f9d58"></i>Google Sheets</span>
-        <span style="font-size:12px"><span class="status-dot green"></span>Conectado</span>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-brand-whatsapp" style="font-size:16px;color:#25d366"></i>ZapSign</span>
-        <span style="font-size:12px"><span class="status-dot ${zapOk?'green':'amber'}"></span>${zapOk?'Configurado':'Pendente'}</span>
-      </div>
-    </div>
-    <button class="btn primary" onclick="openConfig()" style="font-size:13px;padding:10px"><i class="ti ti-settings"></i>Editar configurações</button>
-  </div>`;
-  el.innerHTML=html;
+  h+=`<div class="stl" style="margin-top:8px"><i class="ti ti-settings"></i>Configurações</div>
+  <div class="cc"><div class="ct">Integrações</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-table" style="font-size:16px;color:#0f9d58"></i>Google Sheets</span><span style="font-size:12px"><span class="sd g"></span>Conectado</span></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;display:flex;align-items:center;gap:6px"><i class="ti ti-brand-whatsapp" style="font-size:16px;color:#25d366"></i>ZapSign</span><span style="font-size:12px"><span class="sd ${c.zk&&c.zt?'g':'a'}"></span>${c.zk&&c.zt?'Configurado':'Pendente'}</span></div>
+  <button class="btn p" onclick="openCfg()" style="font-size:13px;padding:10px"><i class="ti ti-settings"></i>Editar configurações</button></div>`;
+  el.innerHTML=h;
 }
 
 // ── DASHBOARD ──
-function renderDashboard(){
-  const funcs=load(K.f);const exames=load(K.e);const epis=load(K.p);const treins=load(K.t);
-  const getName=id=>{const f=funcs.find(x=>x.id===id);return f?f.nome:'?'};
-  const exVenc=exames.filter(e=>daysUntil(e.val)<0).length;
-  const exAlert=exames.filter(e=>{const d=daysUntil(e.val);return d>=0&&d<=30}).length;
-  const epiPend=epis.filter(e=>daysUntil(e.rep)<=30).length;
-  const trVenc=treins.filter(t=>daysUntil(t.val)<0).length;
-  let html='';
-  if(exVenc>0||trVenc>0)html+=`<div class="alert-banner red"><i class="ti ti-alert-circle"></i><div class="abt">${exVenc} exame(s) e ${trVenc} treinamento(s) vencidos.</div></div>`;
-  if(epiPend>0)html+=`<div class="alert-banner amber"><i class="ti ti-clock"></i><div class="abt">${epiPend} EPI(s) com reposição pendente.</div></div>`;
-  html+=`<div class="metrics-grid">
-    <div class="metric"><div class="metric-label">Funcionários</div><div class="metric-val green">${funcs.length}</div><div class="metric-sub">cadastrados</div></div>
-    <div class="metric"><div class="metric-label">Exames vencidos</div><div class="metric-val ${exVenc>0?'red':'green'}">${exVenc}</div><div class="metric-sub">${exAlert} a vencer em 30d</div></div>
-    <div class="metric"><div class="metric-label">EPI pendente</div><div class="metric-val ${epiPend>0?'amber':'green'}">${epiPend}</div><div class="metric-sub">reposição até 30d</div></div>
-    <div class="metric"><div class="metric-label">Treinamentos</div><div class="metric-val ${trVenc>0?'red':'green'}">${trVenc}</div><div class="metric-sub">vencidos</div></div>
+function renderDash(){
+  const F=ld(K.F),E=ld(K.E),P=ld(K.P),T=ld(K.T);
+  const eV=E.filter(e=>du(e.val)<0).length,eA=E.filter(e=>{const d=du(e.val);return d>=0&&d<=30}).length;
+  const pP=P.filter(e=>du(e.rep)<=30).length,tV=T.filter(t=>du(t.val)<0).length;
+  let h='';
+  if(eV>0||tV>0)h+=`<div class="bnr r"><i class="ti ti-alert-circle"></i><div class="bt">${eV} exame(s) e ${tV} treinamento(s) vencidos.</div></div>`;
+  if(pP>0)h+=`<div class="bnr a"><i class="ti ti-clock"></i><div class="bt">${pP} EPI(s) com reposição pendente.</div></div>`;
+  h+=`<div class="mgrid">
+    <div class="mc"><div class="ml">Funcionários</div><div class="mv g">${F.length}</div><div class="ms">cadastrados</div></div>
+    <div class="mc"><div class="ml">Exames vencidos</div><div class="mv ${eV>0?'r':'g'}">${eV}</div><div class="ms">${eA} a vencer</div></div>
+    <div class="mc"><div class="ml">EPI pendente</div><div class="mv ${pP>0?'a':'g'}">${pP}</div><div class="ms">até 30 dias</div></div>
+    <div class="mc"><div class="ml">Treinamentos</div><div class="mv ${tV>0?'r':'g'}">${tV}</div><div class="ms">vencidos</div></div>
   </div>`;
-  const urgentes=[
-    ...exames.filter(e=>daysUntil(e.val)<=30).map(e=>({...e,modulo:'Exame',valStr:e.val,d:daysUntil(e.val),nome:getName(e.funcId)})),
-    ...epis.filter(e=>daysUntil(e.rep)<=30).map(e=>({...e,modulo:'EPI',valStr:e.rep,d:daysUntil(e.rep),nome:getName(e.funcId)})),
-    ...treins.filter(t=>daysUntil(t.val)<=30).map(t=>({...t,modulo:'Treinamento',valStr:t.val,d:daysUntil(t.val),nome:getName(t.funcId)})),
+  const urg=[
+    ...E.filter(e=>du(e.val)<=30).map(e=>({...e,mod:'Exame',vs:e.val,d:du(e.val),nm:getName(e.funcId)})),
+    ...P.filter(e=>du(e.rep)<=30).map(e=>({...e,mod:'EPI',vs:e.rep,d:du(e.rep),nm:getName(e.funcId)})),
+    ...T.filter(t=>du(t.val)<=30).map(t=>({...t,mod:'Treinamento',vs:t.val,d:du(t.val),nm:getName(t.funcId)})),
   ].sort((a,b)=>a.d-b.d);
-  html+=`<div class="sec-title"><i class="ti ti-bell"></i>Alertas</div>`;
-  if(!urgentes.length){html+=`<div class="card"><div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin-bottom:8px;color:#40916c"></i>Tudo em ordem!</div></div>`;}
+  h+=`<div class="stl"><i class="ti ti-bell"></i>Alertas</div>`;
+  if(!urg.length)h+=`<div class="card"><div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px"><i class="ti ti-circle-check" style="font-size:36px;display:block;margin-bottom:8px;color:#40916c"></i>Tudo em ordem!</div></div>`;
   else{
-    html+=`<div class="card"><div style="padding:4px 0">`;
-    urgentes.slice(0,8).forEach(u=>{
-      const s=statusOf(u.valStr);
-      html+=`<div class="alert-item"><div class="alert-dot ${s.cls}"><i class="ti ${s.cls==='red'?'ti-alert-circle':'ti-clock'}"></i></div><div><div class="alert-msg"><strong>${u.nome}</strong> — ${u.tipo||u.modulo}</div><div class="alert-type">${u.modulo} · ${fmtD(u.valStr)} · <span class="badge ${s.cls}" style="padding:1px 6px;font-size:10px">${s.txt}</span></div></div></div>`;
+    h+=`<div class="card"><div style="padding:4px 0">`;
+    urg.slice(0,8).forEach(u=>{
+      const s=sts(u.vs);
+      h+=`<div class="ai"><div class="ad ${s.c}"><i class="ti ${s.c==='r'?'ti-alert-circle':'ti-clock'}"></i></div><div><div class="am"><strong>${u.nm}</strong> — ${u.tipo||u.mod}</div><div class="at">${u.mod} · ${fd(u.vs)} · <span class="badge ${s.c}" style="padding:1px 6px;font-size:10px">${s.t}</span></div></div></div>`;
     });
-    html+=`</div></div>`;
+    h+=`</div></div>`;
   }
-  document.getElementById('page-dashboard').innerHTML=html;
+  document.getElementById('pg-dash').innerHTML=h;
 }
 
-// ── BELL ──
-function updateBell(){
-  const exames=load(K.e);const epis=load(K.p);const treins=load(K.t);
-  const count=exames.filter(e=>daysUntil(e.val)<=30).length+epis.filter(e=>daysUntil(e.rep)<=30).length+treins.filter(t=>daysUntil(t.val)<=30).length;
-  const el=document.getElementById('bell-count');
-  el.textContent=count>9?'9+':count;el.style.display=count?'flex':'none';
+function updateBel(){
+  const c=ld(K.E).filter(e=>du(e.val)<=30).length+ld(K.P).filter(e=>du(e.rep)<=30).length+ld(K.T).filter(t=>du(t.val)<=30).length;
+  const el=document.getElementById('belc');
+  el.textContent=c>9?'9+':c;el.style.display=c?'flex':'none';
 }
 
 // ── ZAPSIGN ──
-async function enviarZapSign(epi,func){
-  const cfg=getConfig();
-  if(!cfg.zapKey||!cfg.zapToken){toast('Configure ZapSign nas configurações.');return false}
-  if(!func.whats){toast('Funcionário sem WhatsApp.');return false}
+async function zapSign(epi,func){
+  const c=cfg();
+  if(!c.zk||!c.zt){tst('Configure ZapSign nas configurações.');return}
+  if(!func.whats){tst('Funcionário sem WhatsApp.');return}
   try{
-    const payload={sandbox:false,template_id:cfg.zapToken,
-      signers:[{name:func.nome,email:'',phone_country:'55',phone_number:func.whats,send_automatic_whatsapp:true,auth_mode:'whatsapp'}],
-      data:[{de:'funcionario',para:func.nome},{de:'cargo',para:func.cargo||''},{de:'epi',para:epi.tipo},{de:'ca',para:epi.ca||''},{de:'quantidade',para:String(epi.qtd||1)},{de:'data_entrega',para:fmtD(epi.data)}]};
-    const res=await fetch('https://api.zapsign.com.br/api/v1/docs/create-from-template/',{method:'POST',headers:{'Authorization':`Bearer ${cfg.zapKey}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(res.ok){toast('ZapSign: link enviado no WhatsApp!');return true}
-    else{toast('Erro no ZapSign. Verifique configurações.');return false}
-  }catch(e){toast('Não foi possível conectar ao ZapSign.');return false}
+    const r=await fetch('https://api.zapsign.com.br/api/v1/docs/create-from-template/',{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${c.zk}`,'Content-Type':'application/json'},
+      body:JSON.stringify({sandbox:false,template_id:c.zt,
+        signers:[{name:func.nome,email:'',phone_country:'55',phone_number:func.whats,send_automatic_whatsapp:true,auth_mode:'whatsapp'}],
+        data:[{de:'funcionario',para:func.nome},{de:'cargo',para:func.cargo||''},{de:'epi',para:epi.tipo},{de:'ca',para:epi.ca||''},{de:'quantidade',para:String(epi.qtd||1)},{de:'data_entrega',para:fd(epi.data)}]})
+    });
+    tst(r.ok?'ZapSign: link enviado!':'Erro no ZapSign.');
+  }catch{tst('Erro ao conectar ao ZapSign.')}
 }
 
 // ── INIT ──
-document.getElementById('fab-btn').style.display='none';
-const lastSync=localStorage.getItem(K.last);
-if(lastSync)document.getElementById('sync-status').textContent=`Sync ${lastSync}`;
-// Sync automático ao abrir
+document.getElementById('fab').style.display='none';
 syncAll();
 </script>
 </body>
