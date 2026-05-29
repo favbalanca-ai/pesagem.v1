@@ -983,7 +983,22 @@ let sigC, sigX, sigDraw=false, sigOk=false;
 
 /* ══ INIT ══════════════════════════════════════════════════════ */
 window.addEventListener('load',()=>{
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r=>{r.update();}).catch(()=>{});
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // Forçar atualização do SW se houver nova versão
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW.addEventListener('statechange', () => {
+          if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+            // Nova versão instalada — será usada no próximo acesso
+            console.log('[App] Nova versão do app disponível');
+          }
+        });
+      });
+      // Verificar atualização a cada vez que o app abre
+      reg.update().catch(() => {});
+    }).catch(err => console.warn('[App] SW não registrado:', err));
+  }
   window.addEventListener('online', ()=>{
     document.getElementById('offb').style.display='none';
     addLog('🌐 Conexão restaurada — iniciando sync','info');
