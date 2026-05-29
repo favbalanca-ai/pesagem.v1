@@ -290,8 +290,8 @@ function pull(sheet) {
     function cleanup() { clearTimeout(to); delete window[cb]; if(sc.parentNode) sc.parentNode.removeChild(sc); }
     window[cb] = function(json) {
       cleanup();
-      if (json && json.ok && Array.isArray(json.data) && json.data.length > 0) {
-        sv(KMAP[sheet], json.data);
+      if (json && json.ok && Array.isArray(json.data)) {
+        if (json.data.length > 0) sv(KMAP[sheet], json.data);
         resolve(json.data);
       } else {
         resolve(null);
