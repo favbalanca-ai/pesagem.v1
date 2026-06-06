@@ -1213,6 +1213,13 @@ function irNova(){
   ['fi-oc','fi-cn','fi-pl','fi-cm','fi-ex'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='fi-oc'?'📄':'📸';});
   ['fl-oc','fl-cn','fl-pl','fl-cm','fl-ex'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=['Fotografar contrato ou ordem','CNH','Placa','Cam.','Extra'][i];});
   const prev=document.getElementById('prev-oc'); if(prev){prev.style.display='none';prev.src='';}
+  // resetar caminhão longo
+  const chkL=document.getElementById('chk-longo');
+  if(chkL){ chkL.checked=false; chkL.disabled=false; }
+  document.getElementById('tara2-wrap').style.display='none';
+  document.getElementById('bruto2-wrap').style.display='none';
+  document.getElementById('f-tr2').value='';
+  document.getElementById('tara-total').textContent='—';
   calcPBT();
   showPg('pg-nova','📋 Nova Pesagem',true,1);
 }
@@ -2100,6 +2107,7 @@ function salvar(){
     eixosDianteiro:d, eixosSimples:es, eixosDuplos:dd, eixosTriplos:t,
     totalEixos:tot, pbtMax:pbt, formulaEixos:formula,
     tara, limPeso:pbt,
+    longo: isLongo(), // salvar flag de caminhão longo
     obs:document.getElementById('f-ob').value,
     balanca:balNome,
     fotos:{...fotos},
@@ -2149,15 +2157,35 @@ var _timerAg=null;
 
 /* ══ PESO BRUTO ════════════════════════════════════════════════ */
 function irBruto(id){
-  atual=DB.ordens.find(o=>o.id===id); if(!atual)return;
+  atual=DB.ordens.find(o=>o.id===id)||cloud.find(o=>o.id===id); if(!atual)return;
   utBruto='kg';
   const fi=document.getElementById('f-br'); fi.value=''; fi.step='1'; fi.max='200000'; fi.placeholder='0';
   document.getElementById('ub').textContent='kg';
   document.getElementById('bk').className='ut on'; document.getElementById('bt').className='ut off';
   document.getElementById('cb').textContent='';
+  document.getElementById('f-br2').value='';
+  document.getElementById('cb2').textContent='';
+  document.getElementById('bruto-total').textContent='—';
   document.getElementById('res-br').style.display='none';
   document.getElementById('btn-cb').style.display='none';
+
+  // Restaurar modo caminhão longo se foi marcado na tara
+  const chk=document.getElementById('chk-longo');
+  const longo=!!atual.longo;
+  chk.checked=longo;
+  chk.disabled=longo; // bloquear alteração no bruto — já foi definido na tara
+  document.getElementById('tara2-wrap').style.display='none'; // tara não aparece no bruto
+  document.getElementById('bruto2-wrap').style.display=longo?'block':'none';
+  if(longo){
+    document.getElementById('ut2').textContent='kg';
+    document.getElementById('ub2').textContent='kg';
+    // Mostrar tara já registrada no info
+  }
+
   const tol=(DB.cfg.tol||7)/100;
+  const taraLabel=longo
+    ?`⚖️ Tara: <b style="color:var(--g1)">${atual.tara.toFixed(3)}t</b> (${Math.round(atual.tara*1000)}kg) — <span style="color:var(--g1)">2 partes somadas</span>`
+    :`⚖️ Tara: <b style="color:var(--g1)">${atual.tara.toFixed(3)}t</b> (${Math.round(atual.tara*1000)}kg)`;
   document.getElementById('br-info').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
       <div class="plc">${atual.placa}</div>
@@ -2165,8 +2193,9 @@ function irBruto(id){
     </div>
     <div class="oi">👤 ${atual.motorista}</div>
     <div class="oi" style="font-family:'JetBrains Mono',monospace;font-size:11px">${atual.formulaEixos}</div>
-    <div class="oi">⚖️ Tara: <b style="color:var(--g1)">${atual.tara.toFixed(3)}t</b> (${Math.round(atual.tara*1000)}kg)</div>
-    <div class="oi">📏 PBT Máx: <b>${atual.pbtMax}t</b> · Tolerância: <b>${(atual.pbtMax*(1+tol)).toFixed(1)}t</b> / ${Math.round(atual.pbtMax*(1+tol)*1000)}kg</div>`;
+    <div class="oi">${taraLabel}</div>
+    <div class="oi">📏 PBT Máx: <b>${atual.pbtMax}t</b> · Tolerância: <b>${(atual.pbtMax*(1+tol)).toFixed(1)}t</b> / ${Math.round(atual.pbtMax*(1+tol)*1000)}kg</div>
+    ${longo?'<div class="oi" style="color:var(--g1);font-weight:700">🚛 Caminhão longo — preencha o Bruto da 1ª e 2ª parte</div>':''}`;
   showPg('pg-br','⚖️ Peso Bruto',true,3);
 }
 function calcBr(){
