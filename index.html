@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2983,6 +2983,7 @@ function normOrdem(o){
     limPeso:      parseFloat(o.pbtMax||o.limPeso)||0,
     statusPeso:   String(o.status||o.statusPeso||'').replace('Finalizado — ',''),
     assinatura:   assinatura,
+    longo:        o.longo===true||o.longo==='Sim'||o.longo==='sim',
   };
 }
 
