@@ -938,6 +938,11 @@ body.dark .card{background:#1a2d22}
   <div class="print-col"><div class="pdf-page" id="print-page-2"></div></div>
 </div>
 
+<!-- Container de impressão do relatório — A4 retrato, 1 por folha -->
+<div id="print-relatorio" style="display:none">
+  <div id="print-rel-page" style="font-family:'Inter',sans-serif;font-size:12px;color:#222;background:#fff;padding:14mm 12mm;"></div>
+</div>
+
 <script>
 /* ══ CONFIG ═══════════════════════════════════════════════════ */
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxvNJutHp0bVC0lZWzmYN_fm5EajV7xBZDu2MJAK_gxVvuAmGUxWx0QAx_M1PIxCRqq-Q/exec";
@@ -3193,71 +3198,126 @@ function pdfContrato(){
   const saldo=vol>0?vol-cargaTotal*1000:null;
   const pct=vol>0?Math.min(100,(cargaTotal*1000/vol*100)).toFixed(1):null;
   const emp=ct?(parseInt(ct.bal)===2?'Fazenda Espora':'Fazenda Água Viva'):'Fazenda Água Viva';
-  const agora=new Date().toLocaleString('pt-BR');
+  const agora=new Date().toLocaleDateString('pt-BR')+' '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
-  // Tabela de pesagens
-  const linhas=fin.map(o=>`
-    <tr style="border-bottom:.5px solid #f0f0f0;font-size:11px">
-      <td style="padding:5px 4px">${o.dataEntrada||'—'}</td>
-      <td style="padding:5px 4px;font-family:'JetBrains Mono',monospace">${o.placa||'—'}</td>
-      <td style="padding:5px 4px">${o.motorista||'—'}</td>
-      <td style="padding:5px 4px;text-align:right;font-family:'JetBrains Mono',monospace">${Math.round((o.tara||0)*1000).toLocaleString('pt-BR')}</td>
-      <td style="padding:5px 4px;text-align:right;font-family:'JetBrains Mono',monospace">${Math.round((o.pesoBruto||0)*1000).toLocaleString('pt-BR')}</td>
-      <td style="padding:5px 4px;text-align:right;font-weight:700;color:#1a5c45;font-family:'JetBrains Mono',monospace">${Math.round((o.cargaLiquida||0)*1000).toLocaleString('pt-BR')}</td>
-      <td style="padding:5px 4px;text-align:center">${(o.statusPeso||'').includes('CONFORME')?'✅':'⚠️'}</td>
+  const linhas=fin.map((o,i)=>`
+    <tr style="background:${i%2===0?'#fff':'#f9fbf9'};border-bottom:.5px solid #e8f0e8">
+      <td style="padding:5px 6px">${o.dataEntrada||'—'}</td>
+      <td style="padding:5px 6px;font-family:monospace;font-weight:600">${o.placa||'—'}</td>
+      <td style="padding:5px 6px">${o.motorista||'—'}</td>
+      <td style="padding:5px 6px;text-align:right;font-family:monospace">${Math.round((o.tara||0)*1000).toLocaleString('pt-BR')}</td>
+      <td style="padding:5px 6px;text-align:right;font-family:monospace">${Math.round((o.pesoBruto||0)*1000).toLocaleString('pt-BR')}</td>
+      <td style="padding:5px 6px;text-align:right;font-weight:700;color:#1a5c45;font-family:monospace">${Math.round((o.cargaLiquida||0)*1000).toLocaleString('pt-BR')}</td>
+      <td style="padding:5px 6px;text-align:center">${(o.statusPeso||'').includes('EXCEDIDO')?'🚨':'✅'}</td>
     </tr>`).join('');
 
-  document.getElementById('pdf-page').innerHTML=`
-    <div class="pdf-logo">
-      <h1>⚖️ ${emp}</h1>
-      <p style="font-weight:700;font-size:13px;margin-top:4px">Relatório de Contrato</p>
-      <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#1a5c45;font-weight:800">${numCt}</p>
-      ${ct?.p?`<p style="font-size:11px;color:#888">Produto: ${ct.p}</p>`:''}
+  const html=`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório ${numCt}</title>
+<style>
+  @page { size: A4 portrait; margin: 12mm 10mm; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#222;background:#fff}
+  .header{text-align:center;border-bottom:2px solid #1a5c45;padding-bottom:10px;margin-bottom:14px}
+  .header h1{font-size:18px;color:#1a5c45;font-weight:800}
+  .header h2{font-size:13px;font-weight:700;margin-top:3px;letter-spacing:.5px}
+  .header .ct{font-size:15px;font-weight:800;color:#1a5c45;margin-top:4px;font-family:monospace}
+  .header .sub{font-size:10px;color:#888;margin-top:2px}
+  .resumo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .card{background:#f4faf4;border:1px solid #c8e6c9;border-radius:6px;padding:8px 10px}
+  .card label{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px;display:block}
+  .card span{font-size:14px;font-weight:800;color:#1a5c45}
+  .card.destaque{background:#1a5c45;border-color:#1a5c45}
+  .card.destaque label{color:#a5d6a7}
+  .card.destaque span{color:#fff;font-size:16px}
+  .card.alerta span{color:#c0392b}
+  section h3{font-size:10px;font-weight:700;color:#1a5c45;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;border-bottom:1px solid #c8e6c9;padding-bottom:3px}
+  table{width:100%;border-collapse:collapse;font-size:10.5px}
+  thead tr{background:#1a5c45;color:#fff}
+  thead th{padding:6px 6px;text-align:left;font-weight:600;font-size:10px}
+  tfoot tr{background:#e8f5e9}
+  tfoot td{padding:6px 6px;font-weight:800;font-size:11px}
+  .rodape{margin-top:14px;border-top:1px solid #eee;padding-top:6px;font-size:9px;color:#aaa;text-align:center}
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚖️ ${emp}</h1>
+  <h2>Relatório de Contrato</h2>
+  <div class="ct">${numCt}</div>
+  <div class="sub">${ct?.p?'Produto: '+ct.p+' · ':''} ${ct?.bal==2?'Balança 2 — Espora':'Balança 1 — Água Viva'}</div>
+</div>
+
+<section style="margin-bottom:14px">
+  <h3>📊 Resumo</h3>
+  <div class="resumo">
+    <div class="card destaque">
+      <label>Carga líquida total</label>
+      <span>${(cargaTotal*1000).toLocaleString('pt-BR')} kg</span>
+      <div style="color:#a5d6a7;font-size:10px;margin-top:2px">${cargaTotal.toFixed(3)} t</div>
     </div>
-
-    <div class="pdf-section"><h3>📊 Resumo do Contrato</h3>
-      <div class="pdf-row"><span class="pdf-label">Total de viagens</span><span class="pdf-val">${todos.length} (${fin.length} finalizadas · ${ag.length} aguardando)</span></div>
-      <div class="pdf-row"><span class="pdf-label">Peso bruto total</span><span class="pdf-val">${(brutoTotal*1000).toLocaleString('pt-BR')} kg</span></div>
-      <div class="pdf-row" style="border-top:1.5px solid #1a5c45;margin-top:4px;padding-top:8px">
-        <span class="pdf-label" style="font-weight:700;color:#1a5c45">Carga líquida total</span>
-        <span class="pdf-val" style="font-size:15px;color:#1a5c45;font-weight:800">${(cargaTotal*1000).toLocaleString('pt-BR')} kg · ${cargaTotal.toFixed(3)} t</span>
-      </div>
-      ${vol>0?`
-      <div class="pdf-row"><span class="pdf-label">Volume contratado</span><span class="pdf-val">${vol.toLocaleString('pt-BR')} kg</span></div>
-      <div class="pdf-row"><span class="pdf-label">Saldo restante</span><span class="pdf-val" style="color:${saldo<=0?'#c0392b':'#1a5c45'}">${Math.round(saldo).toLocaleString('pt-BR')} kg</span></div>
-      <div class="pdf-row"><span class="pdf-label">Percentual entregue</span><span class="pdf-val">${pct}%</span></div>`:''}
-      <div class="pdf-row"><span class="pdf-label">Balança</span><span class="pdf-val">${ct?.bal==2?'Balança 2 — Espora':'Balança 1 — Água Viva'}</span></div>
+    <div class="card">
+      <label>Peso bruto total</label>
+      <span>${(brutoTotal*1000).toLocaleString('pt-BR')} kg</span>
     </div>
-
-    <div class="pdf-section"><h3>🚛 Pesagens Finalizadas (${fin.length})</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead>
-          <tr style="background:#1a5c45;color:#fff">
-            <th style="padding:6px 4px;text-align:left;font-weight:600">Data</th>
-            <th style="padding:6px 4px;text-align:left;font-weight:600">Placa</th>
-            <th style="padding:6px 4px;text-align:left;font-weight:600">Motorista</th>
-            <th style="padding:6px 4px;text-align:right;font-weight:600">Tara kg</th>
-            <th style="padding:6px 4px;text-align:right;font-weight:600">Bruto kg</th>
-            <th style="padding:6px 4px;text-align:right;font-weight:600">Carga kg</th>
-            <th style="padding:6px 4px;text-align:center;font-weight:600">Status</th>
-          </tr>
-        </thead>
-        <tbody>${linhas}</tbody>
-        <tfoot>
-          <tr style="background:#e8f5e9;font-weight:800">
-            <td colspan="5" style="padding:7px 4px;font-size:12px">TOTAL CARREGADO</td>
-            <td style="padding:7px 4px;text-align:right;color:#1a5c45;font-family:'JetBrains Mono',monospace;font-size:13px">${(cargaTotal*1000).toLocaleString('pt-BR')}</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
+    <div class="card">
+      <label>Total de viagens</label>
+      <span>${todos.length}</span>
+      <div style="font-size:9px;color:#666;margin-top:2px">${fin.length} finalizadas · ${ag.length} aguardando</div>
     </div>
+    ${vol>0?`
+    <div class="card ${saldo<=0?'alerta':''}">
+      <label>Volume contratado</label>
+      <span>${vol.toLocaleString('pt-BR')} kg</span>
+      <div style="font-size:9px;color:${saldo<=0?'#c0392b':'#555'};margin-top:2px">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')} kg (${pct}% entregue)</div>
+    </div>`:`<div class="card"><label>Balança</label><span style="font-size:12px">${ct?.bal==2?'Espora':'Água Viva'}</span></div>`}
+  </div>
+</section>
 
-    <div style="text-align:center;margin-top:16px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px">
-      Gerado em ${agora} · ${emp}
-    </div>`;
+<section>
+  <h3>🚛 Pesagens Finalizadas (${fin.length})</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Placa</th>
+        <th>Motorista</th>
+        <th style="text-align:right">Tara kg</th>
+        <th style="text-align:right">Bruto kg</th>
+        <th style="text-align:right">Carga kg</th>
+        <th style="text-align:center">St</th>
+      </tr>
+    </thead>
+    <tbody>${linhas}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5" style="color:#1a5c45">TOTAL CARREGADO</td>
+        <td style="text-align:right;color:#1a5c45;font-family:monospace">${(cargaTotal*1000).toLocaleString('pt-BR')}</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</section>
 
-  document.getElementById('pdf-frame').classList.add('show');
+<div class="rodape">Gerado em ${agora} · ${emp} · Sistema Balança FAV</div>
+</body>
+</html>`;
+
+  // Abrir em nova janela e imprimir automaticamente
+  const win=window.open('','_blank','width=794,height=1123');
+  if(!win){alert('Permita pop-ups para imprimir o relatório.');return;}
+  win.document.write(html);
+  win.document.close();
+  win.onload=function(){
+    win.focus();
+    win.print();
+    setTimeout(()=>win.close(),1000);
+  };
 }
 function imprimirPDF(){
   const src = document.getElementById('pdf-page');
