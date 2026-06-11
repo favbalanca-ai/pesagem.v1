@@ -1477,15 +1477,18 @@ function getTon(campo){
 }
 function toggleLongo(campo){
   const longo = document.getElementById('chk-longo').checked;
-  document.getElementById('tara2-wrap').style.display = longo ? 'block' : 'none';
+  // tara2-wrap só aparece na tela de tara — na tela de bruto fica escondido
+  const naTela = document.querySelector('.pg.on');
+  const naPgTar = naTela && naTela.id === 'pg-tar';
+  document.getElementById('tara2-wrap').style.display = (longo && naPgTar) ? 'block' : 'none';
   document.getElementById('bruto2-wrap').style.display = longo ? 'block' : 'none';
-  // Sincronizar unidade do campo 2 com campo 1
   document.getElementById('ut2').textContent = utTara;
   document.getElementById('ub2').textContent = utBruto;
   if(!longo){
     document.getElementById('f-tr2').value='';
     document.getElementById('f-br2').value='';
     document.getElementById('ct2').textContent='';
+    document.getElementById('cb2').textContent='';
     document.getElementById('tara-total').textContent='—';
     document.getElementById('bruto-total').textContent='—';
   }
@@ -2173,8 +2176,8 @@ function irBruto(id){
   const chk=document.getElementById('chk-longo');
   const longo=!!atual.longo;
   chk.checked=longo;
-  chk.disabled=longo; // bloquear alteração no bruto — já foi definido na tara
-  document.getElementById('tara2-wrap').style.display='none'; // tara não aparece no bruto
+  chk.disabled=false; // sempre permitir ajuste — caso a OS veio sem campo longo do GAS antigo
+  document.getElementById('tara2-wrap').style.display='none'; // tara não aparece na tela de bruto
   document.getElementById('bruto2-wrap').style.display=longo?'block':'none';
   if(longo){
     document.getElementById('ut2').textContent='kg';
@@ -2234,12 +2237,34 @@ function calcBr(){
 function confBr(){
   const b=getTonLongo('b');
   if(!b||b<=0){toast('⚠️ Informe o peso!');return;}
+
+  // Verificar se é longo e os dois campos de bruto foram preenchidos
+  if(isLongo()){
+    const b1=parseFloat(document.getElementById('f-br').value)||0;
+    const b2=parseFloat(document.getElementById('f-br2').value)||0;
+    if(b1<=0||b2<=0){
+      toast('⚠️ Preencha o bruto da 1ª e 2ª parte!');
+      return;
+    }
+  }
+
   const partes=isLongo()?'\n(soma das 2 partes)':'';
   if(!confirm(`Confirmar peso bruto:\n${b.toFixed(3)}t / ${Math.round(b*1000)}kg${partes}?`))return;
-  // Também salvar tara total se longo
-  if(isLongo()) atual.tara = getTonLongo('t');
-  const tara=atual.tara,carga=Math.max(0,b-tara),lim=atual.pbtMax;
-  const tol=(DB.cfg.tol||7)/100,limT=lim*(1+tol);
+
+  // NUNCA sobrescrever a tara — ela já está correta em atual.tara (veio da planilha ou foi registrada)
+  // Só recalcular tara se AMBOS os campos de tara estiverem preenchidos neste celular
+  if(isLongo()){
+    const t1=parseFloat(document.getElementById('f-tr').value)||0;
+    const t2=parseFloat(document.getElementById('f-tr2').value)||0;
+    if(t1>0 && t2>0){
+      // Campos de tara preenchidos localmente — usar esses valores
+      atual.tara = getTonLongo('t');
+    }
+    // Se campos vazios (outro celular) — manter atual.tara que veio da planilha
+  }
+
+  const tara=atual.tara, carga=Math.max(0,b-tara), lim=atual.pbtMax;
+  const tol=(DB.cfg.tol||7)/100, limT=lim*(1+tol);
   atual.pesoBruto=b; atual.cargaLiquida=parseFloat(carga.toFixed(3));
   atual.statusPeso=b>limT?'EXCEDIDO':b>lim?'ATENÇÃO':'CONFORME';
   document.getElementById('sig-info').innerHTML=`
@@ -2247,8 +2272,8 @@ function confBr(){
       <div class="plc">${atual.placa}</div>
       <span class="obg ${atual.statusPeso==='CONFORME'?'bok':atual.statusPeso==='ATENÇÃO'?'bwn':'ber'}">${atual.statusPeso}</span>
     </div>
-    <div class="oi">⚖️ Bruto: <b>${b.toFixed(3)}t</b> (${Math.round(b*1000)}kg)</div>
-    <div class="oi">📦 Carga: <b style="color:var(--g1)">${carga.toFixed(3)}t</b> (${Math.round(carga*1000)}kg)</div>`;
+    <div class="oi">⚖️ Tara: <b>${tara.toFixed(3)}t</b> · Bruto: <b>${b.toFixed(3)}t</b></div>
+    <div class="oi">📦 Carga: <b style="color:var(--g1)">${carga.toFixed(3)}t</b> (${Math.round(carga*1000).toLocaleString('pt-BR')}kg)</div>`;
   clrSig();
   showPg('pg-sig','✍️ Assinatura',true,4);
   document.body.setAttribute('data-sig','1');
