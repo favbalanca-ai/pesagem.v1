@@ -1480,12 +1480,18 @@ function toggleLongo(campo){
     document.getElementById('tara-total').textContent='—';
     document.getElementById('bruto-total').textContent='—';
   }
-  // Rolar para mostrar o campo que acabou de aparecer
+  // Rolar o container da página até o campo aparecer
   if(longo){
     setTimeout(()=>{
       const wrap=document.getElementById('tara2-wrap');
-      if(wrap) wrap.scrollIntoView({behavior:'smooth',block:'start'});
-    },100);
+      if(!wrap) return;
+      // O scroll container é a .pg ativa, não a window
+      const pg=wrap.closest('.pg') || document.getElementById('pg-nova');
+      if(pg){
+        const wrapTop=wrap.offsetTop;
+        pg.scrollTo({top: wrapTop - 60, behavior:'smooth'});
+      }
+    },120);
   }
   onTara(); calcBr();
 }
