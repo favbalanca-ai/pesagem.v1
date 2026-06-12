@@ -1798,9 +1798,9 @@ function carregarContratosLocal(){
 /* ══ SCANNER CNH / DOCUMENTO ═══════════════════════════════════ */
 async function scanCNH(inp) {
   const file = inp.files[0]; if (!file) return;
-  const lbl  = document.getElementById('scan-lbl');
+  const lbl  = document.getElementById('scan-lbl'); if(!lbl) return;
   const res  = document.getElementById('cnh-res');
-  const dados= document.getElementById('cnh-dados');
+  const dados= document.getElementById('cnh-dados'); if(!dados) return;
   lbl.textContent = '⏳ Lendo documento com IA...';
   res.style.display = 'block';
   dados.innerHTML = '<span style="color:var(--ink3)">Aguarde...</span>';
