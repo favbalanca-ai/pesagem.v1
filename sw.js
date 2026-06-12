@@ -1,5 +1,5 @@
 // sw.js v5 — Offline total: Android + iOS
-const CACHE = 'fav-v5';
+const CACHE = 'fav-v6';
 const SYNC_TAG = 'fav-sync-pendentes';
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxvNJutHp0bVC0lZWzmYN_fm5EajV7xBZDu2MJAK_gxVvuAmGUxWx0QAx_M1PIxCRqq-Q/exec";
 const TOKEN = "pesagem@fav2024";
