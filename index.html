@@ -1468,11 +1468,10 @@ function getTon(campo){
 }
 function toggleLongo(campo){
   const longo = document.getElementById('chk-longo').checked;
-  // tara2-wrap só aparece na tela de tara — na tela de bruto fica escondido
-  const naTela = document.querySelector('.pg.on');
-  const naPgTar = naTela && naTela.id === 'pg-tar';
-  document.getElementById('tara2-wrap').style.display = (longo && naPgTar) ? 'block' : 'none';
-  document.getElementById('bruto2-wrap').style.display = longo ? 'block' : 'none';
+  const pgNovaVisivel = document.getElementById('pg-nova').classList.contains('on');
+  const pgBrVisivel   = document.getElementById('pg-br').classList.contains('on');
+  document.getElementById('tara2-wrap').style.display  = (longo && pgNovaVisivel) ? 'block' : 'none';
+  document.getElementById('bruto2-wrap').style.display = (longo && pgBrVisivel)   ? 'block' : 'none';
   document.getElementById('ut2').textContent = utTara;
   document.getElementById('ub2').textContent = utBruto;
   if(!longo){
