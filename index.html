@@ -215,11 +215,20 @@ body.dark .sbar{background:#1a2d22}
 body.dark .card{background:#1a2d22}
 @media print{
   @page { size: A4 landscape; margin: 6mm; }
-  body > *:not(#print-mirror) { display: none !important; }
-  #print-mirror {
+  body > *:not(#print-mirror):not(#print-relatorio) { display: none !important; }
+  #print-mirror { display: none; }
+  #print-relatorio { display: none; }
+  /* Ticket: landscape, 2 cópias */
+  #print-mirror[style*="flex"] {
     display: flex !important;
     width: 100%;
     height: 100%;
+    background: #fff;
+  }
+  /* Relatório: retrato, 1 por folha */
+  #print-relatorio[style*="block"] {
+    display: block !important;
+    width: 100%;
     background: #fff;
   }
   .print-col {
@@ -239,6 +248,14 @@ body.dark .card{background:#1a2d22}
     padding: 0 !important;
     font-size: 10.5px !important;
     margin: 0 !important;
+  }
+  #print-rel-page {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #222;
+    padding: 8mm;
   }
 }
 #offb{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;background:#e6a817;color:#fff;text-align:center;font-size:11px;font-weight:700;padding:5px;z-index:1000;display:none}
@@ -3201,123 +3218,86 @@ function pdfContrato(){
   const agora=new Date().toLocaleDateString('pt-BR')+' '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
   const linhas=fin.map((o,i)=>`
-    <tr style="background:${i%2===0?'#fff':'#f9fbf9'};border-bottom:.5px solid #e8f0e8">
-      <td style="padding:5px 6px">${o.dataEntrada||'—'}</td>
-      <td style="padding:5px 6px;font-family:monospace;font-weight:600">${o.placa||'—'}</td>
-      <td style="padding:5px 6px">${o.motorista||'—'}</td>
-      <td style="padding:5px 6px;text-align:right;font-family:monospace">${Math.round((o.tara||0)*1000).toLocaleString('pt-BR')}</td>
-      <td style="padding:5px 6px;text-align:right;font-family:monospace">${Math.round((o.pesoBruto||0)*1000).toLocaleString('pt-BR')}</td>
-      <td style="padding:5px 6px;text-align:right;font-weight:700;color:#1a5c45;font-family:monospace">${Math.round((o.cargaLiquida||0)*1000).toLocaleString('pt-BR')}</td>
-      <td style="padding:5px 6px;text-align:center">${(o.statusPeso||'').includes('EXCEDIDO')?'🚨':'✅'}</td>
+    <tr style="background:${i%2===0?'#fff':'#f4faf4'}">
+      <td>${o.dataEntrada||'—'}</td>
+      <td style="font-family:monospace;font-weight:600">${o.placa||'—'}</td>
+      <td>${o.motorista||'—'}</td>
+      <td style="text-align:right;font-family:monospace">${Math.round((o.tara||0)*1000).toLocaleString('pt-BR')}</td>
+      <td style="text-align:right;font-family:monospace">${Math.round((o.pesoBruto||0)*1000).toLocaleString('pt-BR')}</td>
+      <td style="text-align:right;font-weight:700;color:#1a5c45;font-family:monospace">${Math.round((o.cargaLiquida||0)*1000).toLocaleString('pt-BR')}</td>
+      <td style="text-align:center">${(o.statusPeso||'').includes('EXCEDIDO')?'🚨':'✅'}</td>
     </tr>`).join('');
 
-  const html=`<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Relatório ${numCt}</title>
-<style>
-  @page { size: A4 portrait; margin: 12mm 10mm; }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#222;background:#fff}
-  .header{text-align:center;border-bottom:2px solid #1a5c45;padding-bottom:10px;margin-bottom:14px}
-  .header h1{font-size:18px;color:#1a5c45;font-weight:800}
-  .header h2{font-size:13px;font-weight:700;margin-top:3px;letter-spacing:.5px}
-  .header .ct{font-size:15px;font-weight:800;color:#1a5c45;margin-top:4px;font-family:monospace}
-  .header .sub{font-size:10px;color:#888;margin-top:2px}
-  .resumo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-  .card{background:#f4faf4;border:1px solid #c8e6c9;border-radius:6px;padding:8px 10px}
-  .card label{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px;display:block}
-  .card span{font-size:14px;font-weight:800;color:#1a5c45}
-  .card.destaque{background:#1a5c45;border-color:#1a5c45}
-  .card.destaque label{color:#a5d6a7}
-  .card.destaque span{color:#fff;font-size:16px}
-  .card.alerta span{color:#c0392b}
-  section h3{font-size:10px;font-weight:700;color:#1a5c45;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;border-bottom:1px solid #c8e6c9;padding-bottom:3px}
-  table{width:100%;border-collapse:collapse;font-size:10.5px}
-  thead tr{background:#1a5c45;color:#fff}
-  thead th{padding:6px 6px;text-align:left;font-weight:600;font-size:10px}
-  tfoot tr{background:#e8f5e9}
-  tfoot td{padding:6px 6px;font-weight:800;font-size:11px}
-  .rodape{margin-top:14px;border-top:1px solid #eee;padding-top:6px;font-size:9px;color:#aaa;text-align:center}
-  @media print{
-    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  }
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>⚖️ ${emp}</h1>
-  <h2>Relatório de Contrato</h2>
-  <div class="ct">${numCt}</div>
-  <div class="sub">${ct?.p?'Produto: '+ct.p+' · ':''} ${ct?.bal==2?'Balança 2 — Espora':'Balança 1 — Água Viva'}</div>
-</div>
-
-<section style="margin-bottom:14px">
-  <h3>📊 Resumo</h3>
-  <div class="resumo">
-    <div class="card destaque">
-      <label>Carga líquida total</label>
-      <span>${(cargaTotal*1000).toLocaleString('pt-BR')} kg</span>
-      <div style="color:#a5d6a7;font-size:10px;margin-top:2px">${cargaTotal.toFixed(3)} t</div>
+  const conteudo=`
+    <div style="text-align:center;border-bottom:2.5px solid #1a5c45;padding-bottom:10px;margin-bottom:14px">
+      <div style="font-size:20px;font-weight:800;color:#1a5c45">⚖️ ${emp}</div>
+      <div style="font-size:13px;font-weight:700;margin-top:3px">Relatório de Contrato</div>
+      <div style="font-size:16px;font-weight:800;color:#1a5c45;font-family:monospace;margin-top:4px">${numCt}</div>
+      <div style="font-size:10px;color:#888;margin-top:2px">${ct?.p?'Produto: '+ct.p+' · ':''}${ct?.bal==2?'Balança 2 — Espora':'Balança 1 — Água Viva'}</div>
     </div>
-    <div class="card">
-      <label>Peso bruto total</label>
-      <span>${(brutoTotal*1000).toLocaleString('pt-BR')} kg</span>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:#1a5c45;border-radius:7px;padding:10px 12px;grid-column:span 2">
+        <div style="font-size:9px;color:#a5d6a7;text-transform:uppercase;letter-spacing:.5px">Carga líquida total</div>
+        <div style="font-size:18px;font-weight:800;color:#fff">${(cargaTotal*1000).toLocaleString('pt-BR')} kg</div>
+        <div style="font-size:11px;color:#a5d6a7">${cargaTotal.toFixed(3)} t</div>
+      </div>
+      <div style="background:#f4faf4;border:1px solid #c8e6c9;border-radius:7px;padding:8px 10px">
+        <div style="font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px">Peso bruto total</div>
+        <div style="font-size:14px;font-weight:800;color:#1a5c45">${(brutoTotal*1000).toLocaleString('pt-BR')} kg</div>
+      </div>
+      <div style="background:#f4faf4;border:1px solid #c8e6c9;border-radius:7px;padding:8px 10px">
+        <div style="font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px">Viagens</div>
+        <div style="font-size:14px;font-weight:800;color:#1a5c45">${todos.length}</div>
+        <div style="font-size:9px;color:#666;margin-top:2px">${fin.length} fin. · ${ag.length} ag.</div>
+      </div>
+      ${vol>0?`
+      <div style="background:${saldo<=0?'#fce8e8':'#f4faf4'};border:1px solid ${saldo<=0?'#e24b4a':'#c8e6c9'};border-radius:7px;padding:8px 10px;grid-column:span 2">
+        <div style="font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.5px">Volume contratado · saldo</div>
+        <div style="font-size:13px;font-weight:800;color:${saldo<=0?'#c0392b':'#1a5c45'}">${vol.toLocaleString('pt-BR')} kg · Saldo: ${Math.round(saldo).toLocaleString('pt-BR')} kg</div>
+        <div style="font-size:10px;color:#666;margin-top:2px">${pct}% entregue</div>
+      </div>`:''}
     </div>
-    <div class="card">
-      <label>Total de viagens</label>
-      <span>${todos.length}</span>
-      <div style="font-size:9px;color:#666;margin-top:2px">${fin.length} finalizadas · ${ag.length} aguardando</div>
+
+    <div style="font-size:10px;font-weight:700;color:#1a5c45;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;border-bottom:1px solid #c8e6c9;padding-bottom:3px">
+      🚛 Pesagens Finalizadas (${fin.length})
     </div>
-    ${vol>0?`
-    <div class="card ${saldo<=0?'alerta':''}">
-      <label>Volume contratado</label>
-      <span>${vol.toLocaleString('pt-BR')} kg</span>
-      <div style="font-size:9px;color:${saldo<=0?'#c0392b':'#555'};margin-top:2px">Saldo: ${Math.round(saldo).toLocaleString('pt-BR')} kg (${pct}% entregue)</div>
-    </div>`:`<div class="card"><label>Balança</label><span style="font-size:12px">${ct?.bal==2?'Espora':'Água Viva'}</span></div>`}
-  </div>
-</section>
+    <table style="width:100%;border-collapse:collapse;font-size:10px">
+      <thead>
+        <tr style="background:#1a5c45;color:#fff">
+          <th style="padding:5px 5px;text-align:left">Data</th>
+          <th style="padding:5px 5px;text-align:left">Placa</th>
+          <th style="padding:5px 5px;text-align:left">Motorista</th>
+          <th style="padding:5px 5px;text-align:right">Tara kg</th>
+          <th style="padding:5px 5px;text-align:right">Bruto kg</th>
+          <th style="padding:5px 5px;text-align:right">Carga kg</th>
+          <th style="padding:5px 5px;text-align:center">St</th>
+        </tr>
+      </thead>
+      <tbody>${linhas}</tbody>
+      <tfoot>
+        <tr style="background:#e8f5e9">
+          <td colspan="5" style="padding:6px 5px;font-weight:800;color:#1a5c45;font-size:11px">TOTAL CARREGADO</td>
+          <td style="padding:6px 5px;text-align:right;font-weight:800;color:#1a5c45;font-family:monospace;font-size:12px">${(cargaTotal*1000).toLocaleString('pt-BR')}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    <div style="margin-top:12px;text-align:center;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:6px">
+      Gerado em ${agora} · ${emp} · Sistema Balança FAV
+    </div>`;
 
-<section>
-  <h3>🚛 Pesagens Finalizadas (${fin.length})</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Placa</th>
-        <th>Motorista</th>
-        <th style="text-align:right">Tara kg</th>
-        <th style="text-align:right">Bruto kg</th>
-        <th style="text-align:right">Carga kg</th>
-        <th style="text-align:center">St</th>
-      </tr>
-    </thead>
-    <tbody>${linhas}</tbody>
-    <tfoot>
-      <tr>
-        <td colspan="5" style="color:#1a5c45">TOTAL CARREGADO</td>
-        <td style="text-align:right;color:#1a5c45;font-family:monospace">${(cargaTotal*1000).toLocaleString('pt-BR')}</td>
-        <td></td>
-      </tr>
-    </tfoot>
-  </table>
-</section>
-
-<div class="rodape">Gerado em ${agora} · ${emp} · Sistema Balança FAV</div>
-</body>
-</html>`;
-
-  // Abrir em nova janela e imprimir automaticamente
-  const win=window.open('','_blank','width=794,height=1123');
-  if(!win){alert('Permita pop-ups para imprimir o relatório.');return;}
-  win.document.write(html);
-  win.document.close();
-  win.onload=function(){
-    win.focus();
-    win.print();
-    setTimeout(()=>win.close(),1000);
-  };
+  // Renderizar no print-relatorio e imprimir
+  const el=document.getElementById('print-rel-page');
+  el.innerHTML=conteudo;
+  const mirror=document.getElementById('print-relatorio');
+  mirror.style.display='block';
+  window.print();
+  window.addEventListener('afterprint',function cb(){
+    mirror.style.display='none';
+    window.removeEventListener('afterprint',cb);
+  },{once:true});
+  setTimeout(()=>{mirror.style.display='none';},4000);
 }
 function imprimirPDF(){
   const src = document.getElementById('pdf-page');
