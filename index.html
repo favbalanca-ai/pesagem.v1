@@ -1468,12 +1468,10 @@ function getTon(campo){
 }
 function toggleLongo(campo){
   const longo = document.getElementById('chk-longo').checked;
-  const pgNovaVisivel = document.getElementById('pg-nova').classList.contains('on');
-  const pgBrVisivel   = document.getElementById('pg-br').classList.contains('on');
-  document.getElementById('tara2-wrap').style.display  = (longo && pgNovaVisivel) ? 'block' : 'none';
-  document.getElementById('bruto2-wrap').style.display = (longo && pgBrVisivel)   ? 'block' : 'none';
-  document.getElementById('ut2').textContent = utTara;
-  document.getElementById('ub2').textContent = utBruto;
+  document.getElementById('tara2-wrap').style.display  = longo ? 'block' : 'none';
+  document.getElementById('bruto2-wrap').style.display = longo ? 'block' : 'none';
+  document.getElementById('ut2').textContent = utTara||'kg';
+  document.getElementById('ub2').textContent = utBruto||'kg';
   if(!longo){
     document.getElementById('f-tr2').value='';
     document.getElementById('f-br2').value='';
@@ -1481,6 +1479,13 @@ function toggleLongo(campo){
     document.getElementById('cb2').textContent='';
     document.getElementById('tara-total').textContent='—';
     document.getElementById('bruto-total').textContent='—';
+  }
+  // Rolar para mostrar o campo que acabou de aparecer
+  if(longo){
+    setTimeout(()=>{
+      const wrap=document.getElementById('tara2-wrap');
+      if(wrap) wrap.scrollIntoView({behavior:'smooth',block:'start'});
+    },100);
   }
   onTara(); calcBr();
 }
@@ -2166,8 +2171,9 @@ function irBruto(id){
   const chk=document.getElementById('chk-longo');
   const longo=!!atual.longo;
   chk.checked=longo;
-  chk.disabled=false; // sempre permitir ajuste — caso a OS veio sem campo longo do GAS antigo
-  document.getElementById('tara2-wrap').style.display='none'; // tara não aparece na tela de bruto
+  chk.disabled=false;
+  // Mostrar/esconder diretamente — sem chamar toggleLongo
+  document.getElementById('tara2-wrap').style.display='none';
   document.getElementById('bruto2-wrap').style.display=longo?'block':'none';
   if(longo){
     document.getElementById('ut2').textContent='kg';
