@@ -214,49 +214,18 @@ body.dark .hb{background:#1a2d22}
 body.dark .sbar{background:#1a2d22}
 body.dark .card{background:#1a2d22}
 @media print{
-  @page { size: A4 landscape; margin: 6mm; }
-  body > *:not(#print-mirror):not(#print-relatorio) { display: none !important; }
-  #print-mirror { display: none; }
-  #print-relatorio { display: none; }
-  /* Ticket: landscape, 2 cópias */
-  #print-mirror[style*="flex"] {
-    display: flex !important;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-  }
-  /* Relatório: retrato, 1 por folha */
-  #print-relatorio[style*="block"] {
-    display: block !important;
-    width: 100%;
-    background: #fff;
-  }
-  .print-col {
-    flex: 1;
-    padding: 6mm;
-    overflow: hidden;
-  }
-  .print-divider {
-    width: 0.4mm;
-    background: #bbb;
-    margin: 6mm 0;
-    flex-shrink: 0;
-  }
-  .print-col .pdf-page {
-    box-shadow: none !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    font-size: 10.5px !important;
-    margin: 0 !important;
-  }
-  #print-rel-page {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    font-family: Arial, sans-serif;
-    font-size: 11px;
-    color: #222;
-    padding: 8mm;
-  }
+  /* Ticket: landscape 2 cópias */
+  body.print-ticket { }
+  body.print-ticket > *:not(#print-mirror) { display:none !important; }
+  body.print-ticket #print-mirror { display:flex !important; width:100%; background:#fff; }
+  /* Relatório: retrato 1 página */
+  body.print-relatorio > *:not(#print-relatorio) { display:none !important; }
+  body.print-relatorio #print-relatorio { display:block !important; width:100%; background:#fff; }
+  /* Compartilhado */
+  .print-col { flex:1; padding:6mm; overflow:hidden; }
+  .print-divider { width:0.4mm; background:#bbb; margin:6mm 0; flex-shrink:0; }
+  .print-col .pdf-page { box-shadow:none !important; max-width:100% !important; padding:0 !important; font-size:10.5px !important; margin:0 !important; }
+  #print-rel-page { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 #offb{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;background:#e6a817;color:#fff;text-align:center;font-size:11px;font-weight:700;padding:5px;z-index:1000;display:none}
 #tst{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--g4);color:#fff;padding:9px 18px;border-radius:30px;font-size:12px;font-weight:600;opacity:0;transition:all .25s;z-index:999;pointer-events:none;max-width:90vw;text-align:center}
@@ -3287,39 +3256,42 @@ function pdfContrato(){
       Gerado em ${agora} · ${emp} · Sistema Balança FAV
     </div>`;
 
-  // Renderizar no print-relatorio e imprimir
-  const el=document.getElementById('print-rel-page');
-  el.innerHTML=conteudo;
-  const mirror=document.getElementById('print-relatorio');
-  mirror.style.display='block';
+  // Renderizar e imprimir
+  document.getElementById('print-rel-page').innerHTML=conteudo;
+  document.getElementById('print-relatorio').style.display='block';
+  document.body.classList.add('print-relatorio');
   window.print();
   window.addEventListener('afterprint',function cb(){
-    mirror.style.display='none';
+    document.body.classList.remove('print-relatorio');
+    document.getElementById('print-relatorio').style.display='none';
     window.removeEventListener('afterprint',cb);
   },{once:true});
-  setTimeout(()=>{mirror.style.display='none';},4000);
+  setTimeout(()=>{
+    document.body.classList.remove('print-relatorio');
+    document.getElementById('print-relatorio').style.display='none';
+  },4000);
 }
 function imprimirPDF(){
-  const src = document.getElementById('pdf-page');
-  // Se pdf-page ainda vazio, gerar primeiro e avisar para clicar de novo
-  if(!src || !src.innerHTML.trim()){
+  const src=document.getElementById('pdf-page');
+  if(!src||!src.innerHTML.trim()){
     gerarPDF();
     toast('⏳ PDF gerado — toque em Imprimir novamente');
     return;
   }
-  const html = src.innerHTML;
-  document.getElementById('print-page-1').innerHTML = html;
-  document.getElementById('print-page-2').innerHTML = html;
-  const mirror = document.getElementById('print-mirror');
-  mirror.style.display = 'flex';
-  // iOS exige window.print() chamado diretamente no handler do evento do usuário
+  document.getElementById('print-page-1').innerHTML=src.innerHTML;
+  document.getElementById('print-page-2').innerHTML=src.innerHTML;
+  document.getElementById('print-mirror').style.display='flex';
+  document.body.classList.add('print-ticket');
   window.print();
-  // Limpar mirror após impressão
-  window.addEventListener('afterprint', function cb(){
-    mirror.style.display = 'none';
-    window.removeEventListener('afterprint', cb);
-  }, {once:true});
-  setTimeout(()=>{ mirror.style.display = 'none'; }, 4000);
+  window.addEventListener('afterprint',function cb(){
+    document.body.classList.remove('print-ticket');
+    document.getElementById('print-mirror').style.display='none';
+    window.removeEventListener('afterprint',cb);
+  },{once:true});
+  setTimeout(()=>{
+    document.body.classList.remove('print-ticket');
+    document.getElementById('print-mirror').style.display='none';
+  },4000);
 }
 </script>
 </body>
