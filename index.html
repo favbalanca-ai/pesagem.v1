@@ -1192,7 +1192,6 @@ function irNova(){
   const bi=document.getElementById('bal-info'); if(bi) bi.style.display='none';
   document.getElementById('ct').textContent='';
   document.getElementById('ut').textContent='kg';
-  document.getElementById('tk').className='ut on'; document.getElementById('tt').className='ut off';
   // reset fotos
   ['fb-oc','fb-cn','fb-pl','fb-cm','fb-ex'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('ok');});
   ['fi-oc','fi-cn','fi-pl','fi-cm','fi-ex'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='fi-oc'?'📄':'📸';});
