@@ -2147,7 +2147,13 @@ function salvar(){
   if(t>0)pts.push(t===1?'25,5':`(${t}×25,5)`);
   const formula=pts.join('+')+' = '+pbt+'t';
   const now=new Date();
-  const balNome=document.getElementById('f-balanca').value||'Balança 1 — Água Viva';
+  // Fallback de balança: se o campo não foi preenchido pela seleção de
+  // contrato (contrato digitado à mão, ou contratos ainda não carregados),
+  // usar a balança do PRÓPRIO operador logado em vez de cravar "Balança 1"
+  // — isso evitava que pesagens da Espora nascessem marcadas como Água Viva
+  // e desaparecessem do filtro de quem trabalha na Espora.
+  const balDoUsr = usr?.bal===2 ? 'Balança 2 — Espora' : usr?.bal===1 ? 'Balança 1 — Água Viva' : '';
+  const balNome=document.getElementById('f-balanca').value||balDoUsr||'Balança 1 — Água Viva';
   const o={
     id:geraID(),
     dataEntrada:now.toLocaleDateString('pt-BR'),
@@ -2180,7 +2186,7 @@ function rAg(){
   let ls=[...DB.ordens,...cloud.filter(o=>!DB.ordens.find(x=>x.id===o.id))]
     .filter(o=>o.status==='Aguardando');
   if(bal===1) ls=ls.filter(o=>!o.balanca||o.balanca.includes('Água Viva')||o.balanca.includes('1'));
-  else if(bal===2) ls=ls.filter(o=>o.balanca&&(o.balanca.includes('Espora')||o.balanca.includes('2')));
+  else if(bal===2) ls=ls.filter(o=>!o.balanca||o.balanca.includes('Espora')||o.balanca.includes('2'));
   // Remover duplicatas por id
   const seen=new Set(); ls=ls.filter(o=>{ if(seen.has(o.id)) return false; seen.add(o.id); return true; });
   const el=document.getElementById('lst-ag');
@@ -2767,7 +2773,7 @@ function rHist(){
   let ls=[...cloud].reverse();
   // Filtro por balança do operador — admin vê tudo
   if(bal===1) ls=ls.filter(o=>!o.balanca||o.balanca.includes('Água Viva')||o.balanca.includes('1'));
-  else if(bal===2) ls=ls.filter(o=>o.balanca&&(o.balanca.includes('Espora')||o.balanca.includes('2')));
+  else if(bal===2) ls=ls.filter(o=>!o.balanca||o.balanca.includes('Espora')||o.balanca.includes('2'));
   // filtro de status
   if(filAtivo==='hj') ls=ls.filter(o=>o.dataEntrada===hj);
   else if(filAtivo==='ag') ls=ls.filter(o=>(o.status||'').toLowerCase().includes('aguardando'));
