@@ -931,6 +931,17 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxvNJutHp0bVC0lZWzmY
 const TOKEN      = "pesagem@fav2024";
 const SYNC_TAG   = "fav-sync-pendentes";
 
+/* ══ FETCH COM TIMEOUT ═════════════════════════════════════════
+   navigator.onLine não é confiável (pode dizer "online" sem internet
+   real, comum em área rural com wifi/sinal instável). Por isso não
+   usamos mais essa flag para DECIDIR se tenta enviar — sempre tentamos,
+   e usamos um timeout curto pra não travar a fila numa conexão ruim. */
+function fetchComTimeout(url, opts, ms){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), ms||12000);
+  return fetch(url, {...opts, signal: ctrl.signal}).finally(()=>clearTimeout(t));
+}
+
 /* ══ INDEXEDDB — fila compartilhada com o Service Worker ══════ */
 let _idb = null;
 async function abrirIDB() {
@@ -1064,6 +1075,16 @@ window.addEventListener('load',()=>{
   });
   if(!navigator.onLine) document.getElementById('offb').style.display='block';
   document.addEventListener('touchmove',e=>{if(document.body.getAttribute('data-sig')==='1')e.preventDefault();},{passive:false});
+  // Tentar sincronizar sempre que o app volta para a tela (primeiro plano).
+  // No iPhone o iOS suspende o JavaScript quase imediatamente quando o app
+  // vai para segundo plano — o timer de 3 min não roda nesse meio tempo.
+  // Reabrir/voltar pro app é o gatilho mais confiável de sync no iOS.
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible' && usr && pend.length>0){
+      addLog('👀 App voltou ao primeiro plano — tentando sincronizar','info');
+      syncP();
+    }
+  });
   checkSess(); calcPBT();
 });
 
@@ -2817,13 +2838,16 @@ function updS(){
     el.textContent=ult?`☁️ Sincronizado às ${ult}`:'☁️ Sincronizado';
   }
 
-  // Banner amarelo
+  // Banner amarelo — mostra TODOS os pendentes, inclusive os que já falharam
+  // algumas vezes (eles continuam tentando, então o operador precisa ver)
   const sb=document.getElementById('sbar2'),pt=document.getElementById('pend-txt');
   if(sb&&pt){
-    const pendOk=pend.filter(p=>!p.falhou);
-    if(pendOk.length>0){
+    if(pend.length>0){
       sb.style.display='flex';
-      pt.textContent=`${pendOk.length} pesagem(s) aguardando envio`;
+      const nf=pend.filter(p=>p.falhou).length;
+      pt.textContent=nf>0
+        ? `${pend.length} pesagem(s) aguardando envio (${nf} com dificuldade — tentando de novo)`
+        : `${pend.length} pesagem(s) aguardando envio`;
     } else {
       sb.style.display='none';
     }
@@ -2846,14 +2870,12 @@ function limparLog(){
 /* ── Enviar para planilha (offline → fila com timestamp) ────── */
 async function enviar(ordem,acao){
   if(!SHEETS_URL){addLog('SHEETS_URL não configurado','erro');return;}
-  if(!navigator.onLine){
-    addP(ordem,acao);
-    addLog(`Offline — ${ordem.placa||ordem.id} salvo na fila`,'aviso');
-    updS();return;
-  }
+  // Sempre tentamos enviar, mesmo que navigator.onLine diga "offline" —
+  // esse sinal pode estar errado (wifi sem internet, sinal fraco rural).
+  // Se realmente não houver conexão, o timeout cuida disso rapidamente.
   try{
-    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao,ordem,token:TOKEN})});
+    const r=await fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao,ordem,token:TOKEN})}, 12000);
     const j=JSON.parse(await r.text());
     if(j.ok){
       addLog(`✅ ${acao} — ${ordem.placa||ordem.id}`,'ok');
@@ -2864,7 +2886,8 @@ async function enviar(ordem,acao){
     }
   }catch(e){
     addP(ordem,acao);
-    addLog(`❌ Falha de rede — ${ordem.placa||ordem.id}: ${e.message}`,'erro');
+    const motivo = e.name==='AbortError' ? 'tempo esgotado' : (e.message||'sem conexão');
+    addLog(`📵 ${navigator.onLine?'Falha de rede':'Offline'} — ${ordem.placa||ordem.id} salvo na fila (${motivo})`,'aviso');
   }
   updS();
 }
@@ -2891,23 +2914,32 @@ function addP(o,a){
   registrarBgSync();
 }
 
-/* ── Sync: enviar fila com retry e limite de tentativas ──────── */
-const MAX_TENTATIVAS=3;
+/* ── Sync: enviar fila com retry contínuo (backoff, nunca desiste) ── */
+const MAX_TENTATIVAS=3; // a partir daqui só liga o alerta visual, não bloqueia mais o reenvio
+const BACKOFF_BASE_MS=60*1000;   // 1 min
+const BACKOFF_MAX_MS=30*60*1000; // teto de 30 min entre tentativas do mesmo item
 let _syncAtivo=false;
 async function syncP(){
-  if(!SHEETS_URL||!navigator.onLine||!pend.length){updS();return;}
+  if(!SHEETS_URL||!pend.length){updS();return;}
   if(_syncAtivo) return; // evitar sync simultâneo
   _syncAtivo=true;
-  addLog(`🔄 Iniciando sync — ${pend.length} pendente(s)`,'info');
 
-  const ps=[...pend];
+  const agora=Date.now();
+  // Respeita o backoff por item, mas NUNCA exclui definitivamente — todo
+  // pendente continua sendo candidato a reenvio, só espaça as tentativas.
+  const ps=pend.filter(p=>{
+    const espera=Math.min(BACKOFF_BASE_MS*Math.pow(2,p.tentativas||0), BACKOFF_MAX_MS);
+    return !p.ultimaTentativa || (agora-p.ultimaTentativa)>=espera;
+  });
+  if(!ps.length){ _syncAtivo=false; updS(); return; }
+
+  addLog(`🔄 Iniciando sync — ${ps.length}/${pend.length} pendente(s) prontos para tentativa`,'info');
   let ok=0, falhou=0;
 
   for(const p of ps){
-    if(p.falhou) continue; // pular os que já falharam demais
     try{
-      const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})});
+      const r=await fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})}, 12000);
       const j=JSON.parse(await r.text());
       if(j.ok){
         // Remover da fila
@@ -2919,30 +2951,11 @@ async function syncP(){
         ok++;
         addLog(`✅ Enviado — ${p.ordem.placa||p.ordem.id}`,'ok');
       } else {
-        // Incrementar tentativas
-        const item=pend.find(x=>x.ordem.id===p.ordem.id);
-        if(item){
-          item.tentativas=(item.tentativas||0)+1;
-          if(item.tentativas>=MAX_TENTATIVAS){
-            item.falhou=true;
-            addLog(`🔴 Falhou ${MAX_TENTATIVAS}x — ${p.ordem.placa||p.ordem.id}: ${j.erro||'erro API'}`,'erro');
-          } else {
-            addLog(`⚠️ Tentativa ${item.tentativas}/${MAX_TENTATIVAS} — ${p.ordem.placa||p.ordem.id}`,'aviso');
-          }
-        }
+        registrarFalha(p, j.erro||'erro API');
         falhou++;
       }
     }catch(e){
-      const item=pend.find(x=>x.ordem.id===p.ordem.id);
-      if(item){
-        item.tentativas=(item.tentativas||0)+1;
-        if(item.tentativas>=MAX_TENTATIVAS){
-          item.falhou=true;
-          addLog(`🔴 Falhou ${MAX_TENTATIVAS}x — ${p.ordem.placa||p.ordem.id}: ${e.message}`,'erro');
-        } else {
-          addLog(`⚠️ Tentativa ${item.tentativas}/${MAX_TENTATIVAS} — ${p.ordem.placa||p.ordem.id}`,'aviso');
-        }
-      }
+      registrarFalha(p, e.name==='AbortError'?'tempo esgotado':e.message);
       falhou++;
     }
   }
@@ -2956,9 +2969,25 @@ async function syncP(){
     await carregarDaPlanilha();
     saveCloud();
   }
-  if(falhou>0&&ok===0) toast(`❌ ${falhou} pendente(s) com problema — veja diagnóstico`);
+  if(falhou>0&&ok===0) toast(`❌ ${falhou} pendente(s) com problema — continuará tentando automaticamente`);
   addLog(`Sync concluído — ${ok} ok · ${falhou} falha(s)`,'info');
   updS();
+}
+
+/* ── Registra uma tentativa que falhou. NÃO bloqueia reenvio futuro,
+   apenas liga o alerta visual depois de MAX_TENTATIVAS e aumenta o
+   intervalo até a próxima tentativa (backoff). ──────────────────── */
+function registrarFalha(p, motivo){
+  const item=pend.find(x=>x.ordem.id===p.ordem.id);
+  if(!item) return;
+  item.tentativas=(item.tentativas||0)+1;
+  item.ultimaTentativa=Date.now();
+  item.falhou=item.tentativas>=MAX_TENTATIVAS;
+  if(item.falhou){
+    addLog(`🔴 Falhou ${item.tentativas}x — ${p.ordem.placa||p.ordem.id}: ${motivo} (continua tentando automaticamente)`,'erro');
+  } else {
+    addLog(`⚠️ Tentativa ${item.tentativas} — ${p.ordem.placa||p.ordem.id}: ${motivo}`,'aviso');
+  }
 }
 
 /* ── Reenviar item com falha manualmente ────────────────────── */
@@ -2967,6 +2996,7 @@ function reenviarFalhou(id){
   if(!item) return;
   item.falhou=false;
   item.tentativas=0;
+  item.ultimaTentativa=0;
   saveDB();
   addLog(`↩️ Reenvio manual solicitado — ${item.ordem.placa||id}`,'info');
   syncP();
@@ -2974,9 +3004,9 @@ function reenviarFalhou(id){
 
 // Carregar TUDO da planilha — substitui cache local
 async function carregarDaPlanilha(){
-  if(!SHEETS_URL||!navigator.onLine) return false;
+  if(!SHEETS_URL) return false;
   try{
-    const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listar',token:TOKEN})});
+    const r=await fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'listar',token:TOKEN})}, 15000);
     const txt=await r.text();
     const j=JSON.parse(txt);
     if(j.ok&&j.ordens){
@@ -2992,7 +3022,7 @@ async function carregarDaPlanilha(){
     }
     return false;
   }catch(e){
-    addLog(`❌ Erro ao carregar planilha: ${e.message}`,'erro');
+    addLog(`❌ Erro ao carregar planilha: ${e.name==='AbortError'?'tempo esgotado':e.message}`,'erro');
     return false;
   }
 }
@@ -3017,12 +3047,14 @@ async function loadCl(){
   if(ok) rHist();
 }
 
-/* ── Sync periódico em background (a cada 3 min) ─────────────── */
+/* ── Sync periódico em background (a cada 3 min, app aberto) ─── */
 let _bgSyncTimer=null;
 function iniciarBgSync(){
   if(_bgSyncTimer) clearInterval(_bgSyncTimer);
   _bgSyncTimer=setInterval(async()=>{
-    if(navigator.onLine&&pend.length>0){
+    // Não checamos navigator.onLine aqui — não é confiável. O próprio
+    // syncP() já tem timeout e trata falha de rede normalmente.
+    if(pend.length>0){
       addLog('🕐 Sync automático em background','info');
       await syncP();
       updHome();
