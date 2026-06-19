@@ -1041,6 +1041,7 @@ const USERS = [
 /* ══ ESTADO ═══════════════════════════════════════════════════ */
 let DB={ordens:[],cfg:{}}, pend=[], atual=null, usr=null;
 let fotos={}, utTara='kg', utBruto='kg', filAtivo='all', cloud=[];
+let fotosPend=[]; // fila persistente de fotos não confirmadas no Drive (sobrevive a reload/offline)
 let contratosCloud=[]; // única fonte de verdade de contratos — vem da planilha
 let pgAtual='pg-home', pgAntes=null;
 let sigC, sigX, sigDraw=false, sigOk=false;
@@ -1067,6 +1068,7 @@ window.addEventListener('load',()=>{
     document.getElementById('offb').style.display='none';
     addLog('🌐 Conexão restaurada — iniciando sync','info');
     syncP();
+    trySyncFotos();
   });
   window.addEventListener('offline',()=>{
     document.getElementById('offb').style.display='block';
@@ -1083,6 +1085,9 @@ window.addEventListener('load',()=>{
     if(document.visibilityState==='visible' && usr && pend.length>0){
       addLog('👀 App voltou ao primeiro plano — tentando sincronizar','info');
       syncP();
+    }
+    if(document.visibilityState==='visible' && usr && fotosPend.length>0){
+      trySyncFotos();
     }
   });
   checkSess(); calcPBT();
@@ -1157,6 +1162,7 @@ function openApp(u){
   // Carregar planilha assim que abrir
   setTimeout(async()=>{
     await syncP();
+    trySyncFotos();
     await Promise.all([carregarDaPlanilha(), loadContratosDaPlanilha()]);
     updHome();
   },1000);
@@ -1176,6 +1182,12 @@ function logout(){
 function saveDB(){
   localStorage.setItem('ppd',JSON.stringify(pend));
 }
+function saveFotosPend(){
+  try{ localStorage.setItem('pfp',JSON.stringify(fotosPend)); }catch(e){ addLog('⚠️ Falha ao salvar fila de fotos: '+e.message,'erro'); }
+}
+function loadFotosPend(){
+  try{ fotosPend=JSON.parse(localStorage.getItem('pfp')||'[]'); }catch(e){ fotosPend=[]; }
+}
 function saveCloud(){
   try{
     localStorage.setItem('pcloud',JSON.stringify(cloud.slice(0,200)));
@@ -1193,6 +1205,7 @@ function loadDB(){
     }
   }catch(e){}
   carregarContratosLocal();
+  loadFotosPend();
 }
 function loadCfg(){
   DB.cfg=JSON.parse(localStorage.getItem('pcfg')||'{"empresa":"Fazenda Água Viva","wa":"5561999995351","tol":7}');
@@ -2058,57 +2071,67 @@ function comprimirImagem(b64full, callback){
   img.src=b64full;
 }
 
-async function uploadFotosDrive(ordem){
-  if(!SHEETS_URL||!navigator.onLine||!ordem) return;
-  const contrato=(ordem.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
-  const data=(ordem.dataEntrada||new Date().toLocaleDateString('pt-BR')).replace(/\//g,'-');
-  const placa=(ordem.placa||'SEM-PLACA').replace(/[^a-zA-Z0-9]/g,'');
-  const tipos={
-    oc:'CONTRATO', fpl:'PLACA', cnh:'CNH', cam:'CAMINHAO',
-    ext:'EXTRA', fotaTara:'BALANCA-TARA', fotaBruto:'BALANCA-BRUTO'
-  };
-  // Coletar fotos existentes
-  const lista=[];
-  Object.keys(tipos).forEach(function(tipo){
-    if(fotos[tipo]) lista.push({tipo:tipo, nome:tipos[tipo], b64:fotos[tipo]});
-  });
-  // Adicionar assinatura se existir
-  if(ordem.assinatura && ordem.assinatura.length>100){
-    lista.push({tipo:'sig', nome:'ASSINATURA', b64:ordem.assinatura});
-  }
-  if(!lista.length) return;
-  toast('📤 Enviando '+lista.length+' foto(s)...');
-  var ok=0;
-  for(var i=0;i<lista.length;i++){
-    var item=lista[i];
-    await new Promise(function(resolve){
-      comprimirImagem(item.b64, async function(comprimida){
-        try{
-          var parts=comprimida.split(',');
-          var mime='image/jpeg';
-          var dados_b64=parts[1];
-          var payload=JSON.stringify({
-            acao:'salvarFoto',
-            dados:{contrato:contrato, data:data, placa:placa, tipo:item.nome, base64:dados_b64, mime:mime},
-            token:TOKEN
-          });
-          var r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
-          var j=JSON.parse(await r.text());
-          if(j.ok){
-            ok++;
-            // Se for assinatura, salvar a URL do Drive no objeto da OS para outros dispositivos
-            if(item.tipo==='sig' && j.url){
-              ordem.assinaturaUrl = j.url;
-              const idx=DB.ordens.findIndex(x=>x.id===ordem.id);
-              if(idx>=0){DB.ordens[idx].assinaturaUrl=j.url; saveDB();}
-            }
+/* ── Fila de fotos: igual à fila de ordens (pend/syncP), nunca desiste.
+   Antes este envio só rodava 1x, na hora de finalizar, e só se
+   navigator.onLine fosse true — em sinal rural fraco isso é o motivo
+   clássico de fotos sumirem: a ordem ia para a planilha (via fila/retry)
+   mas a foto, guardada só na variável local `fotos`, se perdia ao trocar
+   de tela ou recarregar o app. Agora a foto entra numa fila persistente
+   (localStorage) e é reenviada a cada sync, igual à ordem. ── */
+function enfileirarFotos(ordem){
+  const snapshot={...fotos};
+  if(ordem.assinatura && ordem.assinatura.length>100) snapshot.sig=ordem.assinatura;
+  if(!Object.keys(snapshot).length) return;
+  fotosPend.push({id:ordem.id, numOrdem:ordem.numOrdem, dataEntrada:ordem.dataEntrada, placa:ordem.placa, fotos:snapshot});
+  saveFotosPend();
+}
+
+let _syncFotosAtivo=false;
+async function trySyncFotos(){
+  if(!SHEETS_URL||!fotosPend.length) return;
+  if(_syncFotosAtivo) return;
+  _syncFotosAtivo=true;
+  const tipos={oc:'CONTRATO',fpl:'PLACA',cnh:'CNH',cam:'CAMINHAO',ext:'EXTRA',fotaTara:'BALANCA-TARA',fotaTara2:'BALANCA-TARA-2',fotaBruto:'BALANCA-BRUTO',fotaBruto2:'BALANCA-BRUTO-2',sig:'ASSINATURA'};
+  let ok=0, restam=0;
+  for(const item of [...fotosPend]){
+    const contrato=(item.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
+    const data=(item.dataEntrada||new Date().toLocaleDateString('pt-BR')).replace(/\//g,'-');
+    const placa=(item.placa||'SEM-PLACA').replace(/[^a-zA-Z0-9]/g,'');
+    for(const tipo of Object.keys(item.fotos)){
+      const b64full=item.fotos[tipo];
+      if(!b64full) continue;
+      try{
+        const comprimida=await new Promise(res=>comprimirImagem(b64full,res));
+        const parts=comprimida.split(',');
+        const dados_b64=parts[1];
+        const payload=JSON.stringify({
+          acao:'salvarFoto',
+          dados:{contrato,data,placa,tipo:tipos[tipo]||tipo,base64:dados_b64,mime:'image/jpeg'},
+          token:TOKEN
+        });
+        const r=await fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload},15000);
+        const j=JSON.parse(await r.text());
+        if(j.ok){
+          ok++;
+          delete item.fotos[tipo];
+          if(tipo==='sig'&&j.url){
+            const idx=DB.ordens.findIndex(x=>x.id===item.id); if(idx>=0){DB.ordens[idx].assinaturaUrl=j.url;}
+            const ci=cloud.findIndex(c=>c.id===item.id); if(ci>=0){cloud[ci].assinaturaUrl=j.url; saveCloud();}
+            saveDB();
           }
-        }catch(e){}
-        resolve();
-      });
-    });
+        } else {
+          restam++;
+        }
+      }catch(e){
+        restam++; // sem rede ou timeout — fica na fila, tenta de novo no próximo sync
+      }
+    }
   }
-  toast('✅ '+ok+'/'+lista.length+' foto(s) salvas no Drive!');
+  fotosPend=fotosPend.filter(item=>Object.keys(item.fotos).length>0);
+  saveFotosPend();
+  _syncFotosAtivo=false;
+  if(ok>0) addLog(`📤 ${ok} foto(s) enviada(s) ao Drive${restam>0?` — ${restam} ainda na fila`:''}`,'ok');
+  updS();
 }
 
 function fotoPlaca(inp) {
@@ -2554,7 +2577,8 @@ function finalizar(){
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
   if(idx>=0)DB.ordens[idx]={...atual};
   saveDB(); enviar(atual,'atualizar');
-  uploadFotosDrive(atual);
+  enfileirarFotos(atual);
+  trySyncFotos();
   // som de alerta conforme status
   beep(atual.statusPeso==='EXCEDIDO'?'erro':atual.statusPeso==='ATENÇÃO'?'warn':'ok');
   // WhatsApp automático
@@ -3065,6 +3089,7 @@ function iniciarBgSync(){
       await syncP();
       updHome();
     }
+    if(fotosPend.length>0) trySyncFotos();
   }, 3*60*1000); // 3 minutos
 }
 
@@ -3089,6 +3114,7 @@ function renderDiag(){
         <div>🌐 Rede: <b style="color:${online?'var(--g1)':'var(--r1)'}">${online?'Online':'Offline'}</b></div>
         <div>🕐 Último sync bem-sucedido: <b>${ult}</b></div>
         <div>⏳ Aguardando envio: <b>${pendOk.length}</b></div>
+        <div>📷 Fotos aguardando Drive: <b style="color:${fotosPend.length>0?'var(--a1)':'var(--ink3)'}">${fotosPend.reduce((n,it)=>n+Object.keys(it.fotos).length,0)}</b></div>
         <div style="color:${pendFalhos.length>0?'var(--r1)':'var(--ink3)'}">🔴 Com falha (${MAX_TENTATIVAS} tentativas): <b>${pendFalhos.length}</b>${pendFalhos.length>0?' — toque em "Reenviar" abaixo':''}</div>
         <div>☁️ Registros na planilha: <b>${cloud.length}</b></div>
       </div>`;
