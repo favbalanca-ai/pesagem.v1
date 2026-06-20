@@ -838,6 +838,21 @@ body.dark .card{background:#1a2d22}
     <div id="diag-pend-list" style="font-size:12px"></div>
   </div>
 
+  <!-- Fila de fotos com detalhe -->
+  <div class="card">
+    <div class="ct" style="display:flex;align-items:center;gap:8px">
+      <span>📷 Fila de fotos (<span id="diag-fotos-count">0</span>)</span>
+      <button onclick="trySyncFotos()" style="margin-left:auto;background:var(--g3);border:none;color:var(--g1);padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">🔄 Sincronizar fotos</button>
+    </div>
+    <div id="diag-fotos-list" style="font-size:12px"></div>
+  </div>
+
+  <!-- Armazenamento do dispositivo -->
+  <div class="card">
+    <div class="ct">💾 Armazenamento do dispositivo</div>
+    <div id="diag-storage" style="font-size:12px;line-height:1.8">Calculando...</div>
+  </div>
+
   <!-- Log de eventos -->
   <div class="card">
     <div class="ct">📋 Log de sincronização</div>
@@ -966,9 +981,15 @@ let _idb = null;
 async function abrirIDB() {
   if (_idb) return _idb;
   return new Promise((res, rej) => {
-    const req = indexedDB.open('fav-pesagem', 1);
+    const req = indexedDB.open('fav-pesagem', 2);
     req.onupgradeneeded = e => {
-      e.target.result.createObjectStore('pendentes', { keyPath: 'id' });
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('pendentes')) db.createObjectStore('pendentes', { keyPath: 'id' });
+      // v2: fila de fotos cruas aguardando compressão+upload. Fica em
+      // IndexedDB (não localStorage) porque fotos de câmera sem compressão
+      // (3-8MB cada) facilmente passam da cota de localStorage — IndexedDB
+      // tem muito mais espaço disponível.
+      if (!db.objectStoreNames.contains('fotosPendentes')) db.createObjectStore('fotosPendentes', { keyPath: 'id' });
     };
     req.onsuccess = e => { _idb = e.target.result; res(_idb); };
     req.onerror = e => rej(e.target.error);
@@ -1012,6 +1033,40 @@ async function idbLimpar() {
       const tx = db.transaction('pendentes', 'readwrite');
       tx.objectStore('pendentes').clear();
       tx.oncomplete = res;
+    });
+  } catch(e) {}
+}
+
+/* ── Fila de fotos cruas (IndexedDB) — ver enfileirarFotos() para o
+   porquê disso não ser localStorage nem envolver compressão aqui. ── */
+async function idbSalvarFoto(item) {
+  try {
+    const db = await abrirIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('fotosPendentes', 'readwrite');
+      tx.objectStore('fotosPendentes').put(item);
+      tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+    });
+  } catch(e) { addLog('⚠️ Falha ao gravar foto no IndexedDB: '+e.message,'erro'); }
+}
+async function idbLerFotos() {
+  try {
+    const db = await abrirIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('fotosPendentes', 'readonly');
+      const req = tx.objectStore('fotosPendentes').getAll();
+      req.onsuccess = e => res(e.target.result);
+      req.onerror = e => rej(e.target.error);
+    });
+  } catch(e) { return []; }
+}
+async function idbRemoverFoto(id) {
+  try {
+    const db = await abrirIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('fotosPendentes', 'readwrite');
+      tx.objectStore('fotosPendentes').delete(id);
+      tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
     });
   } catch(e) {}
 }
@@ -1201,11 +1256,10 @@ function logout(){
 function saveDB(){
   localStorage.setItem('ppd',JSON.stringify(pend));
 }
-function saveFotosPend(){
-  try{ localStorage.setItem('pfp',JSON.stringify(fotosPend)); }catch(e){ addLog('⚠️ Falha ao salvar fila de fotos: '+e.message,'erro'); }
-}
-function loadFotosPend(){
-  try{ fotosPend=JSON.parse(localStorage.getItem('pfp')||'[]'); }catch(e){ fotosPend=[]; }
+// fotosPend agora vive no IndexedDB (idbSalvarFoto/idbLerFotos/idbRemoverFoto),
+// não mais em localStorage — ver enfileirarFotos() para o porquê.
+async function loadFotosPend(){
+  try{ fotosPend = await idbLerFotos() || []; }catch(e){ fotosPend = []; }
 }
 function saveCloud(){
   try{
@@ -1224,7 +1278,7 @@ function loadDB(){
     }
   }catch(e){}
   carregarContratosLocal();
-  loadFotosPend();
+  loadFotosPend().then(()=>{ if(fotosPend.length) trySyncFotos(); });
 }
 function loadCfg(){
   DB.cfg=JSON.parse(localStorage.getItem('pcfg')||'{"empresa":"Fazenda Água Viva","wa":"5561999995351","tol":7}');
@@ -2101,24 +2155,23 @@ async function enfileirarFotos(ordem){
   const origem={...fotos};
   if(ordem.assinatura && ordem.assinatura.length>100) origem.sig=ordem.assinatura;
   if(!Object.keys(origem).length) return;
-  // Comprime ANTES de gravar no localStorage. Fotos cruas de câmera (3-8MB
-  // cada, sem compressão) estouram a cota de localStorage (~5-10MB no total)
-  // se forem guardadas assim na fila persistente — isso quebrava o sync
-  // inteiro (saveFotosPend falhava e podia atrapalhar saveDB/saveCloud
-  // também, por já estar perto do limite). Comprimindo aqui (mesmo
-  // resize/qualidade que já era usado só na hora do upload) cada foto cai
-  // pra ~60-150KB, então a fila inteira de uma pesagem fica bem abaixo da
-  // cota.
-  const snapshot={};
-  for(const tipo of Object.keys(origem)){
-    try{
-      snapshot[tipo]=await new Promise(res=>comprimirImagem(origem[tipo],res));
-    }catch(e){
-      snapshot[tipo]=origem[tipo]; // fallback bruto se a compressão falhar por algum motivo
-    }
-  }
-  fotosPend.push({id:ordem.id, numOrdem:ordem.numOrdem, dataEntrada:ordem.dataEntrada, placa:ordem.placa, fotos:snapshot});
-  saveFotosPend();
+  // CRÍTICO: grava os bytes CRUS no IndexedDB imediatamente, sem comprimir
+  // antes (a compressão agora só roda dentro de trySyncFotos, na hora de
+  // enviar cada foto). Motivo: comprimir significa decodificar a foto
+  // inteira num <canvas> — em celular fraco isso pode levar mais de 1s por
+  // foto, e o envio automático pro WhatsApp (sendWAauto, ~1.5s depois de
+  // finalizar) tira o navegador de primeiro plano nesse meio tempo. Quando
+  // isso acontece, iOS/Android congela o JS da aba e ESTA função morria no
+  // meio do loop de compressão, antes de salvar qualquer coisa — exatamente
+  // por isso funcionava testando no PC (a aba nunca perde foco) e falhava
+  // no celular. Gravar os bytes crus é rápido (sem decodificar imagem
+  // nenhuma) e cabe tranquilo no IndexedDB (cota bem maior que localStorage,
+  // que foi o motivo de comprimir ali antes — ver histórico).
+  const item={id:ordem.id, numOrdem:ordem.numOrdem, dataEntrada:ordem.dataEntrada, placa:ordem.placa, fotos:origem};
+  fotosPend = fotosPend.filter(x=>x.id!==ordem.id);
+  fotosPend.push(item);
+  await idbSalvarFoto(item);
+  addLog(`📥 ${Object.keys(origem).length} foto(s) de ${ordem.placa||ordem.id} na fila local`,'info');
 }
 
 let _syncFotosAtivo=false;
@@ -2129,6 +2182,7 @@ async function trySyncFotos(){
   try{
     const tipos={oc:'CONTRATO',fpl:'PLACA',cnh:'CNH',cam:'CAMINHAO',ext:'EXTRA',fotaTara:'BALANCA-TARA',fotaTara2:'BALANCA-TARA-2',fotaBruto:'BALANCA-BRUTO',fotaBruto2:'BALANCA-BRUTO-2',sig:'ASSINATURA'};
     let ok=0, restam=0;
+    addLog(`📤 Sync de fotos iniciado — ${fotosPend.length} pesagem(s) na fila`,'info');
     for(const item of [...fotosPend]){
       const contrato=(item.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
       const data=(item.dataEntrada||new Date().toLocaleDateString('pt-BR')).replace(/\//g,'-');
@@ -2136,14 +2190,18 @@ async function trySyncFotos(){
       for(const tipo of Object.keys(item.fotos)){
         const b64full=item.fotos[tipo];
         if(!b64full) continue;
+        const rotulo=tipos[tipo]||tipo;
         try{
-          // Já vem comprimida desde enfileirarFotos() — recomprimir aqui de
-          // novo a cada retry só perdia qualidade à toa.
-          const parts=b64full.split(',');
+          // Comprime AGORA, na hora de enviar — não mais no momento de
+          // enfileirar (ver enfileirarFotos para o porquê). Isso roda de
+          // novo a cada retry se a anterior falhou antes de confirmar, o
+          // que é um custo aceitável frente a perder a foto inteira.
+          const comprimida=await new Promise(res=>comprimirImagem(b64full,res));
+          const parts=comprimida.split(',');
           const dados_b64=parts[1];
           const payload=JSON.stringify({
             acao:'salvarFoto',
-            dados:{contrato,data,placa,tipo:tipos[tipo]||tipo,base64:dados_b64,mime:'image/jpeg'},
+            dados:{contrato,data,placa,tipo:rotulo,base64:dados_b64,mime:'image/jpeg'},
             token:TOKEN
           });
           const r=await comTimeoutDuro(()=>fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload},15000), 19000);
@@ -2151,22 +2209,33 @@ async function trySyncFotos(){
           if(j.ok){
             ok++;
             delete item.fotos[tipo];
+            // Salva o progresso IMEDIATAMENTE após cada foto confirmada —
+            // não espera o loop inteiro terminar — pelo mesmo motivo de
+            // enfileirarFotos: se a aba for suspensa no meio (ex: usuário
+            // saiu pro WhatsApp), o que já foi enviado não se perde de novo.
+            if(Object.keys(item.fotos).length===0){
+              await idbRemoverFoto(item.id);
+            } else {
+              await idbSalvarFoto(item);
+            }
             if(tipo==='sig'&&j.url){
               const idx=DB.ordens.findIndex(x=>x.id===item.id); if(idx>=0){DB.ordens[idx].assinaturaUrl=j.url;}
               const ci=cloud.findIndex(c=>c.id===item.id); if(ci>=0){cloud[ci].assinaturaUrl=j.url; saveCloud();}
               saveDB();
             }
+            addLog(`✅ ${rotulo} — ${item.placa||item.id} enviada ao Drive`,'ok');
           } else {
             restam++;
+            addLog(`⚠️ ${rotulo} — ${item.placa||item.id}: API recusou (${j.erro||'erro desconhecido'})`,'aviso');
           }
         }catch(e){
-          restam++; // sem rede ou timeout — fica na fila, tenta de novo no próximo sync
+          restam++; // sem rede, timeout ou falha ao comprimir — fica na fila, tenta de novo no próximo sync
+          addLog(`⚠️ ${rotulo} — ${item.placa||item.id}: ${e.name==='AbortError'?'tempo esgotado':(e.message||'falha desconhecida')}`,'aviso');
         }
       }
     }
     fotosPend=fotosPend.filter(item=>Object.keys(item.fotos).length>0);
-    saveFotosPend();
-    if(ok>0) addLog(`📤 ${ok} foto(s) enviada(s) ao Drive${restam>0?` — ${restam} ainda na fila`:''}`,'ok');
+    addLog(`Sync de fotos concluído — ${ok} ok · ${restam} ainda na fila`,'info');
   } finally {
     // Mesma trava de segurança do syncP(): garante que _syncFotosAtivo
     // nunca fica presa em true pra sempre por causa de um fetch que
@@ -2619,11 +2688,16 @@ function finalizar(){
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
   if(idx>=0)DB.ordens[idx]={...atual};
   saveDB(); enviar(atual,'atualizar');
-  enfileirarFotos(atual).then(()=>trySyncFotos());
+  // Salva as fotos cruas no IndexedDB ANTES de mandar pro WhatsApp — abrir
+  // o WhatsApp tira o navegador de primeiro plano no celular, e isso pode
+  // congelar o JS da aba antes de terminar de salvar (ver enfileirarFotos).
+  // Encadeando aqui garante a ordem certa mesmo assim.
+  const fotosSalvas = enfileirarFotos(atual);
+  fotosSalvas.then(()=>trySyncFotos());
   // som de alerta conforme status
   beep(atual.statusPeso==='EXCEDIDO'?'erro':atual.statusPeso==='ATENÇÃO'?'warn':'ok');
-  // WhatsApp automático
-  setTimeout(()=>sendWAauto(atual), 1500);
+  // WhatsApp automático — só depois que as fotos já estão seguras no IndexedDB
+  fotosSalvas.then(()=>setTimeout(()=>sendWAauto(atual), 1500));
   rTicket(atual); showPg('pg-tk','🎫 Ticket',true,5);
   toast('🎉 Pesagem finalizada!'); updHome();
 }
@@ -3186,6 +3260,43 @@ function renderDiag(){
           ${p.falhou?`<button onclick="reenviarFalhou('${p.ordem.id}')" style="background:var(--r1);border:none;color:#fff;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">↩️ Reenviar</button>`:''}
         </div>`;
       }).join('');
+    }
+  }
+
+  // Lista de fotos pendentes
+  const tiposLbl={oc:'Contrato',fpl:'Placa',cnh:'CNH',cam:'Caminhão',ext:'Extra',fotaTara:'Balança (tara)',fotaTara2:'Balança (tara 2)',fotaBruto:'Balança (bruto)',fotaBruto2:'Balança (bruto 2)',sig:'Assinatura'};
+  const totalFotos=fotosPend.reduce((n,it)=>n+Object.keys(it.fotos).length,0);
+  const cntF=document.getElementById('diag-fotos-count');
+  if(cntF) cntF.textContent=totalFotos;
+  const plF=document.getElementById('diag-fotos-list');
+  if(plF){
+    if(!fotosPend.length){
+      plF.innerHTML='<div style="color:var(--ink3);padding:8px 0">Nenhuma foto pendente. ✅</div>';
+    } else {
+      plF.innerHTML=fotosPend.map(it=>{
+        const tipos=Object.keys(it.fotos).map(t=>tiposLbl[t]||t).join(', ');
+        return `<div style="padding:8px 0;border-bottom:.5px solid var(--brd)">
+          <div style="font-weight:700;color:var(--a1)">${it.placa||it.id}</div>
+          <div style="color:var(--ink3);font-size:10px">${it.numOrdem||'—'} · ${Object.keys(it.fotos).length} foto(s): ${tipos}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Armazenamento — ajuda a confirmar se é cota estourando (mais comum no
+  // celular, com menos espaço livre do que no PC)
+  const stg=document.getElementById('diag-storage');
+  if(stg){
+    if(navigator.storage && navigator.storage.estimate){
+      navigator.storage.estimate().then(({usage,quota})=>{
+        const mb=v=>(v/1024/1024).toFixed(1);
+        const pct=quota?Math.round(usage/quota*100):0;
+        stg.innerHTML=`
+          <div>Usado: <b>${mb(usage)} MB</b> de <b>${mb(quota)} MB</b> (${pct}%)</div>
+          <div style="color:var(--ink3);font-size:11px;margin-top:2px">Inclui IndexedDB (fila de fotos/pendentes) e cache do app</div>`;
+      }).catch(()=>{ stg.innerHTML='<span style="color:var(--ink3)">Não disponível neste navegador.</span>'; });
+    } else {
+      stg.innerHTML='<span style="color:var(--ink3)">Não disponível neste navegador.</span>';
     }
   }
 
