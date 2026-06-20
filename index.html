@@ -2194,9 +2194,22 @@ function comprimirImagem(b64full, callback){
    mas a foto, guardada só na variável local `fotos`, se perdia ao trocar
    de tela ou recarregar o app. Agora a foto entra numa fila persistente
    (localStorage) e é reenviada a cada sync, igual à ordem. ── */
+/* ── Marca de fotos já confirmadas no Drive por pedido, pra
+   enfileirarFotos() não reenfileirar à toa. ── */
+let _fotosConfirmadas={}; // {id: Set(tipos)}
+
 async function enfileirarFotos(ordem){
   const origem={...fotos};
   if(ordem.assinatura && ordem.assinatura.length>100) origem.sig=ordem.assinatura;
+  // Não reenfileira o que já foi confirmado no Drive — o objeto `fotos`
+  // acumula TUDO que foi capturado durante o pedido inteiro (entrada +
+  // balança) e nunca "esquece" uma foto só porque ela já subiu. Sem isso,
+  // a foto do contrato/CNH/placa enviada com sucesso lá no salvar() era
+  // enfileirada (e reenviada) de novo aqui no finalizar() — o servidor
+  // sendo idempotente evita virar arquivo duplicado, mas ainda gasta
+  // dados/bateria à toa reenviando o que já estava certo.
+  const jaConfirmadas=_fotosConfirmadas[ordem.id];
+  if(jaConfirmadas) jaConfirmadas.forEach(tipo=>delete origem[tipo]);
   if(!Object.keys(origem).length) return;
   // CRÍTICO: grava os bytes CRUS no IndexedDB imediatamente, sem comprimir
   // antes (a compressão agora só roda dentro de trySyncFotos, na hora de
@@ -2259,6 +2272,7 @@ async function trySyncFotos(){
           if(j.ok){
             ok++;
             delete item.fotos[tipo];
+            (_fotosConfirmadas[item.id] ||= new Set()).add(tipo);
             // Salva o progresso IMEDIATAMENTE após cada foto confirmada —
             // não espera o loop inteiro terminar — pelo mesmo motivo de
             // enfileirarFotos: se a aba for suspensa no meio (ex: usuário
