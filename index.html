@@ -1213,8 +1213,11 @@ function openApp(u){
         if(!pend.find(p=>p.ordem&&p.ordem.id===item.id)){
           pend.push(item);
         }
+        if(item.ordem && !DB.ordens.find(o=>o.id===item.ordem.id)){
+          DB.ordens.push(item.ordem);
+        }
       });
-      saveDB(); updS();
+      saveDB(); updS(); updHome();
       addLog(`📦 ${items.length} pendente(s) recuperado(s) do IndexedDB`,'info');
     }
   });
@@ -1277,6 +1280,17 @@ function loadDB(){
       DB.ordens=[...cloud];
     }
   }catch(e){}
+  // Pedidos que ainda estão só na fila de sync (pend) podem não estar no
+  // cache da nuvem ainda — sem isso, um ticket "Aguardando" criado offline
+  // (ou que falhou no primeiro envio) sumia da tela toda vez que o app
+  // recarregava, mesmo continuando a tentar reenviar por baixo dos panos.
+  // O operador via o caminhão "desaparecer" da lista de espera sem ter
+  // sido finalizado nem cancelado.
+  pend.forEach(p=>{
+    if(p.ordem && !DB.ordens.find(o=>o.id===p.ordem.id)){
+      DB.ordens.push(p.ordem);
+    }
+  });
   carregarContratosLocal();
   loadFotosPend().then(()=>{ if(fotosPend.length) trySyncFotos(); });
 }
@@ -2302,12 +2316,21 @@ function salvar(){
     longo: (usr?.bal===1||usr?.bal===0) && isLongo(), // só Balança 1 (Água Viva)
     obs:document.getElementById('f-ob').value,
     balanca:balNome,
-    fotos:{...fotos},
     status:'Aguardando',
     pesoBruto:null, cargaLiquida:null, statusPeso:null, dataHoraFim:null, assinatura:null
   };
   DB.ordens.push(o); saveDB();
   enviar(o,'salvar');
+  // As fotos já capturadas na entrada (contrato/CNH/placa/caminhão) iam
+  // embutidas cruas dentro do próprio payload do 'salvar' (campo o.fotos) —
+  // ninguém nunca leu esse campo (nem o GAS, nem o sync de fotos), só
+  // inflava o POST em vários MB e estourava o timeout em sinal fraco,
+  // jogando a ordem inteira pra fila por causa de fotos que nem iam pro
+  // Drive mesmo. Agora vão pela fila de fotos de verdade (IndexedDB),
+  // do mesmo jeito que finalizar() já faz — e como o caminhão pode ficar
+  // "Aguardando" por bastante tempo até pesar o bruto, enfileirar aqui
+  // também evita perder essas fotos se o app for fechado nesse meio tempo.
+  enfileirarFotos(o).then(()=>trySyncFotos());
   beep('ok'); // bip ao registrar tara
   atual=o; toast('✅ Tara registrada!'); updHome(); irAg();
 }
