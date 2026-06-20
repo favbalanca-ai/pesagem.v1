@@ -1156,6 +1156,21 @@ window.addEventListener('load',()=>{
   // vai para segundo plano — o timer de 3 min não roda nesse meio tempo.
   // Reabrir/voltar pro app é o gatilho mais confiável de sync no iOS.
   document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden'){
+      // CRÍTICO: se uma tentativa estava em andamento bem na hora de ir
+      // pro fundo, o setTimeout da trava de segurança (comTimeoutDuro)
+      // também fica congelado junto — só dispara quando o app volta a
+      // primeiro plano, às vezes minutos/horas depois (visto no log:
+      // "tempo esgotado" aparecendo 11 min depois de "Iniciando sync").
+      // Enquanto essa tentativa zumbi não "morre", _syncAtivo/
+      // _syncFotosAtivo ficam travados e NADA mais consegue sincronizar,
+      // mesmo com o app já de volta e com sinal bom. Por isso libera a
+      // trava aqui, na hora de ir pro fundo, em vez de esperar o timer
+      // zumbi acordar sozinho — a tentativa antiga ainda termina sozinha
+      // mais tarde (só não bloqueia mais nada nesse meio tempo).
+      _syncAtivo=false;
+      _syncFotosAtivo=false;
+    }
     if(document.visibilityState==='visible' && usr && pend.length>0){
       addLog('👀 App voltou ao primeiro plano — tentando sincronizar','info');
       syncP();
@@ -1332,6 +1347,23 @@ function goBack(){pgAntes&&pgAntes!==pgAtual?showPg(pgAntes):home();}
 function home(){updHome();showPg('pg-home','⚖️ Pesagem');}
 function showCfg(){document.getElementById('pg-cfg').style.display='block';}
 function hideCfg(){document.getElementById('pg-cfg').style.display='none';}
+/* ── Reset visual de TODAS as fotos (entrada + balança). Usado em
+   irNova() e sempre que `atual` troca de pedido (ex: confirmarIrBruto)
+   — sem isso, o preview/checkmark da foto do caminhão anterior continuava
+   na tela, podendo enganar o operador a achar que já tinha foto da tara/
+   bruto de um caminhão que na verdade é de outro. ── */
+function resetFotosUI(){
+  const btns=['fb-oc','fb-cn','fb-pl','fb-cm','fb-ex','fb-tara','fb-tara2','fb-bruto','fb-bruto2'];
+  const icones=['fi-oc','fi-cn','fi-pl','fi-cm','fi-ex','fi-tara','fi-tara2','fi-bruto','fi-bruto2'];
+  const labels=['fl-oc','fl-cn','fl-pl','fl-cm','fl-ex','fl-tara','fl-tara2','fl-bruto','fl-bruto2'];
+  const labelTxt=['Fotografar contrato ou ordem','CNH','Placa','Cam.','Extra','Balança ✓','Balança ✓','Balança ✓','Balança ✓'];
+  const previews=['prev-oc','prev-cn','prev-pl','prev-cm','prev-ex','prev-tara','prev-tara2','prev-bruto','prev-bruto2'];
+  btns.forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('ok');});
+  icones.forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=i===0?'📄':'📸';});
+  labels.forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=labelTxt[i];});
+  previews.forEach(id=>{const p=document.getElementById(id);if(p){p.style.display='none';p.src='';}});
+}
+
 function irNova(){
   fotos={}; atual=null; utTara='kg'; utBruto='kg';
   ['f-oc','f-pl','f-mt','f-cpf','f-tr','f-ob','f-mun','f-uf'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
@@ -1351,11 +1383,8 @@ function irNova(){
   const bi=document.getElementById('bal-info'); if(bi) bi.style.display='none';
   document.getElementById('ct').textContent='';
   document.getElementById('ut').textContent='kg';
-  // reset fotos
-  ['fb-oc','fb-cn','fb-pl','fb-cm','fb-ex'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('ok');});
-  ['fi-oc','fi-cn','fi-pl','fi-cm','fi-ex'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=id==='fi-oc'?'📄':'📸';});
-  ['fl-oc','fl-cn','fl-pl','fl-cm','fl-ex'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.textContent=['Fotografar contrato ou ordem','CNH','Placa','Cam.','Extra'][i];});
-  const prev=document.getElementById('prev-oc'); if(prev){prev.style.display='none';prev.src='';}
+  // reset fotos (entrada + balança — ver resetFotosUI)
+  resetFotosUI();
   // resetar caminhão longo
   const chkL=document.getElementById('chk-longo');
   if(chkL){ chkL.checked=false; chkL.disabled=false; }
@@ -2181,7 +2210,14 @@ async function enfileirarFotos(ordem){
   // no celular. Gravar os bytes crus é rápido (sem decodificar imagem
   // nenhuma) e cabe tranquilo no IndexedDB (cota bem maior que localStorage,
   // que foi o motivo de comprimir ali antes — ver histórico).
-  const item={id:ordem.id, numOrdem:ordem.numOrdem, dataEntrada:ordem.dataEntrada, placa:ordem.placa, fotos:origem};
+  // Mescla com o que já estiver na fila pra esse pedido (em vez de
+  // substituir) — salvar() já enfileira as fotos da entrada (contrato/
+  // CNH/placa/caminhão); se essas ainda não tiverem sido confirmadas no
+  // Drive quando finalizar() rodar de novo (offline, sinal ruim), um
+  // replace aqui as jogaria fora da fila silenciosamente.
+  const existente=fotosPend.find(x=>x.id===ordem.id);
+  const mescladas={...(existente?existente.fotos:{}), ...origem};
+  const item={id:ordem.id, numOrdem:ordem.numOrdem, dataEntrada:ordem.dataEntrada, placa:ordem.placa, fotos:mescladas};
   fotosPend = fotosPend.filter(x=>x.id!==ordem.id);
   fotosPend.push(item);
   await idbSalvarFoto(item);
@@ -2385,6 +2421,12 @@ var _timerAg=null;
 
 /* ══ PESO BRUTO ════════════════════════════════════════════════ */
 function irBruto(id){
+  // Se o caminhão que está sendo aberto agora é diferente do que estava
+  // na tela antes, limpa fotos/preview — sem isso, uma foto de tara
+  // tirada pro caminhão A continuava em memória/visível na tela ao abrir
+  // o caminhão B (a fila "Aguardando" pode ter vários caminhões ao mesmo
+  // tempo), arriscando a foto de um ir parar anexada no outro.
+  if(!atual || atual.id!==id){ fotos={}; resetFotosUI(); }
   atual=DB.ordens.find(o=>o.id===id)||cloud.find(o=>o.id===id); if(!atual)return;
 
   // ── Confirmação de dados (motorista/carreta pode ter mudado) ──
