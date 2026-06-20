@@ -942,6 +942,25 @@ function fetchComTimeout(url, opts, ms){
   return fetch(url, {...opts, signal: ctrl.signal}).finally(()=>clearTimeout(t));
 }
 
+/* ── Trava de segurança extra, independente do AbortController ──
+   No Safari/iOS, em conexão ruim (comum em área rural), já vimos o
+   fetch travado por AbortController não rejeitar de verdade — ele
+   simplesmente nunca resolve nem rejeita. Como syncP()/trySyncFotos()
+   usam uma flag (_syncAtivo/_syncFotosAtivo) pra evitar rodar duas
+   vezes ao mesmo tempo, um único fetch assim travado prendia essa
+   flag em "true" pra sempre — e dali em diante TODO sync (botão,
+   timer, volta ao app, evento online) virava no-op silencioso, sem
+   nenhum erro no log. O pendente ficava parado pra sempre em
+   "tentativa 1/3", do jeito que apareceu no diagnóstico.
+   Esse helper garante que o await sempre segue em frente, não
+   importa o que o fetch interno faça. ── */
+function comTimeoutDuro(fazerPromise, ms){
+  return Promise.race([
+    fazerPromise(),
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('tempo esgotado (trava de segurança)')), ms))
+  ]);
+}
+
 /* ══ INDEXEDDB — fila compartilhada com o Service Worker ══════ */
 let _idb = null;
 async function abrirIDB() {
@@ -2107,48 +2126,54 @@ async function trySyncFotos(){
   if(!SHEETS_URL||!fotosPend.length) return;
   if(_syncFotosAtivo) return;
   _syncFotosAtivo=true;
-  const tipos={oc:'CONTRATO',fpl:'PLACA',cnh:'CNH',cam:'CAMINHAO',ext:'EXTRA',fotaTara:'BALANCA-TARA',fotaTara2:'BALANCA-TARA-2',fotaBruto:'BALANCA-BRUTO',fotaBruto2:'BALANCA-BRUTO-2',sig:'ASSINATURA'};
-  let ok=0, restam=0;
-  for(const item of [...fotosPend]){
-    const contrato=(item.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
-    const data=(item.dataEntrada||new Date().toLocaleDateString('pt-BR')).replace(/\//g,'-');
-    const placa=(item.placa||'SEM-PLACA').replace(/[^a-zA-Z0-9]/g,'');
-    for(const tipo of Object.keys(item.fotos)){
-      const b64full=item.fotos[tipo];
-      if(!b64full) continue;
-      try{
-        // Já vem comprimida desde enfileirarFotos() — recomprimir aqui de
-        // novo a cada retry só perdia qualidade à toa.
-        const parts=b64full.split(',');
-        const dados_b64=parts[1];
-        const payload=JSON.stringify({
-          acao:'salvarFoto',
-          dados:{contrato,data,placa,tipo:tipos[tipo]||tipo,base64:dados_b64,mime:'image/jpeg'},
-          token:TOKEN
-        });
-        const r=await fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload},15000);
-        const j=JSON.parse(await r.text());
-        if(j.ok){
-          ok++;
-          delete item.fotos[tipo];
-          if(tipo==='sig'&&j.url){
-            const idx=DB.ordens.findIndex(x=>x.id===item.id); if(idx>=0){DB.ordens[idx].assinaturaUrl=j.url;}
-            const ci=cloud.findIndex(c=>c.id===item.id); if(ci>=0){cloud[ci].assinaturaUrl=j.url; saveCloud();}
-            saveDB();
+  try{
+    const tipos={oc:'CONTRATO',fpl:'PLACA',cnh:'CNH',cam:'CAMINHAO',ext:'EXTRA',fotaTara:'BALANCA-TARA',fotaTara2:'BALANCA-TARA-2',fotaBruto:'BALANCA-BRUTO',fotaBruto2:'BALANCA-BRUTO-2',sig:'ASSINATURA'};
+    let ok=0, restam=0;
+    for(const item of [...fotosPend]){
+      const contrato=(item.numOrdem||'SEM-CONTRATO').replace(/[^a-zA-Z0-9.\-]/g,'');
+      const data=(item.dataEntrada||new Date().toLocaleDateString('pt-BR')).replace(/\//g,'-');
+      const placa=(item.placa||'SEM-PLACA').replace(/[^a-zA-Z0-9]/g,'');
+      for(const tipo of Object.keys(item.fotos)){
+        const b64full=item.fotos[tipo];
+        if(!b64full) continue;
+        try{
+          // Já vem comprimida desde enfileirarFotos() — recomprimir aqui de
+          // novo a cada retry só perdia qualidade à toa.
+          const parts=b64full.split(',');
+          const dados_b64=parts[1];
+          const payload=JSON.stringify({
+            acao:'salvarFoto',
+            dados:{contrato,data,placa,tipo:tipos[tipo]||tipo,base64:dados_b64,mime:'image/jpeg'},
+            token:TOKEN
+          });
+          const r=await comTimeoutDuro(()=>fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload},15000), 19000);
+          const j=JSON.parse(await r.text());
+          if(j.ok){
+            ok++;
+            delete item.fotos[tipo];
+            if(tipo==='sig'&&j.url){
+              const idx=DB.ordens.findIndex(x=>x.id===item.id); if(idx>=0){DB.ordens[idx].assinaturaUrl=j.url;}
+              const ci=cloud.findIndex(c=>c.id===item.id); if(ci>=0){cloud[ci].assinaturaUrl=j.url; saveCloud();}
+              saveDB();
+            }
+          } else {
+            restam++;
           }
-        } else {
-          restam++;
+        }catch(e){
+          restam++; // sem rede ou timeout — fica na fila, tenta de novo no próximo sync
         }
-      }catch(e){
-        restam++; // sem rede ou timeout — fica na fila, tenta de novo no próximo sync
       }
     }
+    fotosPend=fotosPend.filter(item=>Object.keys(item.fotos).length>0);
+    saveFotosPend();
+    if(ok>0) addLog(`📤 ${ok} foto(s) enviada(s) ao Drive${restam>0?` — ${restam} ainda na fila`:''}`,'ok');
+  } finally {
+    // Mesma trava de segurança do syncP(): garante que _syncFotosAtivo
+    // nunca fica presa em true pra sempre por causa de um fetch que
+    // travou sem resolver nem rejeitar.
+    _syncFotosAtivo=false;
+    updS();
   }
-  fotosPend=fotosPend.filter(item=>Object.keys(item.fotos).length>0);
-  saveFotosPend();
-  _syncFotosAtivo=false;
-  if(ok>0) addLog(`📤 ${ok} foto(s) enviada(s) ao Drive${restam>0?` — ${restam} ainda na fila`:''}`,'ok');
-  updS();
 }
 
 function fotoPlaca(inp) {
@@ -2920,8 +2945,8 @@ async function enviar(ordem,acao){
   // esse sinal pode estar errado (wifi sem internet, sinal fraco rural).
   // Se realmente não houver conexão, o timeout cuida disso rapidamente.
   try{
-    const r=await fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({acao,ordem,token:TOKEN})}, 12000);
+    const r=await comTimeoutDuro(()=>fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({acao,ordem,token:TOKEN})}, 12000), 16000);
     const j=JSON.parse(await r.text());
     if(j.ok){
       addLog(`✅ ${acao} — ${ordem.placa||ordem.id}`,'ok');
@@ -2970,54 +2995,59 @@ async function syncP(){
   if(_syncAtivo) return; // evitar sync simultâneo
   _syncAtivo=true;
 
-  const agora=Date.now();
-  // Respeita o backoff por item, mas NUNCA exclui definitivamente — todo
-  // pendente continua sendo candidato a reenvio, só espaça as tentativas.
-  const ps=pend.filter(p=>{
-    const espera=Math.min(BACKOFF_BASE_MS*Math.pow(2,p.tentativas||0), BACKOFF_MAX_MS);
-    return !p.ultimaTentativa || (agora-p.ultimaTentativa)>=espera;
-  });
-  if(!ps.length){ _syncAtivo=false; updS(); return; }
+  try{
+    const agora=Date.now();
+    // Respeita o backoff por item, mas NUNCA exclui definitivamente — todo
+    // pendente continua sendo candidato a reenvio, só espaça as tentativas.
+    const ps=pend.filter(p=>{
+      const espera=Math.min(BACKOFF_BASE_MS*Math.pow(2,p.tentativas||0), BACKOFF_MAX_MS);
+      return !p.ultimaTentativa || (agora-p.ultimaTentativa)>=espera;
+    });
+    if(!ps.length){ return; }
 
-  addLog(`🔄 Iniciando sync — ${ps.length}/${pend.length} pendente(s) prontos para tentativa`,'info');
-  let ok=0, falhou=0;
+    addLog(`🔄 Iniciando sync — ${ps.length}/${pend.length} pendente(s) prontos para tentativa`,'info');
+    let ok=0, falhou=0;
 
-  for(const p of ps){
-    try{
-      const r=await fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})}, 12000);
-      const j=JSON.parse(await r.text());
-      if(j.ok){
-        // Remover da fila
-        pend=pend.filter(x=>x.ordem.id!==p.ordem.id);
-        await idbRemover(p.ordem.id); // remover do IDB também
-        // Remover flag de pendente do cloud (já confirmado pela planilha)
-        const ci=cloud.findIndex(c=>c.id===p.ordem.id);
-        if(ci>=0){ delete cloud[ci]._pendenteEnvio; saveCloud(); }
-        ok++;
-        addLog(`✅ Enviado — ${p.ordem.placa||p.ordem.id}`,'ok');
-      } else {
-        registrarFalha(p, j.erro||'erro API');
+    for(const p of ps){
+      try{
+        const r=await comTimeoutDuro(()=>fetchComTimeout(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+          body:JSON.stringify({acao:p.acao,ordem:p.ordem,token:TOKEN})}, 12000), 16000);
+        const j=JSON.parse(await r.text());
+        if(j.ok){
+          // Remover da fila
+          pend=pend.filter(x=>x.ordem.id!==p.ordem.id);
+          await idbRemover(p.ordem.id); // remover do IDB também
+          // Remover flag de pendente do cloud (já confirmado pela planilha)
+          const ci=cloud.findIndex(c=>c.id===p.ordem.id);
+          if(ci>=0){ delete cloud[ci]._pendenteEnvio; saveCloud(); }
+          ok++;
+          addLog(`✅ Enviado — ${p.ordem.placa||p.ordem.id}`,'ok');
+        } else {
+          registrarFalha(p, j.erro||'erro API');
+          falhou++;
+        }
+      }catch(e){
+        registrarFalha(p, e.name==='AbortError'?'tempo esgotado':e.message);
         falhou++;
       }
-    }catch(e){
-      registrarFalha(p, e.name==='AbortError'?'tempo esgotado':e.message);
-      falhou++;
     }
-  }
 
-  saveDB();
-  _syncAtivo=false;
+    saveDB();
 
-  if(ok>0){
-    localStorage.setItem('syncUlt',new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
-    toast(`☁️ ${ok} pesagem(s) enviada(s)!`);
-    await carregarDaPlanilha();
-    saveCloud();
+    if(ok>0){
+      localStorage.setItem('syncUlt',new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+      toast(`☁️ ${ok} pesagem(s) enviada(s)!`);
+      await carregarDaPlanilha();
+      saveCloud();
+    }
+    if(falhou>0&&ok===0) toast(`❌ ${falhou} pendente(s) com problema — continuará tentando automaticamente`);
+    addLog(`Sync concluído — ${ok} ok · ${falhou} falha(s)`,'info');
+  } finally {
+    // SEMPRE libera a trava, mesmo se algo travar/explodir lá em cima —
+    // é o que evita o sync inteiro morrer silenciosamente pro resto da sessão.
+    _syncAtivo=false;
+    updS();
   }
-  if(falhou>0&&ok===0) toast(`❌ ${falhou} pendente(s) com problema — continuará tentando automaticamente`);
-  addLog(`Sync concluído — ${ok} ok · ${falhou} falha(s)`,'info');
-  updS();
 }
 
 /* ── Registra uma tentativa que falhou. NÃO bloqueia reenvio futuro,
