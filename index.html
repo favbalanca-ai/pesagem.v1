@@ -2078,10 +2078,26 @@ function comprimirImagem(b64full, callback){
    mas a foto, guardada só na variável local `fotos`, se perdia ao trocar
    de tela ou recarregar o app. Agora a foto entra numa fila persistente
    (localStorage) e é reenviada a cada sync, igual à ordem. ── */
-function enfileirarFotos(ordem){
-  const snapshot={...fotos};
-  if(ordem.assinatura && ordem.assinatura.length>100) snapshot.sig=ordem.assinatura;
-  if(!Object.keys(snapshot).length) return;
+async function enfileirarFotos(ordem){
+  const origem={...fotos};
+  if(ordem.assinatura && ordem.assinatura.length>100) origem.sig=ordem.assinatura;
+  if(!Object.keys(origem).length) return;
+  // Comprime ANTES de gravar no localStorage. Fotos cruas de câmera (3-8MB
+  // cada, sem compressão) estouram a cota de localStorage (~5-10MB no total)
+  // se forem guardadas assim na fila persistente — isso quebrava o sync
+  // inteiro (saveFotosPend falhava e podia atrapalhar saveDB/saveCloud
+  // também, por já estar perto do limite). Comprimindo aqui (mesmo
+  // resize/qualidade que já era usado só na hora do upload) cada foto cai
+  // pra ~60-150KB, então a fila inteira de uma pesagem fica bem abaixo da
+  // cota.
+  const snapshot={};
+  for(const tipo of Object.keys(origem)){
+    try{
+      snapshot[tipo]=await new Promise(res=>comprimirImagem(origem[tipo],res));
+    }catch(e){
+      snapshot[tipo]=origem[tipo]; // fallback bruto se a compressão falhar por algum motivo
+    }
+  }
   fotosPend.push({id:ordem.id, numOrdem:ordem.numOrdem, dataEntrada:ordem.dataEntrada, placa:ordem.placa, fotos:snapshot});
   saveFotosPend();
 }
@@ -2101,8 +2117,9 @@ async function trySyncFotos(){
       const b64full=item.fotos[tipo];
       if(!b64full) continue;
       try{
-        const comprimida=await new Promise(res=>comprimirImagem(b64full,res));
-        const parts=comprimida.split(',');
+        // Já vem comprimida desde enfileirarFotos() — recomprimir aqui de
+        // novo a cada retry só perdia qualidade à toa.
+        const parts=b64full.split(',');
         const dados_b64=parts[1];
         const payload=JSON.stringify({
           acao:'salvarFoto',
@@ -2577,8 +2594,7 @@ function finalizar(){
   const idx=DB.ordens.findIndex(o=>o.id===atual.id);
   if(idx>=0)DB.ordens[idx]={...atual};
   saveDB(); enviar(atual,'atualizar');
-  enfileirarFotos(atual);
-  trySyncFotos();
+  enfileirarFotos(atual).then(()=>trySyncFotos());
   // som de alerta conforme status
   beep(atual.statusPeso==='EXCEDIDO'?'erro':atual.statusPeso==='ATENÇÃO'?'warn':'ok');
   // WhatsApp automático
